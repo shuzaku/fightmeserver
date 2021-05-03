@@ -29,7 +29,7 @@ db.once("open", function () {
   console.log("Connection Succeeded");
 });
 
-app.listen(process.env.PORT || 8081)
+app.listen(process.env.PORT )
 
 //Accounts
 app.post('/accounts', (req, res) => accountController.addAccount(req,res));
