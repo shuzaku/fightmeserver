@@ -44,6 +44,7 @@ function getSearchValues(req, res) {
     }
   ], function (error, searchValues) {
     if (error) { console.error(error); }
+    res.header("Access-Control-Allow-Origin", "*");
     res.send({
       searchValues: searchValues
     })

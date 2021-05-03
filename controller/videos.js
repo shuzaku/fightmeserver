@@ -187,7 +187,7 @@ function queryVideo(req, res) {
     {$unwind: {path:'$Player2Character3', preserveNullAndEmptyArrays: true}},
     {$lookup: {
       from: 'combos',
-      localField: 'ComboIds',
+      localField: 'Combos.Id',
       foreignField: '_id',
       as: 'Combo'
     }}, 
@@ -203,6 +203,12 @@ function queryVideo(req, res) {
       foreignField: '_id',
       as: 'Combo.Character'
     }}, 
+    {
+      $unwind: {
+        path: "$Combo.Character",
+        preserveNullAndEmptyArrays: true
+      }
+    },
   ];
 
   if(queries.length > 0) {
@@ -218,6 +224,7 @@ function queryVideo(req, res) {
     res.send({
       videos: videos
     })
+    console.log(videos)
   })
 }
 
