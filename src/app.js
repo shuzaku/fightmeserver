@@ -9,6 +9,7 @@ let tagController = require("../controller/tags");
 let tournamentController = require("../controller/tournaments");
 let videoController = require("../controller/videos");
 let searchController = require("../controller/searches");
+let matchController = require("../controller/matches");
 
 const express = require('express')
 const bodyParser = require('body-parser')
@@ -30,7 +31,9 @@ db.once("open", function () {
   console.log("Connection Succeeded");
 });
 
-app.listen(process.env.PORT || 443);
+
+// app.listen(process.env.PORT || 443);
+app.listen(process.env.PORT || 8082);
 
 //Accounts
 app.post('/accounts', (req, res) => accountController.addAccount(req,res));
@@ -91,3 +94,7 @@ app.delete('/videos/:id', (req, res) => videoController.deleteVideo(req,res));
 
 //Search
 app.get('/search', (req, res) => searchController.getSearchValues(req,res));
+
+//Matches
+app.post('/matches', (req, res) => matchController.addMatches(req,res));
+app.get('/matches', (req, res) => matchController.getMatches(req,res));

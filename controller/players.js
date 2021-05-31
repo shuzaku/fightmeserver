@@ -23,14 +23,9 @@ function addPlayer(req, res) {
   })
 }
 
-// Fetch all player
+// Fetch all players
 function getPlayers(req, res) {
-  Player.aggregate([{$match: {
-    _id: {
-      $ne: ObjectId("000000000000000000000000")
-    }
-  }
-  }], function (error, players) {
+  Player.find({}, 'Name PlayerImg', function (error, players) {
     if (error) { console.error(error); }
     res.send({
       players: players
