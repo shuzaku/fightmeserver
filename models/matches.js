@@ -12,12 +12,6 @@ var MatchessSchema = new Schema({
   VideoUrl: {
     type: String
   },
-  StartTime: {
-    type: Number
-  },
-  EndTime: {
-    type: Number
-  },
   GameId: {
     type: ObjectId
   },

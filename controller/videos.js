@@ -8,10 +8,17 @@ function addVideo(req, res) {
   var ContentCreatorId = req.body.ContentCreatorId;
   var VideoType = req.body.VideoType;
   var GameId = req.body.GameId;
-  var ComboIds = req.body.ComboIds.map(combo => {return ObjectId(combo)});
+  var StartTime = req.body.StartTime;
+  var EndTime = req.body.EndTime;
+  var Combos = req.body.Combos.map(combo => {
+    return {
+      Id: ObjectId(combo.Id),
+      StartTime: combo.StartTime,
+      Endtime: combo.EndTime
+    }
+  });
   var Tags = req.body.Tags;
   
-  console.log(ComboIds)
   var new_video = new Video({
     Url: Url,
     ContentType: ContentType,
@@ -19,45 +26,15 @@ function addVideo(req, res) {
     StartTime: StartTime,
     EndTime: EndTime,
     GameId: GameId,
-    Tags: Tags
+    Tags: Tags,
+    Combos: Combos
   })
+
 
   if(ContentCreatorId) {
     new_video.ContentCreatorId = ContentCreatorId;
   }
-  if(ComboIds.length > 0) {
-    new_video.ComboIds = ComboIds;
-  }
-  if(Player1Id) {
-    new_video.Player1Id = Player1Id;
-  }
-  if(Player2Id) {
-    new_video.Player2Id = Player2Id;
-  }
-  if(Player1CharacterId) {
-    new_video.Player1CharacterId = Player1CharacterId;
-  }
-  if(Player1Character2Id) {
-    new_video.Player1Character2Id = Player1Character2Id;
-  }
-  if(Player1Character3Id) {
-    new_video.Player1Character3Id = Player1Character3Id;
-  }
-  if(Player2CharacterId) {
-    new_video.Player2CharacterId = Player2CharacterId;
-  }
-  if(Player2Character2Id) {
-    new_video.Player2Character2Id = Player2Character2Id;
-  }
-  if(Player2Character3Id) {
-    new_video.Player2Character3Id = Player2Character3Id;
-  }
-  if(WinnerId) {
-    new_video.WinnerId = WinnerId;
-  }
-
-  console.log(new_video);
-
+  
   new_video.save(function (error) {
     if (error) {
       console.log(error)
@@ -196,7 +173,7 @@ function queryVideo(req, res) {
     }, {
       '$lookup': {
         'from': 'characters', 
-        'localField': 'Combo.CharacterId', 
+      'localField': 'Combo.CharacterId', 
         'foreignField': '_id', 
         'as': 'Combo.Character'
       }

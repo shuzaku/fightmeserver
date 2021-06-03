@@ -7,27 +7,34 @@ function addMatches(req, res) {
       var Team1Players = req.body.Team1Players;
       var Team2Players = req.body.Team2Players
       var VideoUrl = req.body.VideoUrl;
-      var StartTime = req.body.Team1Players;
-      var EndTime = req.body.Team2Players
-      var GameId = req.body.VideoUrl;
+      var GameId = ObjectId(req.body.GameId);
 
       var new_match = new Match({
-        Team1Players: Team1Players,
-        Team2Players: Team2Players,
+        Team1Players: Team1Players.map(player => {
+          return {
+            Slot: 1,
+            Id: ObjectId(player.Id),
+            CharacterIds: player.CharacterIds.map(id => {return ObjectId(id)})
+          }
+        }),
+        Team2Players: Team2Players.map(player => {
+          return {
+            Slot: 2,
+            Id: ObjectId(player.Id),
+            CharacterIds: player.CharacterIds.map(id => {return ObjectId(id)})
+          }
+        }),
         VideoUrl: VideoUrl,
-        StartTime: StartTime,
-        EndTime: EndTime,
         GameId: GameId,
-        Tags: Tags
-      })
+      });
     
-      new_match.save(function (error) {
+      new_match.save(function (error,match) {
         if (error) {
           console.log(error)
         }
         res.send({
           success: true,
-          message: 'Match saved successfully!'
+          message: 'Post saved successfully!'
         })
       })
     }
@@ -53,15 +60,15 @@ function addMatches(req, res) {
         }
       })
 
-      Match.insertMany(matches, function(error){
-        if (error) {
-          console.log(error)
-        }
-        res.send({
-          success: true,
-          message: 'Match saved successfully!'
-        })     
-      }); 
+      // Match.insertMany(matches, function(error){
+      //   if (error) {
+      //     console.log(error)
+      //   }
+      //   res.send({
+      //     success: true,
+      //     message: 'Match saved successfully!'
+      //   })     
+      // }); 
     }
   };
   
@@ -74,4 +81,5 @@ function getMatches(req, res) {
     })
   }).sort({ _id: -1 })
 }
+
 module.exports = { addMatches, getMatches }
