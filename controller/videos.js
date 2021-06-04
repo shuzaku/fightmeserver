@@ -185,7 +185,7 @@ function queryVideo(req, res) {
     }, {
       '$addFields': {
         'Combo.StartTime': '$Combos.StartTime', 
-        'Combo.EndTime': '$Combos.EndTime', 
+        'Combo.EndTime': '$Combos.Endtime', 
         'ComboCharacterId': '$Combo.CharacterId', 
         'ComboId': '$Combo._id', 
         'Id': '$_id'
@@ -203,7 +203,7 @@ function queryVideo(req, res) {
   } else if(sort === "Hits") {
     aggregate.push({$sort: {'Combo.Hits': -1}})
   } else {
-    aggregate.push({$sort: {sort: -1}})
+    aggregate.push({$sort: {'_id': -1}})
   }
   
   if(filter){
@@ -216,8 +216,7 @@ function queryVideo(req, res) {
 
   aggregate.push({$skip: skip});
   aggregate.push({$limit: 5});  
-
-
+  
   Video.aggregate(aggregate, function (error, videos) {
     if (error) { console.error(error); }
     res.send({
