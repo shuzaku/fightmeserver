@@ -15,6 +15,8 @@ function addAccount(req, res) {
     IsEmailVerified: IsEmailVerified,
     AccountType: AccountType,
     Uid: Uid,
+    FavoriteVideos: [],
+    Collections: []  
   })
 
   new_account.save(function (error) {
@@ -28,4 +30,38 @@ function addAccount(req, res) {
   })
 };
 
-module.exports = { addAccount }
+// Fetch single game
+function getAccount(req, res) {
+  var db = req.db;
+  // Account.findById(req.params.id, 'DisplayName Email AccountType FavoriteVideos Collections', function (error, account) {
+  //   if (error) { console.error(error); }
+  //   res.send(account)
+  // })
+
+  Account.aggregate([{ $match:  { Uid: req.params.id }  }], function (error, account) {
+    if (error) { console.error(error); }
+    res.send({
+      account: account
+    })
+  })
+
+}
+
+
+function patchAccount(req, res) {
+  Account.findById(req.params.id, 'FavoriteVideos', function (error, account) {
+    if (error) { console.error(error); }
+
+    account.FavoriteVideos = req.body.FavoriteVideos;
+
+    account.save(function (error) {
+      if (error) {
+        console.log(error)
+      }
+      res.send({
+        success: true
+      })
+    })
+  })
+}
+module.exports = { addAccount, getAccount, patchAccount }

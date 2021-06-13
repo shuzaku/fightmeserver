@@ -18,6 +18,12 @@ var AccountSchema = new Schema({
   },
   Uid: {
     type: String
+  },
+  FavoriteVideos: {
+    type: Array
+  },
+  Collections: {
+    type: Array
   }
 }, {
   timestamp: true

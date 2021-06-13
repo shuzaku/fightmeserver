@@ -33,13 +33,16 @@ function addCombo(req, res) {
     var Inputs = req.body.Inputs;
     var Hits = req.body.Hits;
     var Damage = req.body.Damage;
-
+    var Tags = req.body.Tags.map((tag) => {
+      return ObjectId(tag)
+    });
   
     var new_combo = new Combo({
       CharacterId: CharacterId,
       Inputs: Inputs,
       Hits: Hits,
-      Damage: Damage
+      Damage: Damage,
+      Tags: Tags
     })
   
     new_combo.save(function (error,combo) {
@@ -87,4 +90,43 @@ function patchCombo(req, res) {
     })
   })
 }
-module.exports = { addCombo, patchCombo }
+
+// Fetch single combo
+function getCombo(req, res) {
+  var comboId =  ObjectId(req.params.id);
+
+  var aggregate = [
+    {
+      '$lookup': {
+        'from': 'characters', 
+        'localField': 'CharacterId', 
+        'foreignField': '_id', 
+        'as': 'Character'
+      }
+    },
+    {
+      '$lookup': {
+        'from': 'tags', 
+        'localField': 'Tags', 
+        'foreignField': '_id', 
+        'as': 'Tags'
+      }
+    },
+    {
+      '$unwind': {
+        'path': '$Character', 
+        'preserveNullAndEmptyArrays': true
+      }
+    }  
+  ]
+
+  aggregate.unshift({$match: { _id: comboId }});
+
+  Combo.aggregate(aggregate, function (error, combos) {
+    if (error) { console.error(error); }
+    res.send({
+      combos: combos
+    })
+  })
+}
+module.exports = { addCombo, patchCombo, getCombo }

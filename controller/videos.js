@@ -10,13 +10,13 @@ function addVideo(req, res) {
   var GameId = req.body.GameId;
   var StartTime = req.body.StartTime;
   var EndTime = req.body.EndTime;
-  var Combos = req.body.Combos.map(combo => {
+  var Combos = ContentType === 'Combo' ? req.body.Combos.map(combo => {
     return {
       Id: ObjectId(combo.Id),
       StartTime: combo.StartTime,
       Endtime: combo.EndTime
     }
-  });
+  }): null;
   var Tags = req.body.Tags;
   
   var new_video = new Video({
@@ -53,6 +53,7 @@ function queryVideo(req, res) {
   var skip =  parseInt(req.query.skip);
   var sort = req.query.sort || '_id';
   var filter = req.query.filter;
+  var tagFilter = req.query.tag ? ObjectId(req.query.tag): null;
 
   if (req.query.queryName || req.query.queryValue){
     var names = req.query.queryName.split(",");
@@ -61,7 +62,7 @@ function queryVideo(req, res) {
     if (names.length > 1){
       for(var i = 0; i < names.length; i++){
         var query = {};
-        if (names[i].includes('Id')) {
+        if (names[i].includes('Id') || names[i].includes('id')) {
           query[names[i]] =  {'$eq': ObjectId(values[i])};
         }
         else {
@@ -71,12 +72,12 @@ function queryVideo(req, res) {
       }
     }
     else if(names[0] === 'PlayerId'){
-      queries.push({"Match.Team1Players": { '$elemMatch': { 'Id':  ObjectId(values[0]) } }})
-      queries.push({"Match.Team2Players": { '$elemMatch': { 'Id':  ObjectId(values[0]) } }})
+      queries.push({"Team1Players": { '$elemMatch': { '_id':  ObjectId(values[0]) } }})
+      queries.push({"Team2Players": { '$elemMatch': { '_id':  ObjectId(values[0]) } }})
     }
     else if(names[0] === 'CharacterId'){
-      queries.push({"Match.Team1PlayerCharacters": { '$elemMatch': { '_id':  ObjectId(values[0]) } }})
-      queries.push({"Match.Team2PlayerCharacters": { '$elemMatch': { '_id':  ObjectId(values[0]) } }})
+      queries.push({"Team1PlayerCharacters": { '$elemMatch': { '_id':  ObjectId(values[0]) } }})
+      queries.push({"Team2PlayerCharacters": { '$elemMatch': { '_id':  ObjectId(values[0]) } }})
       queries.push({'Combo.CharacterId': {'$eq': ObjectId(values[0])}});
     }
     else {
@@ -91,6 +92,152 @@ function queryVideo(req, res) {
     }
   }
   
+  var aggregate = [
+    {
+      '$lookup': {
+        'from': 'games', 
+        'localField': 'GameId', 
+        'foreignField': '_id', 
+        'as': 'Game'
+      }
+    }, {
+      '$unwind': '$Game'
+    }, {
+      '$lookup': {
+        'from': 'matches', 
+        'localField': 'Url', 
+        'foreignField': 'VideoUrl', 
+        'as': 'Match'
+      }
+    }, {
+      '$unwind': {
+        'path': '$Match', 
+        'preserveNullAndEmptyArrays': true
+      }
+    }, {
+      '$lookup': {
+        'from': 'creators', 
+        'localField': 'ContentCreatorId', 
+        'foreignField': '_id', 
+        'as': 'ContentCreator'
+      }
+    }, {
+      '$lookup': {
+        'from': 'players', 
+        'localField': 'Match.Team1Players.Id', 
+        'foreignField': '_id', 
+        'as': 'Team1Players'
+      }
+    }, {
+      '$lookup': {
+        'from': 'players', 
+        'localField': 'Match.Team2Players.Id', 
+        'foreignField': '_id', 
+        'as': 'Team2Players'
+      }
+    }, {
+      '$lookup': {
+        'from': 'characters', 
+        'localField': 'Match.Team1Players.CharacterIds', 
+        'foreignField': '_id', 
+        'as': 'Team1PlayerCharacters'
+      }
+    }, {
+      '$lookup': {
+        'from': 'characters', 
+        'localField': 'Match.Team2Players.CharacterIds', 
+        'foreignField': '_id', 
+        'as': 'Team2PlayerCharacters'
+      }
+    }, {
+      '$unwind': {
+        'path': '$ContentCreator', 
+        'preserveNullAndEmptyArrays': true
+      }
+    }, {
+      '$unwind': {
+        'path': '$Combos', 
+        'preserveNullAndEmptyArrays': true
+      }
+    }, {
+      '$lookup': {
+        'from': 'combos', 
+        'localField': 'Combos.Id', 
+        'foreignField': '_id', 
+        'as': 'Combo'
+      }
+    }, {
+      '$unwind': {
+        'path': '$Combo', 
+        'preserveNullAndEmptyArrays': true
+      }
+    }, {
+      '$lookup': {
+        'from': 'characters', 
+        'localField': 'Combo.CharacterId', 
+        'foreignField': '_id', 
+        'as': 'Combo.Character'
+      }
+    }, {
+      '$unwind': {
+        'path': '$Combo.Character', 
+        'preserveNullAndEmptyArrays': true
+      }
+    }, {
+      '$lookup': {
+        'from': 'tags', 
+        'localField': 'Combo.Tags', 
+        'foreignField': '_id', 
+        'as': 'Combo.Tags'
+      }
+    }, {
+      '$addFields': {
+        'Combo.StartTime': '$Combos.StartTime', 
+        'Combo.EndTime': '$Combos.Endtime', 
+        'ComboCharacterId': '$Combo.CharacterId', 
+        'ComboId': '$Combo._id', 
+        'Id': '$_id'
+      }
+    }
+  ];
+
+  if(queries.length > 0) {
+    aggregate.push({$match: {$or: queries}});
+  }
+
+  if(sort === "Damage"){
+    aggregate.push({$sort: {'Combo.Damage': -1}})
+  } else if(sort === "Hits") {
+    aggregate.push({$sort: {'Combo.Hits': -1}})
+  } else {
+    aggregate.push({$sort: {'_id': -1}})
+  }
+  
+  if(filter){
+    if (filter === 'Combo'){
+      aggregate.push({$match: {ContentType:'Combo'}})
+    } else if (filter === 'Match'){
+      aggregate.push({$match: {ContentType: 'Match'}})
+    }
+  }
+  console.log(tagFilter)
+  if(tagFilter){
+    aggregate.push({$match: {"Combo.Tags": { '$elemMatch': { '_id':  ObjectId(tagFilter) } }}});
+  }
+
+  aggregate.push({$skip: skip});
+  aggregate.push({$limit: 5});  
+  
+  Video.aggregate(aggregate, function (error, videos) {
+    if (error) { console.error(error); }
+    res.send({
+      videos: videos
+    })
+  })
+}
+
+// Fetch single Video
+function getVideo(req, res) {
   var aggregate = [
     {
       '$lookup': {
@@ -173,7 +320,7 @@ function queryVideo(req, res) {
     }, {
       '$lookup': {
         'from': 'characters', 
-      'localField': 'Combo.CharacterId', 
+        'localField': 'Combo.CharacterId', 
         'foreignField': '_id', 
         'as': 'Combo.Character'
       }
@@ -181,6 +328,13 @@ function queryVideo(req, res) {
       '$unwind': {
         'path': '$Combo.Character', 
         'preserveNullAndEmptyArrays': true
+      }
+    }, {
+      '$lookup': {
+        'from': 'tags', 
+        'localField': 'Combo.Tags', 
+        'foreignField': '_id', 
+        'as': 'Combo.ComboTags'
       }
     }, {
       '$addFields': {
@@ -192,132 +346,6 @@ function queryVideo(req, res) {
       }
     }
   ];
-
-
-  if(queries.length > 0) {
-    aggregate.push({$match: {$or: queries}});
-  }
-
-  if(sort === "Damage"){
-    aggregate.push({$sort: {'Combo.Damage': -1}})
-  } else if(sort === "Hits") {
-    aggregate.push({$sort: {'Combo.Hits': -1}})
-  } else {
-    aggregate.push({$sort: {'_id': -1}})
-  }
-  
-  if(filter){
-    if (filter === 'Combo'){
-      aggregate.push({$match: {ContentType:'Combo'}})
-    } else if (filter === 'Match'){
-      aggregate.push({$match: {ContentType: 'Match'}})
-    }
-  }
-
-  aggregate.push({$skip: skip});
-  aggregate.push({$limit: 5});  
-  
-  Video.aggregate(aggregate, function (error, videos) {
-    if (error) { console.error(error); }
-    res.send({
-      videos: videos
-    })
-  })
-}
-
-// Fetch single Video
-function getVideo(req, res) {
-  var aggregate = [    
-    {$sort: {_id: -1}},
-    {$lookup: {
-      from: "games",
-      localField: "GameId",
-      foreignField: "_id",
-      as: "Game"
-      }
-    },
-    {$unwind: '$Game'},
-    {$lookup: {
-      from: "creators",
-      localField: "ContentCreatorId",
-      foreignField: "_id",
-      as: "ContentCreator"
-      }
-    },
-    {$unwind: {path:'$ContentCreator', preserveNullAndEmptyArrays: true}},
-    {$lookup: {
-      from: "players",
-      localField: "Player1Id",
-      foreignField: "_id",
-      as: "Player1"
-      }
-    },
-    {$unwind: {path:'$Player1', preserveNullAndEmptyArrays: true}},
-    {$lookup: {
-      from: "players",
-      localField: "Player2Id",
-      foreignField: "_id",
-      as: "Player2"
-      }
-    },
-    {$unwind: {path:'$Player2', preserveNullAndEmptyArrays: true}},
-    {$lookup: {
-      from: "characters",
-      localField: "Player1CharacterId",
-      foreignField: "_id",
-      as: "Player1Character"
-      }
-    },
-    {$unwind: {path:'$Player1Character', preserveNullAndEmptyArrays: true}},
-    {$lookup: {
-      from: "characters",
-      localField: "Player1Character2Id",
-      foreignField: "_id",
-      as: "Player1Character2"
-      }
-    },
-    {$unwind: {path:'$Player1Character2', preserveNullAndEmptyArrays: true}},
-    {$lookup: {
-      from: "characters",
-      localField: "Player1Character3Id",
-      foreignField: "_id",
-      as: "Player1Character3"
-      }
-    },
-    {$unwind: {path:'$Player1Character3', preserveNullAndEmptyArrays: true}},
-    {$lookup: {
-      from: "characters",
-      localField: "Player2CharacterId",
-      foreignField: "_id",
-      as: "Player2Character"
-      }
-    },
-    {$unwind: {path:'$Player2Character', preserveNullAndEmptyArrays: true}},
-    {$lookup: {
-      from: "characters",
-      localField: "Player2Character2Id",
-      foreignField: "_id",
-      as: "Player2Character2"
-      }
-    },
-    {$unwind: {path:'$Player2Character2', preserveNullAndEmptyArrays: true}},
-    {$lookup: {
-      from: "characters",
-      localField: "Player2Character3Id",
-      foreignField: "_id",
-      as: "Player2Character3"
-      }
-    },
-    {$unwind: {path:'$Player2Character3', preserveNullAndEmptyArrays: true}},
-    {$lookup: {
-      from: "combos",
-      localField: "ComboId",
-      foreignField: "_id",
-      as: "Combo"
-      }
-    },
-  ];
-  
   var videoId = req.params.id;
   aggregate.unshift({$match: {'_id': {'$eq': ObjectId(videoId)}}});
   Video.aggregate(aggregate, function (error, video) {
@@ -373,4 +401,174 @@ function deleteVideo(req, res) {
   })
 }
 
-module.exports = { addVideo, queryVideo, getVideo, patchVideo, deleteVideo}
+// Fetch all Tag
+function getVideos(req, res) {
+  var skip =  parseInt(req.query.skip);
+  var aggregate = [
+    {'$sort': {'_id': 1}},
+    {
+      '$lookup': {
+        'from': 'combos', 
+        'localField': 'Combos.Id', 
+        'foreignField': '_id', 
+        'as': 'Combo'
+      }
+    },
+    {
+      '$lookup': {
+        'from': 'matches', 
+        'localField': 'Url', 
+        'foreignField': 'VideoUrl', 
+        'as': 'Match'
+      }
+    },
+    {
+      '$unwind': {
+        'path': '$Combos', 
+        'preserveNullAndEmptyArrays': true
+      }
+    }, 
+    {
+      '$lookup': {
+        'from': 'combos', 
+        'localField': 'Combos.Id', 
+        'foreignField': '_id', 
+        'as': 'Combo'
+      }
+    },
+    {
+      '$unwind': {
+        'path': '$Combo', 
+        'preserveNullAndEmptyArrays': true
+      }
+    }, 
+    {
+      '$unwind': {
+        'path': '$Match', 
+        'preserveNullAndEmptyArrays': true
+      }
+    }, 
+  ]
+
+  aggregate.push({$skip: skip});
+  aggregate.push({$limit: 5});  
+  aggregate.push({$project:{
+    "Match._id": 1, 
+    "Combo":{
+      "_id": 1,
+      "StartTime" :1,
+      "EndTime": 1
+    },
+    "ContentType": 1
+  }})
+
+  Video.aggregate(aggregate, function (error, videos) {
+    if (error) { console.error(error); }
+    res.send({
+      videos: videos
+    })
+  })
+}
+
+function getComboVideo(req, res) {
+  var ComboId =  ObjectId(req.params.id);
+
+  var aggregate = [
+    {
+      '$unwind': {
+        'path': '$Combos', 
+        'preserveNullAndEmptyArrays': true
+      }
+    },
+    {
+      '$match': {
+          'Combos.Id': ComboId
+      }
+    },
+    {
+      '$lookup': {
+        'from': 'games', 
+        'localField': 'GameId', 
+        'foreignField': '_id', 
+        'as': 'Game'
+      }
+    }, 
+    {
+      '$unwind': '$Game'
+    }, 
+    {
+      '$lookup': {
+        'from': 'creators', 
+        'localField': 'ContentCreatorId', 
+        'foreignField': '_id', 
+        'as': 'ContentCreator'
+      }
+    }, 
+    {
+      '$unwind': {
+        'path': '$ContentCreator', 
+        'preserveNullAndEmptyArrays': true
+      }
+    },
+    {
+      '$addFields': {
+        'Combo.StartTime': '$Combos.StartTime', 
+        'Combo.EndTime': '$Combos.Endtime', 
+      }
+    }
+  ];
+
+  Video.aggregate(aggregate, function (error, videos) {
+    if (error) { console.error(error); }
+    res.send({
+      videos: videos
+    })
+    aggregate = [];
+  })
+}
+
+function getMatchVideo(req, res) {
+  var matchUrl =  req.params.url;
+
+  var aggregate = [
+    {
+      '$match': {
+          'Url': matchUrl
+      }
+    },
+    {
+      '$lookup': {
+        'from': 'games', 
+        'localField': 'GameId', 
+        'foreignField': '_id', 
+        'as': 'Game'
+      }
+    }, 
+    {
+      '$unwind': '$Game'
+    }, 
+    {
+      '$lookup': {
+        'from': 'creators', 
+        'localField': 'ContentCreatorId', 
+        'foreignField': '_id', 
+        'as': 'ContentCreator'
+      }
+    }, 
+    {
+      '$unwind': {
+        'path': '$ContentCreator', 
+        'preserveNullAndEmptyArrays': true
+      }
+    },
+  ];
+
+  Video.aggregate(aggregate, function (error, videos) {
+    if (error) { console.error(error); }
+    res.send({
+      videos: videos
+    })
+    aggregate = [];
+  })
+}
+module.exports = { addVideo, queryVideo, getVideo, patchVideo, deleteVideo, getVideos, getComboVideo, getMatchVideo}

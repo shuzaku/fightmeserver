@@ -32,11 +32,13 @@ db.once("open", function () {
 });
 
 
-app.listen(process.env.PORT || 443);
-// app.listen(process.env.PORT || 8082);
+// app.listen(process.env.PORT || 443);
+app.listen(process.env.PORT || 8082);
 
 //Accounts
 app.post('/accounts', (req, res) => accountController.addAccount(req,res));
+app.get('/accounts/:id', (req, res) => accountController.getAccount(req,res));
+app.put('/accounts/:id', (req, res) => accountController.patchAccount(req,res));
 
 //Characters
 app.post('/characters', (req, res) => characterController.addCharacter(req,res));
@@ -48,6 +50,7 @@ app.delete('/characters/:id', (req, res) => characterController.deleteCharacter(
 
 //Combos
 app.post('/combos', (req, res) => comboController.addCombo(req,res));
+app.get('/combo/:id', (req, res) => comboController.getCombo(req,res));
 app.put('/combo/:id', (req, res) => comboController.patchCombo(req,res));
 
 //Creators
@@ -91,6 +94,9 @@ app.get('/videoQuery', (req, res) => videoController.queryVideo(req,res));
 app.get('/video/:id', (req, res) => videoController.getVideo(req,res));
 app.put('/video/:id', (req, res) => videoController.patchVideo(req,res));
 app.delete('/videos/:id', (req, res) => videoController.deleteVideo(req,res));
+app.post('/getVideos', (req, res) => videoController.getVideos(req,res));
+app.get('/comboVideo/:id', (req, res) => videoController.getComboVideo(req,res));
+app.get('/matchVideo/:url', (req, res) => videoController.getMatchVideo(req,res));
 
 //Search
 app.get('/search', (req, res) => searchController.getSearchValues(req,res));
@@ -98,3 +104,6 @@ app.get('/search', (req, res) => searchController.getSearchValues(req,res));
 //Matches
 app.post('/matches', (req, res) => matchController.addMatches(req,res));
 app.get('/matches', (req, res) => matchController.getMatches(req,res));
+app.put('/matches/:id', (req, res) => matchController.patchMatch(req,res));
+app.get('/match/:id', (req, res) => matchController.getMatch(req,res));
+

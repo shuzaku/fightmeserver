@@ -14,6 +14,9 @@ var ComboSchema = new Schema({
   },
   Damage: {
     type: Number
+  },
+  Tags: {
+    type: Array
   }
 }, {
   timestamp: true
