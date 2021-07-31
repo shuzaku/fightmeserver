@@ -3,47 +3,60 @@ var ObjectId = require('mongodb').ObjectId;
 
 // Add new Video
 function addVideo(req, res) {
-  var Url = req.body.Url;
-  var ContentType = req.body.ContentType
-  var ContentCreatorId = req.body.ContentCreatorId;
-  var VideoType = req.body.VideoType;
-  var GameId = req.body.GameId;
-  var StartTime = req.body.StartTime;
-  var EndTime = req.body.EndTime;
-  var Combos = ContentType === 'Combo' ? req.body.Combos.map(combo => {
-    return {
-      Id: ObjectId(combo.Id),
-      StartTime: combo.StartTime,
-      Endtime: combo.EndTime
-    }
-  }): null;
-  var Tags = req.body.Tags;
-  
-  var new_video = new Video({
-    Url: Url,
-    ContentType: ContentType,
-    VideoType: VideoType,
-    StartTime: StartTime,
-    EndTime: EndTime,
-    GameId: GameId,
-    Tags: Tags,
-    Combos: Combos
-  })
-
-
-  if(ContentCreatorId) {
-    new_video.ContentCreatorId = ContentCreatorId;
-  }
-  
-  new_video.save(function (error) {
-    if (error) {
-      console.log(error)
-    }
-    res.send({
-      success: true,
-      message: 'Post saved successfully!'
+  if(!req.query.bulk){
+    var Url = req.body.Url;
+    var ContentType = req.body.ContentType
+    var ContentCreatorId = req.body.ContentCreatorId;
+    var VideoType = req.body.VideoType;
+    var GameId = req.body.GameId;
+    var StartTime = req.body.StartTime;
+    var EndTime = req.body.EndTime;
+    var Combos = ContentType === 'Combo' ? req.body.Combos.map(combo => {
+      return {
+        Id: ObjectId(combo.Id),
+        StartTime: combo.StartTime,
+        Endtime: combo.EndTime
+      }
+    }): null;
+    var Tags = req.body.Tags;
+    
+    var new_video = new Video({
+      Url: Url,
+      ContentType: ContentType,
+      VideoType: VideoType,
+      StartTime: StartTime,
+      EndTime: EndTime,
+      GameId: GameId,
+      Tags: Tags,
+      Combos: Combos
     })
-  })
+
+
+    if(ContentCreatorId) {
+      new_video.ContentCreatorId = ContentCreatorId;
+    }
+    
+    new_video.save(function (error) {
+      if (error) {
+        console.log(error)
+      }
+      res.send({
+        success: true,
+        message: 'Post saved successfully!'
+      })
+    })
+  } else {
+    Video.insertMany(req.body, function(error,videos){
+      if (error) {
+        console.log(error)
+      }
+      res.send({
+        success: true,
+        message: 'Videos saved successfully!',
+        videos: videos
+      })      
+    })    
+  }
 }
 
 // Query Videos
@@ -93,6 +106,11 @@ function queryVideo(req, res) {
   }
   
   var aggregate = [
+    {
+      '$sort': 
+        {'_id': -1}
+      
+    },
     {
       '$lookup': {
         'from': 'games', 
@@ -220,7 +238,6 @@ function queryVideo(req, res) {
       aggregate.push({$match: {ContentType: 'Match'}})
     }
   }
-  console.log(tagFilter)
   if(tagFilter){
     aggregate.push({$match: {"Combo.Tags": { '$elemMatch': { '_id':  ObjectId(tagFilter) } }}});
   }
@@ -239,6 +256,11 @@ function queryVideo(req, res) {
 // Fetch single Video
 function getVideo(req, res) {
   var aggregate = [
+    {
+      '$sort': 
+        {'_id': -1}
+      
+    },
     {
       '$lookup': {
         'from': 'games', 
@@ -405,7 +427,7 @@ function deleteVideo(req, res) {
 function getVideos(req, res) {
   var skip =  parseInt(req.query.skip);
   var aggregate = [
-    {'$sort': {'_id': 1}},
+    {'$sort': {'_id': -1}},
     {
       '$lookup': {
         'from': 'combos', 

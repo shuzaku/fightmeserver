@@ -7,37 +7,35 @@ function addCreator(req, res) {
   var Name = req.body.Name;
   var LogoUrl = req.body.LogoUrl;
   var YoutubeUrl = req.body.YoutubeUrl;
+  var YoutubeId = req.body.YoutubeId;
 
   var new_creator = new Creator({
     Name: Name,
     LogoUrl: LogoUrl,
-    YoutubeUrl: YoutubeUrl
+    YoutubeUrl: YoutubeUrl,
+    YoutubeId: YoutubeId
   })
 
-  new_creator.save(function (error) {
+  new_creator.save(function (error, creator) {
     if (error) {
       console.log(error)
     }
     res.send({
       success: true,
-      message: 'Post saved successfully!'
+      message: 'Post saved successfully!',
+      id: creator.id
     })
   })
 };
 
-// Fetch all creator
+// Fetch all creators
 function getCreators(req, res) {
-  Creator.aggregate([{$match: {
-    _id: {
-      $ne: ObjectId("000000000000000000000000")
-    }
-  }
-  }], function (error, creators) {
+  Creator.find({}, 'Name YoutubeUrl YoutubeId', function (error, creators) {
     if (error) { console.error(error); }
     res.send({
       creators: creators
     })
-  })
+  }).sort({ _id: -1 })
 }
 
 // Fetch single creator

@@ -39,6 +39,7 @@ function addMatches(req, res) {
       })
     }
     else {
+      
       var matches = req.body.map(match =>{
         return {
           VideoUrl: match.VideoUrl,
@@ -60,15 +61,15 @@ function addMatches(req, res) {
         }
       })
 
-      // Match.insertMany(matches, function(error){
-      //   if (error) {
-      //     console.log(error)
-      //   }
-      //   res.send({
-      //     success: true,
-      //     message: 'Match saved successfully!'
-      //   })     
-      // }); 
+      Match.insertMany(matches, function(error){
+        if (error) {
+          console.log(error)
+        }
+        res.send({
+          success: true,
+          message: 'Match saved successfully!'
+        })     
+      }); 
     }
   };
   

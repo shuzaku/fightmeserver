@@ -1,5 +1,6 @@
 
 var Account = require("../models/accounts");
+var ObjectId = require('mongodb').ObjectId;
 
 // Add new Account
 function addAccount(req, res) {
@@ -49,11 +50,11 @@ function getAccount(req, res) {
 
 
 function patchAccount(req, res) {
-  Account.findById(req.params.id, 'FavoriteVideos', function (error, account) {
+  Account.findById(req.params.id, 'FavoriteVideos, Collections', function (error, account) {
     if (error) { console.error(error); }
 
     account.FavoriteVideos = req.body.FavoriteVideos;
-
+    account.Collections = req.body.Collections.map(collection => {return ObjectId(collection)});
     account.save(function (error) {
       if (error) {
         console.log(error)

@@ -12,13 +12,14 @@ function addPlayer(req, res) {
     ImageUrl: ImageUrl,
   })
 
-  new_player.save(function (error) {
+  new_player.save(function (error, player) {
     if (error) {
       console.log(error)
     }
     res.send({
       success: true,
-      message: 'Post saved successfully!'
+      message: 'Post saved successfully!',
+      playerId: player.id
     })
   })
 }

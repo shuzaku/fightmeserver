@@ -10,6 +10,7 @@ let tournamentController = require("../controller/tournaments");
 let videoController = require("../controller/videos");
 let searchController = require("../controller/searches");
 let matchController = require("../controller/matches");
+let collectionController = require("../controller/collections");
 
 const express = require('express')
 const bodyParser = require('body-parser')
@@ -32,8 +33,8 @@ db.once("open", function () {
 });
 
 
-// app.listen(process.env.PORT || 443);
-app.listen(process.env.PORT || 8082);
+app.listen(process.env.PORT || 443);
+// app.listen(process.env.PORT || 8082);
 
 //Accounts
 app.post('/accounts', (req, res) => accountController.addAccount(req,res));
@@ -106,4 +107,10 @@ app.post('/matches', (req, res) => matchController.addMatches(req,res));
 app.get('/matches', (req, res) => matchController.getMatches(req,res));
 app.put('/matches/:id', (req, res) => matchController.patchMatch(req,res));
 app.get('/match/:id', (req, res) => matchController.getMatch(req,res));
+
+//Collections
+app.post('/collections', (req, res) => collectionController.addCollection(req,res));
+app.get('/collectionQuery', (req, res) => collectionController.queryCollection(req,res));
+app.put('/collections/:id', (req, res) => collectionController.patchCollection(req,res));
+app.get('/collection/:id', (req, res) => collectionController.getCollection(req,res));
 
