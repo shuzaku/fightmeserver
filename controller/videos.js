@@ -67,44 +67,6 @@ function queryVideo(req, res) {
   var sort = req.query.sort || '_id';
   var filter = req.query.filter;
   var tagFilter = req.query.tag ? ObjectId(req.query.tag): null;
-
-  if (req.query.queryName || req.query.queryValue){
-    var names = req.query.queryName.split(",");
-    var values = req.query.queryValue.split(",");
-    
-    if (names.length > 1){
-      for(var i = 0; i < names.length; i++){
-        var query = {};
-        if (names[i].includes('Id') || names[i].includes('id')) {
-          query[names[i]] =  {'$eq': ObjectId(values[i])};
-        }
-        else {
-          query[names[i]] =  {'$eq': values[i]}
-        }
-        queries.push(query);
-      }
-    }
-    else if(names[0] === 'PlayerId'){
-      queries.push({"Team1Players": { '$elemMatch': { '_id':  ObjectId(values[0]) } }})
-      queries.push({"Team2Players": { '$elemMatch': { '_id':  ObjectId(values[0]) } }})
-    }
-    else if(names[0] === 'CharacterId'){
-      queries.push({"Team1PlayerCharacters": { '$elemMatch': { '_id':  ObjectId(values[0]) } }})
-      queries.push({"Team2PlayerCharacters": { '$elemMatch': { '_id':  ObjectId(values[0]) } }})
-      queries.push({'Combo.CharacterId': {'$eq': ObjectId(values[0])}});
-    }
-    else {
-      var query = {};
-      if(names[0].includes('Id')){
-        query[names[0]] =  {'$eq': ObjectId(values[0])};
-        queries.push(query);
-      } else {
-        query[names[0]] =  {'$eq': values[0]};
-        queries.push(query);
-      }
-    }
-  }
-  
   var aggregate = [
     {
       '$sort': 
@@ -219,6 +181,49 @@ function queryVideo(req, res) {
     }
   ];
 
+  if (req.query.queryName || req.query.queryValue){
+    var names = req.query.queryName.split(",");
+    var values = req.query.queryValue.split(",");
+    
+    if (names.length > 1){
+      for(var i = 0; i < names.length; i++){
+        var query = {};
+        if (names[i].includes('Id') || names[i].includes('id')) {
+          query[names[i]] =  {'$eq': ObjectId(values[i])};
+        }
+        else {
+          query[names[i]] =  {'$eq': values[i]}
+        }
+        queries.push(query);
+      }
+    }
+    else if(names[0] === 'PlayerId'){
+      var playerQuery= [
+        {"Team1Players": { '$elemMatch': { '_id':  ObjectId(values[0]) } }},
+        {"Team2Players": { '$elemMatch': { '_id':  ObjectId(values[0]) } }}
+      ];
+      aggregate.push({$match: {$or: playerQuery}});
+    }
+    else if(names[0] === 'CharacterId'){
+      var characterQuery= [
+        {"Team1PlayerCharacters": { '$elemMatch': { '_id':  ObjectId(values[0]) } }},
+        {"Team2PlayerCharacters": { '$elemMatch': { '_id':  ObjectId(values[0]) } }},
+        {'Combo.CharacterId': {'$eq': ObjectId(values[0])}}
+      ];
+      aggregate.push({$match: {$or: characterQuery}});
+    }
+    else {
+      var query = {};
+      if(names[0].includes('Id')){
+        query[names[0]] =  {'$eq': ObjectId(values[0])};
+        queries.push(query);
+      } else {
+        query[names[0]] =  {'$eq': values[0]};
+        queries.push(query);
+      }
+    }
+  }
+
   if(queries.length > 0) {
     aggregate.push({$match: {$or: queries}});
   }
@@ -244,6 +249,8 @@ function queryVideo(req, res) {
 
   aggregate.push({$skip: skip});
   aggregate.push({$limit: 5});  
+
+  console.log(queries)
   
   Video.aggregate(aggregate, function (error, videos) {
     if (error) { console.error(error); }

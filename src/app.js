@@ -17,6 +17,9 @@ const bodyParser = require('body-parser')
 const morgan = require('morgan')
 const cors = require('cors')
 
+let dotenv = require('dotenv');
+dotenv.config();
+var connectionString  = `mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@fightme2.vdh52.mongodb.net/%3Cdbname%3E?retryWrites=true&w=majority`;
 var mongoose = require('mongoose');
 
 const app = express()
@@ -25,7 +28,7 @@ app.use(bodyParser.json())
 app.use(cors())
 
 
-mongoose.connect('mongodb+srv://mtchau:CSLNsZTp!pqf3cA@fightme2.vdh52.mongodb.net/%3Cdbname%3E?retryWrites=true&w=majority');
+mongoose.connect(connectionString);
 var db = mongoose.connection;
 db.on("error", console.error.bind(console, "connection error"));
 db.once("open", function () {
