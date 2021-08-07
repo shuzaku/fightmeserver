@@ -80,7 +80,7 @@ function getCharacters(req, res) {
   // Fetch single character
 function getCharacter(req, res) {
     var db = req.db;
-    Character.findById(req.params.id, 'Name GameId ImageUrl', function (error, character) {
+    Character.findById(req.params.id, 'Name GameId ImageUrl AvatarUrl', function (error, character) {
       if (error) { console.error(error); }
       res.send(character)
     })
