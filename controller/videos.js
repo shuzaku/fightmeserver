@@ -249,8 +249,6 @@ function queryVideo(req, res) {
 
   aggregate.push({$skip: skip});
   aggregate.push({$limit: 5});  
-
-  console.log(queries)
   
   Video.aggregate(aggregate, function (error, videos) {
     if (error) { console.error(error); }
@@ -600,4 +598,111 @@ function getMatchVideo(req, res) {
     aggregate = [];
   })
 }
-module.exports = { addVideo, queryVideo, getVideo, patchVideo, deleteVideo, getVideos, getComboVideo, getMatchVideo}
+
+// Query Videos
+function getMatchupVideos(req, res) {
+  var queries = [];
+
+  var skip =  parseInt(req.query.skip);
+  var aggregate = [
+    {
+      '$sort': 
+        {'_id': -1}
+      
+    },
+    {
+      '$lookup': {
+        'from': 'games', 
+        'localField': 'GameId', 
+        'foreignField': '_id', 
+        'as': 'Game'
+      }
+    }, {
+      '$unwind': '$Game'
+    }, {
+      '$lookup': {
+        'from': 'matches', 
+        'localField': 'Url', 
+        'foreignField': 'VideoUrl', 
+        'as': 'Match'
+      }
+    }, {
+      '$unwind': {
+        'path': '$Match', 
+        'preserveNullAndEmptyArrays': true
+      }
+    }, {
+      '$lookup': {
+        'from': 'creators', 
+        'localField': 'ContentCreatorId', 
+        'foreignField': '_id', 
+        'as': 'ContentCreator'
+      }
+    }, {
+      '$lookup': {
+        'from': 'players', 
+        'localField': 'Match.Team1Players.Id', 
+        'foreignField': '_id', 
+        'as': 'Team1Players'
+      }
+    }, {
+      '$lookup': {
+        'from': 'players', 
+        'localField': 'Match.Team2Players.Id', 
+        'foreignField': '_id', 
+        'as': 'Team2Players'
+      }
+    }, {
+      '$lookup': {
+        'from': 'characters', 
+        'localField': 'Match.Team1Players.CharacterIds', 
+        'foreignField': '_id', 
+        'as': 'Team1PlayerCharacters'
+      }
+    }, {
+      '$lookup': {
+        'from': 'characters', 
+        'localField': 'Match.Team2Players.CharacterIds', 
+        'foreignField': '_id', 
+        'as': 'Team2PlayerCharacters'
+      }
+    }, {
+      '$unwind': {
+        'path': '$ContentCreator', 
+        'preserveNullAndEmptyArrays': true
+      }
+    }, {
+      '$addFields': {
+        'Id': '$_id'
+      }
+    }
+  ];
+  var character1 = ObjectId(req.query.character1);
+  var character2 = ObjectId(req.query.character2);
+  queries.push({
+      $and: [
+        {"Team1PlayerCharacters": { '$elemMatch': { '_id':  character1 } }},
+        {"Team2PlayerCharacters": { '$elemMatch': { '_id':  character2 } }}
+      ]
+  })
+
+  queries.push({
+      $and: [
+        {"Team1PlayerCharacters": { '$elemMatch': { '_id':  character2 } }},
+        {"Team2PlayerCharacters": { '$elemMatch': { '_id':  character1 } }}
+      ]
+  })
+
+  aggregate.push({$match: {$or: queries}});
+
+  aggregate.push({$skip: skip});
+  aggregate.push({$limit: 5});  
+  
+  Video.aggregate(aggregate, function (error, videos) {
+    if (error) { console.error(error); }
+    res.send({
+      videos: videos
+    })
+  })
+}
+module.exports = { addVideo, queryVideo, getVideo, patchVideo, deleteVideo, getVideos, getComboVideo, getMatchVideo, getMatchupVideos}

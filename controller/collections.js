@@ -37,8 +37,6 @@ if(queries.length > 0) {
     aggregate.push({$match: {$or: queries}});
 }
 
-console.log(queries.length)
-
 if(queries.length > 0) {
     Collection.find({ $or: queries }, 'Name Videos OwnerId', function (error, collections) {
         if (error) { console.error(error); }

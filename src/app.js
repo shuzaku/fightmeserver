@@ -36,8 +36,8 @@ db.once("open", function () {
 });
 
 
-app.listen(process.env.PORT || 443);
-// app.listen(process.env.PORT || 8082);
+// app.listen(process.env.PORT || 443);
+app.listen(process.env.PORT || 8082);
 
 //Accounts
 app.post('/accounts', (req, res) => accountController.addAccount(req,res));
@@ -101,6 +101,7 @@ app.delete('/videos/:id', (req, res) => videoController.deleteVideo(req,res));
 app.post('/getVideos', (req, res) => videoController.getVideos(req,res));
 app.get('/comboVideo/:id', (req, res) => videoController.getComboVideo(req,res));
 app.get('/matchVideo/:url', (req, res) => videoController.getMatchVideo(req,res));
+app.get('/characterMatchup', (req, res) => videoController.getMatchupVideos(req,res));
 
 //Search
 app.get('/search', (req, res) => searchController.getSearchValues(req,res));
