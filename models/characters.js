@@ -9,6 +9,9 @@ var CharacterSchema = new Schema({
   ImageUrl: {
     type: String
   },
+  AvatarUrl: {
+    type: String
+  },
   GameId: {
     type: String,
     required: '{PATH} is required!'

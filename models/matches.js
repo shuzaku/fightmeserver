@@ -15,9 +15,24 @@ var MatchessSchema = new Schema({
   GameId: {
     type: ObjectId
   },
+  GameVersion: {
+    type: Number
+  },
   Tags: {
     type: Array
   },
+  WinnerIds: {
+    type: Array
+  },
+  LosersIds: {
+    type: Array
+  },
+  Created: {
+    type: Date
+  },
+  Updated: {
+    type: Date
+  }
 }, {
   timestamp: true
 });

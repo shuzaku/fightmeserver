@@ -6,11 +6,13 @@ function addCharacter(req, res) {
       var Name = req.body.Name;
       var GameId = req.body.GameId
       var ImageUrl = req.body.ImageUrl;
-    
+      var AvatarUrl = req.body.AvatarUrl;
+
       var new_character = new Character({
         Name: Name,
         GameId: GameId,
         ImageUrl: ImageUrl,
+        AvatarUrl: AvatarUrl
       })
     
       new_character.save(function (error) {
@@ -89,7 +91,7 @@ function getCharacter(req, res) {
   // Update a character
 function updateCharacter(req, res) {
     var db = req.db;
-    Character.findById(req.params.id, 'Name GameId ImageUrl', function (error, character) {
+    Character.findById(req.params.id, 'Name GameId ImageUrl AvatarUrl', function (error, character) {
       if (error) { console.error(error); }
       character.Name = req.body.Name;
       character.GameId = req.body.GameId

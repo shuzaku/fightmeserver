@@ -8,24 +8,30 @@ function addMatches(req, res) {
       var Team2Players = req.body.Team2Players
       var VideoUrl = req.body.VideoUrl;
       var GameId = ObjectId(req.body.GameId);
+      var GameVersion = req.body.GameVersion
+      var WinnerIds = req.body.WinnerIds;
+      var LoserIds = req.body.LoserIds;
 
       var new_match = new Match({
         Team1Players: Team1Players.map(player => {
           return {
             Slot: 1,
             Id: ObjectId(player.Id),
-            CharacterIds: player.CharacterIds.map(id => {return ObjectId(id)})
+            CharacterIds: player.CharacterIds.map(character => { return ObjectId(character.id)})
           }
         }),
         Team2Players: Team2Players.map(player => {
           return {
             Slot: 2,
             Id: ObjectId(player.Id),
-            CharacterIds: player.CharacterIds.map(id => {return ObjectId(id)})
+            CharacterIds: player.CharacterIds.map(character => {return ObjectId(character.id)})
           }
         }),
         VideoUrl: VideoUrl,
         GameId: GameId,
+        GameVersion: GameVersion,
+        WinnerIds: WinnerIds,
+        LoserIds: LoserIds
       });
     
       new_match.save(function (error,match) {
@@ -44,6 +50,9 @@ function addMatches(req, res) {
         return {
           VideoUrl: match.VideoUrl,
           GameId: ObjectId(match.GameId),
+          GameVersion: GameVersion,
+          WinnerIds: WinnerIds,
+          LoserIds: LoserIds,
           Team1Players: [
             {
               Slot:1,
@@ -85,14 +94,16 @@ function getMatches(req, res) {
 
 // Update a matches
 function patchMatch(req, res) {
-  Match.findById(ObjectId(req.params.id), 'Team1Players Team2Players VideoUrl GameId', function (error, match) {
+  Match.findById(ObjectId(req.params.id), 'Team1Players Team2Players VideoUrl GameId GameVersion WinnerIds LoserIds', function (error, match) {
     if (error) { console.error(error); }
 
     var Team1Players = req.body.Team1Players;
     var Team2Players = req.body.Team2Players
     var VideoUrl = req.body.VideoUrl;
     var GameId = ObjectId(req.body.GameId);
-
+    var GameVersion = ObjectId(req.body.GameVersion);
+    var WinnerIds = req.body.WinnerIds;
+    var LoserIds = req.body.LoserIds;
 
       match.Team1Players = Team1Players.map(player => {
         return {
@@ -110,8 +121,7 @@ function patchMatch(req, res) {
       });
       VideoUrl = VideoUrl;
       GameId = GameId;
-
-  
+      GameVersion = GameVersion;
 
     match.save(function (error) {
       if (error) {
@@ -176,4 +186,93 @@ function getMatch(req, res) {
     })
   })
 }
-module.exports = { addMatches, getMatches, patchMatch, getMatch }
+
+// Delete single match
+function deleteMatch(req, res) {
+  var db = req.db;
+  Match.remove({
+    _id: req.params.id
+  }, function (err, character) {
+    if (err)
+      res.send(err)
+    res.send({
+      success: true
+    })
+  })
+}
+
+// Query Matches
+function queryMatches(req, res) {
+  var names = req.query.queryName.split(",");
+  var values = req.query.queryValue.split(",");
+  var queries = [];
+  var aggregate = [];
+  
+  
+  if (names.length > 0){
+      for(var i = 0; i < names.length; i++){
+        var query = {};
+        if (names[i] === 'GameId') {
+          query[names[i]] =  {'$eq': ObjectId(values[i])};
+        }
+        if (names[i] === 'Id') {
+          query['_id'] =  {'$eq': ObjectId(values[i])};
+        }
+        else {
+          query[names[i]] =  {'$eq': values[i]}
+        }
+        queries.push(query);
+      }
+  } 
+  else {
+      for(var i = 0; i < names.length; i++){
+          var query = {};
+          query[names[i]] = values[i];
+          queries.push(query);
+      }
+  }
+  
+  
+  if(queries.length > 0) {
+      aggregate.push({$match: {$or: queries}});
+  }
+  
+  if(queries.length > 0) {
+      Match.find({ $or: queries }, 'Team1Players Team2Players VideoUrl GameId GameVersion WinnerIds LoserIds', function (error, matches) {
+          if (error) { console.error(error); }
+          res.send({
+            matches: matches
+          })
+        }).sort({ _id: -1 })    
+  }
+  else {
+    Match.find(queries[0], 'Team1Players Team2Players VideoUrl GameId GameVersion WinnerIds LoserIds', function (error, matches) {
+      if (error) { console.error(error); }
+      res.send({
+        matches: matches
+      })
+      }).sort({ _id: -1 })    
+  }
+  }
+
+// Update a matches
+function patchMatches(req, res) {
+  var queries = req.body.map(match => {
+    return  ObjectId(match.id)
+  });
+
+  var now = Date.now();
+
+  const update = {$set: {"Updated": now}};
+  // const update = {$set: {"_v": 1}};
+  const settings = { upsert: true };
+  Match.updateMany({}, update, function (error, results) {
+    if (error) { console.error(error); }
+    if (!error) {
+      console.log('success with reject');
+      res.sendStatus(200);
+    }
+  })
+
+}
+module.exports = { addMatches, getMatches, patchMatch, getMatch, deleteMatch, queryMatches, patchMatches }

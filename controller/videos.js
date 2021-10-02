@@ -19,32 +19,41 @@ function addVideo(req, res) {
       }
     }): null;
     var Tags = req.body.Tags;
-    
-    var new_video = new Video({
-      Url: Url,
-      ContentType: ContentType,
-      VideoType: VideoType,
-      StartTime: StartTime,
-      EndTime: EndTime,
-      GameId: GameId,
-      Tags: Tags,
-      Combos: Combos
-    })
 
-
-    if(ContentCreatorId) {
-      new_video.ContentCreatorId = ContentCreatorId;
-    }
-    
-    new_video.save(function (error) {
-      if (error) {
-        console.log(error)
-      }
-      res.send({
-        success: true,
-        message: 'Post saved successfully!'
+    var isDuplicate = Video.find({ "Url" : Url}).limit(1).size();
+  
+    // if(isDuplicate){
+    //   res.send({
+    //     success: true,
+    //     err: 'Video already exist',
+    //   });  
+    // }
+    // else {
+      var new_video = new Video({
+        Url: Url,
+        ContentType: ContentType,
+        VideoType: VideoType,
+        StartTime: StartTime,
+        EndTime: EndTime,
+        GameId: GameId,
+        Tags: Tags,
+        Combos: Combos
       })
-    })
+
+      if(ContentCreatorId) {
+        new_video.ContentCreatorId = ContentCreatorId;
+      }
+      
+      new_video.save(function (error) {
+        if (error) {
+          console.log(error)
+        }
+        res.send({
+          success: true,
+          message: 'Post saved successfully!'
+        })
+      })  
+    // }
   } else {
     Video.insertMany(req.body, function(error,videos){
       if (error) {
@@ -82,6 +91,18 @@ function queryVideo(req, res) {
       }
     }, {
       '$unwind': '$Game'
+    }, {
+      '$lookup': {
+        'from': 'montages', 
+        'localField': 'Url', 
+        'foreignField': 'VideoUrl', 
+        'as': 'Montage'
+      }
+    }, {
+      '$unwind': {
+        'path': '$Montage', 
+        'preserveNullAndEmptyArrays': true
+      }
     }, {
       '$lookup': {
         'from': 'matches', 
@@ -387,12 +408,18 @@ function getVideo(req, res) {
 
 // Update a Video
 function patchVideo(req, res) {
-  Video.findById(req.params.id, 'ContentCreatorId GameId Player1Id Player2Id Player1CharacterId Player1Character2Id Player1Character3Id Player2CharacterId Player2Character2Id Player2Character3Id ComboId WinnerId Tags', function (error, video) {
+  Video.findById(req.params.id, 'ContentCreatorId GameId Player1Id Player2Id Player1CharacterId Player1Character2Id Player1Character3Id Player2CharacterId Player2Character2Id Player2Character3Id Combos WinnerId Tags', function (error, video) {
     if (error) { console.error(error); }
 
     video.ContentCreatorId = req.body.ContentCreatorId;
-    video.GameId = req.body.GameId;
-    video.ComboId = req.body.ComboId;
+    video.GameId = ObjectId(req.body.GameId);
+    video.Combos = req.body.Combos.map(combo => {
+      return {
+        Id: ObjectId(combo.Id),
+        StartTime: combo.StartTime,
+        EndTime: combo.EndTime
+      }
+    });
     video.Player1Id = req.body.Player1Id;
     video.Player2Id = req.body.Player2Id;
     video.Player1CharacterId = req.body.Player1CharacterId;

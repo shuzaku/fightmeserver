@@ -11,6 +11,7 @@ let videoController = require("../controller/videos");
 let searchController = require("../controller/searches");
 let matchController = require("../controller/matches");
 let collectionController = require("../controller/collections");
+let montageController = require("../controller/montages");
 
 const express = require('express')
 const bodyParser = require('body-parser')
@@ -56,6 +57,8 @@ app.delete('/characters/:id', (req, res) => characterController.deleteCharacter(
 app.post('/combos', (req, res) => comboController.addCombo(req,res));
 app.get('/combo/:id', (req, res) => comboController.getCombo(req,res));
 app.put('/combo/:id', (req, res) => comboController.patchCombo(req,res));
+app.delete('/combo/:id', (req, res) => comboController.deleteCombo(req,res));
+
 
 //Creators
 app.post('/creator', (req, res) => creatorController.addCreator(req,res));
@@ -111,6 +114,10 @@ app.post('/matches', (req, res) => matchController.addMatches(req,res));
 app.get('/matches', (req, res) => matchController.getMatches(req,res));
 app.put('/matches/:id', (req, res) => matchController.patchMatch(req,res));
 app.get('/match/:id', (req, res) => matchController.getMatch(req,res));
+app.delete('/match/:id', (req, res) => matchController.deleteMatch(req,res));
+app.get('/matchQuery', (req, res) => matchController.queryMatches(req,res));
+app.put('/matches/', (req, res) => matchController.patchMatches(req,res));
+
 
 //Collections
 app.post('/collections', (req, res) => collectionController.addCollection(req,res));
@@ -118,3 +125,6 @@ app.get('/collectionQuery', (req, res) => collectionController.queryCollection(r
 app.put('/collections/:id', (req, res) => collectionController.patchCollection(req,res));
 app.get('/collection/:id', (req, res) => collectionController.getCollection(req,res));
 
+//Montages
+app.post('/montages', (req, res) => montageController.addMontage(req,res));
+app.get('/montage/:id', (req, res) => montageController.getMontage(req,res));

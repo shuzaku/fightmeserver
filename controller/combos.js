@@ -129,4 +129,17 @@ function getCombo(req, res) {
     })
   })
 }
-module.exports = { addCombo, patchCombo, getCombo }
+
+function deleteCombo(req, res) {
+  var db = req.db;
+  Combo.remove({
+    _id: req.params.id
+  }, function (err, character) {
+    if (err)
+      res.send(err)
+    res.send({
+      success: true
+    })
+  })
+}
+module.exports = { addCombo, patchCombo, getCombo, deleteCombo}
