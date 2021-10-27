@@ -7,7 +7,7 @@ var TagSchema = new Schema({
       required: '{PATH} is required!'
     }
   }, {
-  timestamp: true, 
+    timestamps: true, 
   });
 
 var Tags = mongoose.model("Tags", TagSchema);

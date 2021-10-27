@@ -20,7 +20,7 @@ const cors = require('cors')
 
 let dotenv = require('dotenv');
 dotenv.config();
-var connectionString  = `mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@fightme2.vdh52.mongodb.net/%3Cdbname%3E?retryWrites=true&w=majority`;
+var connectionString  = `mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@cluster0.vdh52.mongodb.net/Fighters-Edge?retryWrites=true&w=majority`;
 var mongoose = require('mongoose');
 
 const app = express()
@@ -36,9 +36,8 @@ db.once("open", function () {
   console.log("Connection Succeeded");
 });
 
-
-// app.listen(process.env.PORT || 443);
-app.listen(process.env.PORT || 8082);
+app.listen(process.env.PORT || 443);
+// app.listen(process.env.PORT || 8082);
 
 //Accounts
 app.post('/accounts', (req, res) => accountController.addAccount(req,res));
@@ -58,7 +57,6 @@ app.post('/combos', (req, res) => comboController.addCombo(req,res));
 app.get('/combo/:id', (req, res) => comboController.getCombo(req,res));
 app.put('/combo/:id', (req, res) => comboController.patchCombo(req,res));
 app.delete('/combo/:id', (req, res) => comboController.deleteCombo(req,res));
-
 
 //Creators
 app.post('/creator', (req, res) => creatorController.addCreator(req,res));

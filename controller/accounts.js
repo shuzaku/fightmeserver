@@ -17,6 +17,8 @@ function addAccount(req, res) {
     AccountType: AccountType,
     Uid: Uid,
     FavoriteVideos: [],
+    FollowedPlayers: [],
+    FollowedCharacters: [],
     Collections: []  
   })
 
@@ -31,15 +33,44 @@ function addAccount(req, res) {
   })
 };
 
-// Fetch single game
+// Fetch single account
 function getAccount(req, res) {
   var db = req.db;
-  // Account.findById(req.params.id, 'DisplayName Email AccountType FavoriteVideos Collections', function (error, account) {
-  //   if (error) { console.error(error); }
-  //   res.send(account)
-  // })
-
-  Account.aggregate([{ $match:  { Uid: req.params.id }  }], function (error, account) {
+  Account.aggregate([
+    {$match:  { Uid: req.params.id }  },
+    {$lookup:  
+      {
+        from: 'players',
+        localField: 'FollowedPlayers',
+        foreignField: '_id',
+        as: 'FollowedPlayers'
+      }
+    },
+    {$lookup:  
+      {
+        from: 'characters',
+        localField: 'FollowedCharacters',
+        foreignField: '_id',
+        as: 'FollowedCharacters'
+      }
+    },
+    {$lookup:  
+      {
+        from: 'games',
+        localField: 'FollowedGames',
+        foreignField: '_id',
+        as: 'FollowedGames'
+      }
+    },
+    {$lookup:  
+      {
+        from: 'collections',
+        localField: 'Collections',
+        foreignField: '_id',
+        as: 'Collections'
+      }
+    }
+  ], function (error, account) {
     if (error) { console.error(error); }
     res.send({
       account: account
@@ -50,10 +81,14 @@ function getAccount(req, res) {
 
 
 function patchAccount(req, res) {
-  Account.findById(req.params.id, 'FavoriteVideos, Collections', function (error, account) {
+  Account.findById(req.params.id, 'FavoriteVideos, FollowedPlayers, FollowedCharacters, FollowedGames, Collections', function (error, account) {
     if (error) { console.error(error); }
-
+    console.log(req.body)
     account.FavoriteVideos = req.body.FavoriteVideos;
+    account.FollowedPlayers = req.body.FollowedPlayers.map(player => {return ObjectId(player)});
+    account.FollowedCharacters = req.body.FollowedCharacters.map(character => {return ObjectId(character)});
+    account.FollowedGames = req.body.FollowedGames.map(game => {return ObjectId(game)});
+
     account.Collections = req.body.Collections.map(collection => {return ObjectId(collection)});
     account.save(function (error) {
       if (error) {

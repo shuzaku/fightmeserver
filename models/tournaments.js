@@ -16,7 +16,7 @@ var TournamentsSchema = new Schema({
     type: String
   }
 }, {
-  timestamp: true
+  timestamps: true, 
 });
 
 var Tournaments = mongoose.model("Tournaments", TournamentsSchema);

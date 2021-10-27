@@ -17,7 +17,7 @@ var CharacterSchema = new Schema({
     required: '{PATH} is required!'
   }
 }, {
-  timestamp: true
+  timestamps: true, 
 });
 
 var Characters = mongoose.model("Characters", CharacterSchema);

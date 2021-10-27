@@ -16,7 +16,7 @@ var CollectionSchema = new Schema({
     required: '{PATH} is required!'
   }
 }, {
-  timestamp: true
+  timestamps: true, 
 });
 
 var Collections = mongoose.model("Collections", CollectionSchema);
