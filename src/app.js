@@ -20,7 +20,7 @@ const cors = require('cors')
 
 let dotenv = require('dotenv');
 dotenv.config();
-var connectionString  = `mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@fightme2.vdh52.mongodb.net/%3Cdbname%3E?retryWrites=true&w=majority`;
+var connectionString  = `mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@cluster0.vdh52.mongodb.net/Fighters-Edge?retryWrites=true&w=majority`;
 var mongoose = require('mongoose');
 
 const app = express()
