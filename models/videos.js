@@ -59,7 +59,7 @@ var VideoSchema = new Schema({
       type: Array
     }
   }, {
-  timestamp: true, 
+  timestamps: true, 
   });
 
 var Videos = mongoose.model("Videos", VideoSchema);

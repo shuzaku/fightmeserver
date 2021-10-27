@@ -26,7 +26,7 @@ var MontageSchema = new Schema({
     type: Date
   }
 }, {
-  timestamp: true
+  timestamps: true, 
 });
 
 var Montages = mongoose.model("Montages", MontageSchema);

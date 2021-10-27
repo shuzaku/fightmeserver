@@ -36,9 +36,8 @@ db.once("open", function () {
   console.log("Connection Succeeded");
 });
 
-
-// app.listen(process.env.PORT || 443);
-app.listen(process.env.PORT || 8082);
+app.listen(process.env.PORT || 443);
+// app.listen(process.env.PORT || 8082);
 
 //Accounts
 app.post('/accounts', (req, res) => accountController.addAccount(req,res));
@@ -58,7 +57,6 @@ app.post('/combos', (req, res) => comboController.addCombo(req,res));
 app.get('/combo/:id', (req, res) => comboController.getCombo(req,res));
 app.put('/combo/:id', (req, res) => comboController.patchCombo(req,res));
 app.delete('/combo/:id', (req, res) => comboController.deleteCombo(req,res));
-
 
 //Creators
 app.post('/creator', (req, res) => creatorController.addCreator(req,res));

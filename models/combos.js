@@ -19,7 +19,7 @@ var ComboSchema = new Schema({
     type: Array
   }
 }, {
-  timestamp: true
+  timestamps: true, 
 });
 
 var Combo = mongoose.model("Combo", ComboSchema);

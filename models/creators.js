@@ -16,7 +16,7 @@ var CreatorsSchema = new Schema({
     type: String
   }
 }, {
-  timestamp: true
+  timestamps: true, 
 });
 
 var Creators = mongoose.model("Creators", CreatorsSchema);

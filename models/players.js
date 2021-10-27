@@ -10,7 +10,7 @@ var PlayerSchema = new Schema({
     type: String
   }
 }, {
-  timestamp: true
+  timestamps: true, 
 });
 
 var Players = mongoose.model("Players", PlayerSchema);

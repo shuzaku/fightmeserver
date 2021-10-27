@@ -10,7 +10,7 @@ var GameSchema = new Schema({
     type: String
   }
 }, {
-  timestamp: true
+  timestamps: true, 
 });
 
 var Games = mongoose.model("Games", GameSchema);

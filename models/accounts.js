@@ -24,9 +24,18 @@ var AccountSchema = new Schema({
   },
   Collections: {
     type: Array
+  },
+  FollowedPlayers: {
+    type: Array
+  },
+  FollowedCharacters: {
+    type: Array
+  },
+  FollowedGames: {
+    type: Array
   }
 }, {
-  timestamp: true
+  timestamps: true, 
 });
 
 var Accounts = mongoose.model("Accounts", AccountSchema);

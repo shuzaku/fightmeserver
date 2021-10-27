@@ -26,15 +26,9 @@ var MatchessSchema = new Schema({
   },
   LosersIds: {
     type: Array
-  },
-  Created: {
-    type: Date
-  },
-  Updated: {
-    type: Date
   }
 }, {
-  timestamp: true
+  timestamps: true, 
 });
 
 var Matches = mongoose.model("Matches", MatchessSchema);

@@ -8,7 +8,6 @@ var values = req.query.queryValue.split(",");
 var queries = [];
 var aggregate = [];
 
-
 if (names.length > 0){
     for(var i = 0; i < names.length; i++){
       var query = {};
