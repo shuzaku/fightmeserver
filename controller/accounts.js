@@ -41,25 +41,25 @@ function getAccount(req, res) {
     {$lookup:  
       {
         from: 'players',
-        localField: 'FollowedPlayers',
+        localField: 'FollowedPlayers.PlayerId',
         foreignField: '_id',
-        as: 'FollowedPlayers'
+        as: 'FollowedPlayersDetails'
       }
     },
     {$lookup:  
       {
         from: 'characters',
-        localField: 'FollowedCharacters',
+        localField: 'FollowedCharacters.CharacterId',
         foreignField: '_id',
-        as: 'FollowedCharacters'
+        as: 'FollowedCharactersDetails'
       }
     },
     {$lookup:  
       {
         from: 'games',
-        localField: 'FollowedGames',
+        localField: 'FollowedGames.GameId',
         foreignField: '_id',
-        as: 'FollowedGames'
+        as: 'FollowedGamesDetails'
       }
     },
     {$lookup:  
@@ -85,9 +85,24 @@ function patchAccount(req, res) {
     if (error) { console.error(error); }
     console.log(req.body)
     account.FavoriteVideos = req.body.FavoriteVideos;
-    account.FollowedPlayers = req.body.FollowedPlayers.map(player => {return ObjectId(player)});
-    account.FollowedCharacters = req.body.FollowedCharacters.map(character => {return ObjectId(character)});
-    account.FollowedGames = req.body.FollowedGames.map(game => {return ObjectId(game)});
+    account.FollowedPlayers = req.body.FollowedPlayers.map(player => {
+      return {
+        'PlayerId' : ObjectId(player.PlayerId),
+        'AddedDate': player.AddedDate
+      }
+    });
+    account.FollowedCharacters = req.body.FollowedCharacters.map(character => {      
+      return {
+      'CharacterId' : ObjectId(character.CharacterId),
+      'AddedDate': character.AddedDate
+      }
+    });
+    account.FollowedGames = req.body.FollowedGames.map(game => {      
+      return {
+      'GameId' : ObjectId(game.GameId),
+      'AddedDate': game.AddedDate
+      }
+    });
 
     account.Collections = req.body.Collections.map(collection => {return ObjectId(collection)});
     account.save(function (error) {

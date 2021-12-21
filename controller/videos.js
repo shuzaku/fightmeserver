@@ -754,4 +754,6 @@ function getMatchupVideos(req, res) {
     })
   })
 }
-module.exports = { addVideo, queryVideo, getVideo, patchVideo, deleteVideo, getVideos, getComboVideo, getMatchVideo, getMatchupVideos}
+
+
+module.exports = {  addVideo, queryVideo, getVideo, patchVideo, deleteVideo, getVideos, getComboVideo, getMatchVideo, getMatchupVideos}
