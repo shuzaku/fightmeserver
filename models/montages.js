@@ -24,6 +24,12 @@ var MontageSchema = new Schema({
   },
   Updated: {
     type: Date
+  },
+  SubmittedBy: {
+    type: ObjectId
+  },
+  UpdatedBy: {
+    type: ObjectId
   }
 }, {
   timestamps: true, 

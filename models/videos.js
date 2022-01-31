@@ -57,6 +57,12 @@ var VideoSchema = new Schema({
     },
     Tags: {
       type: Array
+    },
+    SubmittedBy: {
+      type: ObjectId
+    },
+    UpdatedBy: {
+      type: ObjectId
     }
   }, {
   timestamps: true, 

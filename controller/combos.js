@@ -1,4 +1,6 @@
 var Combo = require("../models/combos");
+var ComboClip = require("../models/combo-clips");
+
 var ObjectId = require('mongodb').ObjectId;
 
 // // Add new Combo
@@ -92,24 +94,29 @@ function patchCombo(req, res) {
 }
 
 // Fetch single combo
-function getCombo(req, res) {
-  var comboId =  ObjectId(req.params.id);
-
+function getComboClip(req, res) {
+  var comboClipId =  ObjectId(req.params.id);
   var aggregate = [
     {
       '$lookup': {
-        'from': 'characters', 
-        'localField': 'CharacterId', 
+        'from': 'combos', 
+        'localField': 'ComboId', 
         'foreignField': '_id', 
-        'as': 'Character'
+        'as': 'Combo'
+      }
+    },
+    {
+      '$unwind': {
+        'path': '$Combo', 
+        'preserveNullAndEmptyArrays': true
       }
     },
     {
       '$lookup': {
-        'from': 'tags', 
-        'localField': 'Tags', 
+        'from': 'characters', 
+        'localField': 'Combo.CharacterId', 
         'foreignField': '_id', 
-        'as': 'Tags'
+        'as': 'Character'
       }
     },
     {
@@ -120,12 +127,12 @@ function getCombo(req, res) {
     }  
   ]
 
-  aggregate.unshift({$match: { _id: comboId }});
-
-  Combo.aggregate(aggregate, function (error, combos) {
+  aggregate.unshift({$match: { _id: ObjectId(comboClipId) }});
+  ComboClip.aggregate(aggregate, function (error, comboClip) {
     if (error) { console.error(error); }
+    console.log(res)
     res.send({
-      combos: combos
+      comboClip: comboClip
     })
   })
 }
@@ -142,4 +149,4 @@ function deleteCombo(req, res) {
     })
   })
 }
-module.exports = { addCombo, patchCombo, getCombo, deleteCombo}
+module.exports = { addCombo, patchCombo, getComboClip, deleteCombo}

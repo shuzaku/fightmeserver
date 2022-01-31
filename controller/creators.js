@@ -30,7 +30,7 @@ function addCreator(req, res) {
 
 // Fetch all creators
 function getCreators(req, res) {
-  Creator.find({}, 'Name YoutubeUrl YoutubeId', function (error, creators) {
+  Creator.find({}, 'Name YoutubeUrl YoutubeId LogoUrl', function (error, creators) {
     if (error) { console.error(error); }
     res.send({
       creators: creators
@@ -41,7 +41,7 @@ function getCreators(req, res) {
 // Fetch single creator
 function getCreator(req, res) {
   var db = req.db;
-  Creator.findById(req.params.id, 'Name LogoUrl YoutubeUrl', function (error, creator) {
+  Creator.findById(req.params.id, 'Name YoutubeUrl YoutubeId LogoUrl', function (error, creator) {
     if (error) { console.error(error); }
     res.send(creator)
   })
@@ -50,7 +50,7 @@ function getCreator(req, res) {
 // Update a creator
 function updateCreator(req, res) {
   var db = req.db;
-  Creator.findById(req.params.id, 'Name LogoUrl YoutubeUrl', function (error, creator) {
+  Creator.findById(req.params.id, 'Name YoutubeUrl YoutubeId LogoUrl', function (error, creator) {
     if (error) { console.error(error); }
 
     creator.Name = req.body.Name;

@@ -2,18 +2,18 @@ var mongoose = require("mongoose");
 var Schema = mongoose.Schema;
 const ObjectId = Schema.Types.ObjectId;
 
-var ComboSchema = new Schema({
-  CharacterId: {
+var ComboClipSchema = new Schema({
+  ComboId: {
     type: ObjectId
   },
-  Inputs: {
-    type: Array
+  StartTime: {
+    type: String,
   },
-  Hits: {
-    type: Number
+  EndTime: {
+    type: String,
   },
-  Damage: {
-    type: Number
+  Url: {
+    type: String,
   },
   Tags: {
     type: Array
@@ -28,6 +28,6 @@ var ComboSchema = new Schema({
   timestamps: true, 
 });
 
-var Combo = mongoose.model("Combo", ComboSchema);
+var ComboClip = mongoose.model("Combo-Clips", ComboClipSchema);
 
-module.exports = Combo; 
+module.exports = ComboClip; 

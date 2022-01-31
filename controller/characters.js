@@ -1,4 +1,5 @@
 var Character = require("../models/characters");
+var ObjectId = require('mongodb').ObjectId;
 
 // Add new character(s)
 function addCharacter(req, res) {
@@ -47,8 +48,13 @@ function queryCharacter(req, res) {
   
     for(var i = 0; i < names.length; i++){
       var query = {};
-      query[names[i]] = values[i];
-      queries.push(query);
+      if(names[i] === ('Id')){
+        var query = {'_id':   ObjectId(values[i])};
+        queries.push(query);
+      }  else {
+        query[names[i]] = values[i];
+        queries.push(query);
+      }
     }
     
     if(queries.length > 1) {
@@ -62,6 +68,8 @@ function queryCharacter(req, res) {
     else {
       Character.find(queries[0], 'Name ImageUrl AvatarUrl', function (error, characters) {
         if (error) { console.error(error); }
+        console.log(2)
+
         res.send({
           characters: characters
         })
@@ -82,7 +90,7 @@ function getCharacters(req, res) {
   // Fetch single character
 function getCharacter(req, res) {
     var db = req.db;
-    Character.findById(req.params.id, 'Name GameId ImageUrl AvatarUrl', function (error, character) {
+    Character.findById(ObjectId(req.params.id), 'Name GameId ImageUrl AvatarUrl', function (error, character) {
       if (error) { console.error(error); }
       res.send(character)
     })

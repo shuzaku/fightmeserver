@@ -15,19 +15,22 @@ function addTournament(req, res) {
     Date: Date
   })
 
-  new_tournament.save(function (error) {
+  console.log(new_tournament)
+
+  new_tournament.save(function (error, tournament) {
     if (error) {
       console.log(error)
     }
     res.send({
       success: true,
-      message: 'Post saved successfully!'
+      message: 'Post saved successfully!',
+      tournamentId: tournament.id
     })
   })
 }
 
 // Fetch all tournament
-function getTournament(req, res) {
+function getTournaments(req, res) {
   Tournament.find({}, 'Name GameIds LogoUrl Date', function (error, tournaments) {
     if (error) { console.error(error); }
     res.send({
@@ -81,4 +84,4 @@ function deleteTournament(req, res) {
   })
 }
 
-module.exports = { addTournament, getTournament, getTournament, updateTournament, deleteTournament}
+module.exports = { addTournament, getTournaments, getTournament, updateTournament, deleteTournament}

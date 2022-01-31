@@ -9,35 +9,38 @@ function addMontage(req, res) {
   var Characters = req.body.Characters.map(character => {return ObjectId(character.Id)});
   var Created = Date.now();
   var Updated = Date.now();
-
-  var isDuplicate = Montage.find({ "VideoUrl" : VideoUrl}).limit(1).size();
-  
-  if(isDuplicate){
-    res.send({
-      success: true,
-      err: 'Montage already exist',
-    });   
-  }
-  else {
-    var new_montage = new Montage({
-      Players: Players,
-      VideoUrl: VideoUrl,
-      GameId: GameId,
-      Characters: Characters,
-      Created: Created,
-      Updated: Updated
-    })
-  
-    new_montage.save(function (error,montage) {
-      if (error) {
-        console.log(error)
-      }
+  var isDuplicate = Montage.find({ "VideoUrl" : VideoUrl}  , function (error, montages) {
+    if (error) { console.error(error); }
+    if(montages.length > 0){
       res.send({
         success: true,
-        message: 'Post saved successfully!',
+        err: 'Montage already exist',
+      });   
+    }
+    else {
+      var new_montage = new Montage({
+        Players: Players,
+        VideoUrl: VideoUrl,
+        GameId: GameId,
+        Characters: Characters,
+        Created: Created,
+        Updated: Updated
       })
-    })
-  }
+    
+      new_montage.save(function (error,montage) {
+        if (error) {
+          console.log(error)
+        }
+        res.send({
+          success: true,
+          message: 'Post saved successfully!',
+        })
+      })
+    }
+  }).sort({ Name: 1 }) .limit(1);
+
+
+
 }
 
 // Fetch single match

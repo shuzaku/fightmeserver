@@ -9,9 +9,11 @@ function addMatches(req, res) {
       var VideoUrl = req.body.VideoUrl;
       var GameId = ObjectId(req.body.GameId);
       var GameVersion = req.body.GameVersion
-      var WinnerIds = req.body.WinnerIds;
-      var LoserIds = req.body.LoserIds;
-
+      var WinningPlayersId = req.body.WinningPlayersId.map(id => {return ObjectId(id)});
+      var LosingPlayersId = req.body.LosingPlayersId.map(id => {return ObjectId(id)});
+      var TournamentId = ObjectId(req.body.TournamentId);
+      var StartTime = req.body.StartTime;
+      var EndTime = req.body.EndTime;
       var new_match = new Match({
         Team1Players: Team1Players.map(player => {
           return {
@@ -30,8 +32,11 @@ function addMatches(req, res) {
         VideoUrl: VideoUrl,
         GameId: GameId,
         GameVersion: GameVersion,
-        WinnerIds: WinnerIds,
-        LoserIds: LoserIds
+        TournamentId: TournamentId,
+        WinningPlayersId: WinningPlayersId,
+        LosingPlayersId: LosingPlayersId,
+        StartTime: StartTime,
+        EndTime: EndTime
       });
     
       new_match.save(function (error,match) {
@@ -39,6 +44,7 @@ function addMatches(req, res) {
           console.log(error)
         }
         res.send({
+          match: match,
           success: true,
           message: 'Post saved successfully!'
         })
@@ -76,7 +82,8 @@ function addMatches(req, res) {
         }
         res.send({
           success: true,
-          message: 'Match saved successfully!'
+          message: 'Match saved successfully!',
+          matches: matches
         })     
       }); 
     }

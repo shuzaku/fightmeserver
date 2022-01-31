@@ -77,4 +77,41 @@ function deletePlayer(req, res) {
   })
 }
 
-module.exports = {addPlayer, getPlayer, getPlayers, updatePlayer, deletePlayer}
+  // Query Player
+  function queryPlayer(req, res) {
+    var db = req.db;
+    var names = req.query.queryName.split(",");
+    var values = req.query.queryValue.split(",");
+    var queries = [];
+  
+    for(var i = 0; i < names.length; i++){
+      var query = {};
+      if(names[i] === ('Id')){
+        var query = {'_id':   ObjectId(values[i])};
+        queries.push(query);
+      }  else {
+        query[names[i]] = values[i];
+        queries.push(query);
+      }
+    }
+    
+    if(queries.length > 1) {
+      Player.find({ $or: queries }, 'Name PlayerImg ', function (error, players) {
+        if (error) { console.error(error); }
+        res.send({
+          players: players
+        })
+      }).sort({ Name: 1 })    
+    }
+    else {
+      Player.find(queries[0], 'Name PlayerImg ', function (error, players) {
+        if (error) { console.error(error); }
+
+        res.send({
+          players: players
+        })
+      }).sort({ Name: 1 })    
+    }
+  };
+
+module.exports = {addPlayer, getPlayer, getPlayers, updatePlayer, deletePlayer, queryPlayer}

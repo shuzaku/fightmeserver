@@ -21,11 +21,26 @@ var MatchessSchema = new Schema({
   Tags: {
     type: Array
   },
-  WinnerIds: {
+  WinningPlayersId: {
     type: Array
   },
-  LosersIds: {
+  LosingPlayersId:{
     type: Array
+  },
+  TournamentId: {
+    type: ObjectId
+  },
+  SubmittedBy: {
+    type: ObjectId
+  },
+  UpdatedBy: {
+    type: ObjectId
+  },
+  StartTime: {
+    type: String
+  },
+  EndTime: {
+    type: String
   }
 }, {
   timestamps: true, 

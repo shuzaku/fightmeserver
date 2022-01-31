@@ -2,6 +2,7 @@
 let accountController = require("../controller/accounts");
 let characterController = require("../controller/characters");
 let comboController = require("../controller/combos");
+let comboClipController = require("../controller/combo-clip");
 let creatorController = require("../controller/creators");
 let gameController = require("../controller/games");
 let playerController = require("../controller/players");
@@ -36,8 +37,8 @@ db.once("open", function () {
   console.log("Connection Succeeded");
 });
 
-app.listen(process.env.PORT || 443);
-// app.listen(process.env.PORT || 8082);
+// app.listen(process.env.PORT || 443);
+app.listen(process.env.PORT || 8082);
 
 //Accounts
 app.post('/accounts', (req, res) => accountController.addAccount(req,res));
@@ -54,9 +55,11 @@ app.delete('/characters/:id', (req, res) => characterController.deleteCharacter(
 
 //Combos
 app.post('/combos', (req, res) => comboController.addCombo(req,res));
-app.get('/combo/:id', (req, res) => comboController.getCombo(req,res));
 app.put('/combo/:id', (req, res) => comboController.patchCombo(req,res));
 app.delete('/combo/:id', (req, res) => comboController.deleteCombo(req,res));
+
+app.get('/comboClip/:id', (req, res) => comboClipController.getComboClip(req,res));
+
 
 //Creators
 app.post('/creator', (req, res) => creatorController.addCreator(req,res));
@@ -86,7 +89,7 @@ app.post('/tags', (req, res) => tagController.addTag(req,res));
 app.get('/tags', (req, res) => tagController.getTags(req,res));
 
 //Tournament
-app.post('/tournament', (req, res) => tournamentController.addTournament(req,res));
+app.post('/tournaments', (req, res) => tournamentController.addTournament(req,res));
 app.get('/tournamentQuery', (req, res) => tournamentController.queryTournament(req,res));
 app.get('/tournaments', (req, res) => tournamentController.getTournaments(req,res));
 app.get('/tournaments/:id', (req, res) => tournamentController.getTournament(req,res));
@@ -100,7 +103,7 @@ app.get('/video/:id', (req, res) => videoController.getVideo(req,res));
 app.put('/video/:id', (req, res) => videoController.patchVideo(req,res));
 app.delete('/videos/:id', (req, res) => videoController.deleteVideo(req,res));
 app.post('/getVideos', (req, res) => videoController.getVideos(req,res));
-app.get('/comboVideo/:id', (req, res) => videoController.getComboVideo(req,res));
+app.get('/comboVideo/:url', (req, res) => videoController.getComboVideo(req,res));
 app.get('/matchVideo/:url', (req, res) => videoController.getMatchVideo(req,res));
 app.get('/characterMatchup', (req, res) => videoController.getMatchupVideos(req,res));
 

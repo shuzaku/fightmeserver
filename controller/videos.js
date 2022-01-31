@@ -103,7 +103,14 @@ function queryVideo(req, res) {
         'path': '$Montage', 
         'preserveNullAndEmptyArrays': true
       }
-    }, {
+    },{
+      '$lookup': {
+        'from': 'characters',
+        'localField': 'Montage.Characters',
+        'foreignField': '_id',
+        'as': 'MontageCharacters'
+      }
+    },{
       '$lookup': {
         'from': 'matches', 
         'localField': 'Url', 
@@ -114,13 +121,6 @@ function queryVideo(req, res) {
       '$unwind': {
         'path': '$Match', 
         'preserveNullAndEmptyArrays': true
-      }
-    }, {
-      '$lookup': {
-        'from': 'creators', 
-        'localField': 'ContentCreatorId', 
-        'foreignField': '_id', 
-        'as': 'ContentCreator'
       }
     }, {
       '$lookup': {
@@ -151,37 +151,27 @@ function queryVideo(req, res) {
         'as': 'Team2PlayerCharacters'
       }
     }, {
+      '$lookup': {
+        'from': 'combo-clips', 
+        'localField': 'Url', 
+        'foreignField': 'Url', 
+        'as': 'ComboClip'
+      }
+    }, {
+      '$unwind': {
+        'path': '$ComboClip', 
+        'preserveNullAndEmptyArrays': true
+      }
+    }, {
+      '$lookup': {
+        'from': 'creators', 
+        'localField': 'ContentCreatorId', 
+        'foreignField': '_id', 
+        'as': 'ContentCreator'
+      }
+    },{
       '$unwind': {
         'path': '$ContentCreator', 
-        'preserveNullAndEmptyArrays': true
-      }
-    }, {
-      '$unwind': {
-        'path': '$Combos', 
-        'preserveNullAndEmptyArrays': true
-      }
-    }, {
-      '$lookup': {
-        'from': 'combos', 
-        'localField': 'Combos.Id', 
-        'foreignField': '_id', 
-        'as': 'Combo'
-      }
-    }, {
-      '$unwind': {
-        'path': '$Combo', 
-        'preserveNullAndEmptyArrays': true
-      }
-    }, {
-      '$lookup': {
-        'from': 'characters', 
-        'localField': 'Combo.CharacterId', 
-        'foreignField': '_id', 
-        'as': 'Combo.Character'
-      }
-    }, {
-      '$unwind': {
-        'path': '$Combo.Character', 
         'preserveNullAndEmptyArrays': true
       }
     }, {
@@ -191,12 +181,32 @@ function queryVideo(req, res) {
         'foreignField': '_id', 
         'as': 'Combo.Tags'
       }
-    }, {
+    },{
+      '$lookup': {
+        'from': 'combos', 
+        'localField': 'ComboClip.ComboId', 
+        'foreignField': '_id', 
+        'as': 'Combo'
+      }
+    },{
+      '$unwind': {
+        'path': '$Combo', 
+        'preserveNullAndEmptyArrays': true
+      }
+    },{
+      '$lookup': {
+        'from': 'characters', 
+        'localField': 'Combo.CharacterId', 
+        'foreignField': '_id', 
+        'as': 'Character'
+      }
+    },{
+      '$unwind': {
+        'path': '$Character', 
+        'preserveNullAndEmptyArrays': true
+      }
+    },{
       '$addFields': {
-        'Combo.StartTime': '$Combos.StartTime', 
-        'Combo.EndTime': '$Combos.Endtime', 
-        'ComboCharacterId': '$Combo.CharacterId', 
-        'ComboId': '$Combo._id', 
         'Id': '$_id'
       }
     }
@@ -245,7 +255,8 @@ function queryVideo(req, res) {
           var characterQuery= [
             {"Team1PlayerCharacters": { '$elemMatch': { '_id':  ObjectId(values[i]) } }},
             {"Team2PlayerCharacters": { '$elemMatch': { '_id':  ObjectId(values[i]) } }},
-            {'Combo.CharacterId': {'$eq': ObjectId(values[i])}}
+            {'MontageCharacters': { '$elemMatch': { '_id':  ObjectId(values[i]) } }},
+            {'Combo.CharacterId': {'$eq': ObjectId(values[i])}},
           ];
           queries.push({$or: characterQuery});
           break
@@ -253,7 +264,6 @@ function queryVideo(req, res) {
         default: 
           if(names[i].includes('Id')){
             query[names[i]] =  {'$eq': ObjectId(values[i])};
-            console.log('test')
             queries.push(query);
           } else {
             query[names[0]] =  {'$eq': values[0]};
@@ -547,18 +557,12 @@ function getVideos(req, res) {
 }
 
 function getComboVideo(req, res) {
-  var ComboId =  ObjectId(req.params.id);
+  var comboUrl =  req.params.url;
 
   var aggregate = [
     {
-      '$unwind': {
-        'path': '$Combos', 
-        'preserveNullAndEmptyArrays': true
-      }
-    },
-    {
       '$match': {
-          'Combos.Id': ComboId
+          'Url': comboUrl
       }
     },
     {
@@ -586,12 +590,7 @@ function getComboVideo(req, res) {
         'preserveNullAndEmptyArrays': true
       }
     },
-    {
-      '$addFields': {
-        'Combo.StartTime': '$Combos.StartTime', 
-        'Combo.EndTime': '$Combos.Endtime', 
-      }
-    }
+
   ];
 
   Video.aggregate(aggregate, function (error, videos) {
