@@ -37,8 +37,8 @@ db.once("open", function () {
   console.log("Connection Succeeded");
 });
 
-app.listen(process.env.PORT || 443);
-// app.listen(process.env.PORT || 8082);
+// app.listen(process.env.PORT || 8080);
+app.listen(process.env.PORT || 8082);
 
 //Accounts
 app.post('/accounts', (req, res) => accountController.addAccount(req,res));
