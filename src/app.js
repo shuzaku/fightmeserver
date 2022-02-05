@@ -38,7 +38,7 @@ db.once("open", function () {
 });
 
 // app.listen(process.env.PORT || 8080);
-app.listen(process.env.PORT || 8082);
+app.listen(process.env.PORT || 80);
 
 //Accounts
 app.post('/accounts', (req, res) => accountController.addAccount(req,res));
