@@ -261,6 +261,10 @@ function queryVideo(req, res) {
           queries.push({$or: characterQuery});
           break
 
+        case 'VideoId':
+            queries.push({'_id': {'$eq': ObjectId(values[i])}});
+          break
+
         default: 
           if(names[i].includes('Id')){
             query[names[i]] =  {'$eq': ObjectId(values[i])};
@@ -271,10 +275,12 @@ function queryVideo(req, res) {
           }
       }
     }
-
-
   };
-  if(queries.length > 0) {
+
+  if(names.some(n => n === "VideoId")){
+    aggregate.push({$match: {$or: queries}});
+  }
+  else if(queries.length > 0) {
     aggregate.push({$match: {$and: queries}});
   }
 
