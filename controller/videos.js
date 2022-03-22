@@ -275,12 +275,12 @@ function queryVideo(req, res) {
           }
       }
     }
+    if(names.some(n => n === "VideoId")){
+      aggregate.push({$match: {$or: queries}});
+    }
   };
 
-  if(names.some(n => n === "VideoId")){
-    aggregate.push({$match: {$or: queries}});
-  }
-  else if(queries.length > 0) {
+  if(queries.length > 0) {
     aggregate.push({$match: {$and: queries}});
   }
 
