@@ -9,8 +9,8 @@ function addMatches(req, res) {
       var VideoUrl = req.body.VideoUrl;
       var GameId = ObjectId(req.body.GameId);
       var GameVersion = req.body.GameVersion
-      var WinningPlayersId = req.body.WinningPlayersId.map(id => {return ObjectId(id)});
-      var LosingPlayersId = req.body.LosingPlayersId.map(id => {return ObjectId(id)});
+      var WinningPlayersId = req.body.WinningPlayersId ? req.body.WinningPlayersId.map(id => {return ObjectId(id)}) : null;
+      var LosingPlayersId = req.body.LosingPlayersId ? req.body.LosingPlayersId.map(id => {return ObjectId(id)}) : null;
       var TournamentId = ObjectId(req.body.TournamentId);
       var StartTime = req.body.StartTime;
       var EndTime = req.body.EndTime;
@@ -51,14 +51,13 @@ function addMatches(req, res) {
       })
     }
     else {
-      
       var matches = req.body.map(match =>{
         return {
           VideoUrl: match.VideoUrl,
           GameId: ObjectId(match.GameId),
           GameVersion: GameVersion,
-          WinnerIds: WinnerIds,
-          LoserIds: LoserIds,
+          WinnerIds: match.WinnerIds,
+          LoserIds: match.LoserIds,
           Team1Players: [
             {
               Slot:1,
