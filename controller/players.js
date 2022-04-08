@@ -37,7 +37,7 @@ function getPlayers(req, res) {
 // Fetch single player
 function getPlayer(req, res) {
   var db = req.db;
-  Player.findById(req.params.id, 'Name ImageUrl', function (error, player) {
+  Player.findById(req.params.id, 'Name PlayerImg', function (error, player) {
     if (error) { console.error(error); }
     res.send(player)
   })
@@ -46,11 +46,11 @@ function getPlayer(req, res) {
 // Update a player
 function updatePlayer(req, res) {
   var db = req.db;
-  Player.findById(req.params.id, 'Name ImageUrl', function (error, player) {
+  Player.findById(req.params.id, 'Name PlayerImg', function (error, player) {
     if (error) { console.error(error); }
 
     player.Name = req.body.Name;
-    player.ImageUrl = req.body.ImageUrl;
+    player.PlayerImg = req.body.PlayerImg;
 
     player.save(function (error) {
       if (error) {
