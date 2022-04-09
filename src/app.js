@@ -52,6 +52,8 @@ app.get('/characters', (req, res) => characterController.getCharacters(req,res))
 app.get('/characters/:id', (req, res) => characterController.getCharacter(req,res));
 app.put('/characters/:id', (req, res) => characterController.updateCharacter(req,res));
 app.delete('/characters/:id', (req, res) => characterController.deleteCharacter(req,res));
+app.get('/characterMatchupInfo', (req, res) => characterController.getMatchupInfo(req,res));
+
 
 //Combos
 app.post('/combos', (req, res) => comboController.addCombo(req,res));

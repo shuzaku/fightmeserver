@@ -129,4 +129,26 @@ function deleteCharacter(req, res) {
     })
   }
 
-module.exports = { addCharacter, queryCharacter, getCharacters, getCharacter, updateCharacter, deleteCharacter}
+
+// Query matchup info
+function getMatchupInfo(req, res) {
+  var queries = [];
+
+  var character1 = ObjectId(req.query.character1);
+  var character2 = ObjectId(req.query.character2);
+
+  queries.push({'_id':   character1});
+  queries.push({'_id':   character2});
+  console.log(queries)
+
+
+  Character.find({ $or: queries }, 'Name ImageUrl AvatarUrl GameId FeaturedPlayers', function (error, characters) {
+    if (error) { console.error(error); }
+    res.send({
+      characters: characters
+    })
+  });
+   
+}
+
+module.exports = { addCharacter, queryCharacter, getCharacters, getCharacter, updateCharacter, deleteCharacter, getMatchupInfo}
