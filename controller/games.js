@@ -39,7 +39,7 @@ function getGames(req, res) {
 // Fetch single game
 function getGame(req, res) {
   var db = req.db;
-  Game.findById(req.params.id, 'Title LogoUrl FeaturedCharacter NewCharacter', function (error, game) {
+  Game.findById(req.params.id, 'Title LogoUrl FeaturedCharacter NewCharacter Banner', function (error, game) {
     if (error) { console.error(error); }
     res.send(game)
   })
