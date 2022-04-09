@@ -59,9 +59,7 @@ app.get('/characterMatchupInfo', (req, res) => characterController.getMatchupInf
 app.post('/combos', (req, res) => comboController.addCombo(req,res));
 app.put('/combo/:id', (req, res) => comboController.patchCombo(req,res));
 app.delete('/combo/:id', (req, res) => comboController.deleteCombo(req,res));
-
 app.get('/comboClip/:id', (req, res) => comboClipController.getComboClip(req,res));
-
 
 //Creators
 app.post('/creator', (req, res) => creatorController.addCreator(req,res));
@@ -110,7 +108,9 @@ app.get('/matchVideo/:url', (req, res) => videoController.getMatchVideo(req,res)
 app.get('/characterMatchup', (req, res) => videoController.getMatchupVideos(req,res));
 
 //Search
+app.get('/initialSearch', (req, res) => searchController.defaultSearch(req,res));
 app.get('/search', (req, res) => searchController.getSearchValues(req,res));
+
 
 //Matches
 app.post('/matches', (req, res) => matchController.addMatches(req,res));
