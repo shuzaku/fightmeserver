@@ -79,7 +79,7 @@ function queryCharacter(req, res) {
   
   // Fetch all characters
 function getCharacters(req, res) {
-    Character.find({}, 'Name GameId ImageUrl AvatarUrl', function (error, characters) {
+    Character.find({}, 'Name GameId ImageUrl AvatarUrl FeaturedPlayers', function (error, characters) {
       if (error) { console.error(error); }
       res.send({
         characters: characters
@@ -90,7 +90,7 @@ function getCharacters(req, res) {
   // Fetch single character
 function getCharacter(req, res) {
     var db = req.db;
-    Character.findById(ObjectId(req.params.id), 'Name GameId ImageUrl AvatarUrl', function (error, character) {
+    Character.findById(ObjectId(req.params.id), 'Name GameId ImageUrl AvatarUrl FeaturedPlayers', function (error, character) {
       if (error) { console.error(error); }
       res.send(character)
     })
@@ -99,7 +99,7 @@ function getCharacter(req, res) {
   // Update a character
 function updateCharacter(req, res) {
     var db = req.db;
-    Character.findById(req.params.id, 'Name GameId ImageUrl AvatarUrl', function (error, character) {
+    Character.findById(req.params.id, 'Name GameId ImageUrl AvatarUrl FeaturedPlayers', function (error, character) {
       if (error) { console.error(error); }
       character.Name = req.body.Name;
       character.GameId = req.body.GameId
