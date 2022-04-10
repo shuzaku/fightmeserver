@@ -89,10 +89,21 @@ function getCharacters(req, res) {
   
   // Fetch single character
 function getCharacter(req, res) {
-    var db = req.db;
-    Character.findById(ObjectId(req.params.id), 'Name GameId ImageUrl AvatarUrl FeaturedPlayers', function (error, character) {
+  var aggregate = [{
+    '$lookup': {
+      'from': 'players', 
+      'localField': 'FeaturedPlayers', 
+      'foreignField': '_id', 
+      'as': 'player'
+    }
+  }];
+  aggregate.push({$match: { "GameId" : req.params.id }});
+
+    Character.aggregate(aggregate, function (error, characters) {
       if (error) { console.error(error); }
-      res.send(character)
+      res.send({
+        characters: videos
+      })
     })
   }
 
@@ -139,8 +150,6 @@ function getMatchupInfo(req, res) {
 
   queries.push({'_id':   character1});
   queries.push({'_id':   character2});
-  console.log(queries)
-
 
   Character.find({ $or: queries }, 'Name ImageUrl AvatarUrl GameId FeaturedPlayers', function (error, characters) {
     if (error) { console.error(error); }
