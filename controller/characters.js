@@ -94,7 +94,7 @@ function getCharacter(req, res) {
       'from': 'players', 
       'localField': 'FeaturedPlayers', 
       'foreignField': '_id', 
-      'as': 'player'
+      'as': 'Players'
     }
   }];
   aggregate.push({$match: { "_id" : ObjectId(req.params.id) }});
