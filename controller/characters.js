@@ -97,7 +97,7 @@ function getCharacter(req, res) {
       'as': 'player'
     }
   }];
-  aggregate.push({$match: { "PlayerId" : req.params.id }});
+  aggregate.push({$match: { "_id" : req.params.id }});
 
     Character.aggregate(aggregate, function (error, characters) {
       if (error) { console.error(error); }
