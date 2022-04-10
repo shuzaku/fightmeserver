@@ -102,7 +102,7 @@ function getCharacter(req, res) {
     Character.aggregate(aggregate, function (error, characters) {
       if (error) { console.error(error); }
       res.send({
-        characters: videos
+        characters: characters
       })
     })
   }
