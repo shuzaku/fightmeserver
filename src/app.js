@@ -13,6 +13,7 @@ let searchController = require("../controller/searches");
 let matchController = require("../controller/matches");
 let collectionController = require("../controller/collections");
 let montageController = require("../controller/montages");
+let moveController = require("../controller/moves");
 
 const express = require('express')
 const bodyParser = require('body-parser')
@@ -53,7 +54,6 @@ app.get('/characters/:id', (req, res) => characterController.getCharacter(req,re
 app.put('/characters/:id', (req, res) => characterController.updateCharacter(req,res));
 app.delete('/characters/:id', (req, res) => characterController.deleteCharacter(req,res));
 app.get('/characterMatchupInfo', (req, res) => characterController.getMatchupInfo(req,res));
-
 
 //Combos
 app.post('/combos', (req, res) => comboController.addCombo(req,res));
@@ -111,7 +111,6 @@ app.get('/characterMatchup', (req, res) => videoController.getMatchupVideos(req,
 app.get('/initialSearch', (req, res) => searchController.defaultSearch(req,res));
 app.get('/search', (req, res) => searchController.getSearchValues(req,res));
 
-
 //Matches
 app.post('/matches', (req, res) => matchController.addMatches(req,res));
 app.get('/matches', (req, res) => matchController.getMatches(req,res));
@@ -120,7 +119,6 @@ app.get('/match/:id', (req, res) => matchController.getMatch(req,res));
 app.delete('/match/:id', (req, res) => matchController.deleteMatch(req,res));
 app.get('/matchQuery', (req, res) => matchController.queryMatches(req,res));
 app.put('/matches/', (req, res) => matchController.patchMatches(req,res));
-
 
 //Collections
 app.post('/collections', (req, res) => collectionController.addCollection(req,res));
@@ -131,3 +129,6 @@ app.get('/collection/:id', (req, res) => collectionController.getCollection(req,
 //Montages
 app.post('/montages', (req, res) => montageController.addMontage(req,res));
 app.get('/montage/:id', (req, res) => montageController.getMontage(req,res));
+
+//Moves
+app.get('/characterMoves/:id', (req, res) => moveController.getCharacterMoves(req,res));
