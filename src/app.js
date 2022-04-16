@@ -14,6 +14,7 @@ let matchController = require("../controller/matches");
 let collectionController = require("../controller/collections");
 let montageController = require("../controller/montages");
 let moveController = require("../controller/moves");
+let noteController = require("../controller/notes");
 
 const express = require('express')
 const bodyParser = require('body-parser')
@@ -38,8 +39,8 @@ db.once("open", function () {
   console.log("Connection Succeeded");
 });
 
-// app.listen(process.env.PORT || 8081);
-app.listen(process.env.PORT || 80);
+app.listen(process.env.PORT || 8081);
+// app.listen(process.env.PORT || 80);
 
 //Accounts
 app.post('/accounts', (req, res) => accountController.addAccount(req,res));
@@ -132,3 +133,11 @@ app.get('/montage/:id', (req, res) => montageController.getMontage(req,res));
 
 //Moves
 app.get('/characterMoves/:id', (req, res) => moveController.getCharacterMoves(req,res));
+
+//Notes
+app.post('/notes', (req, res) => noteController.addNote(req,res));
+app.get('/noteQuery', (req, res) => noteController.queryNote(req,res));
+app.get('/notes', (req, res) => noteController.getNotes(req,res));
+app.get('/notes/:id', (req, res) => noteController.getNote(req,res));
+app.put('/notes/:id', (req, res) => noteController.updateNote(req,res));
+app.delete('/notes/:id', (req, res) => noteController.deleteNote(req,res));
