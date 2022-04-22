@@ -46,11 +46,14 @@ function queryNote(req, res) {
   if (names.length > 0){
       for(var i = 0; i < names.length; i++){
         var query = {};
-        if (names[i] === 'AuthorId') {
-          query[names[i]] =  {'$eq': ObjectId(values[i])};
-        }
-        else {
-          query[names[i]] =  {'$eq': values[i]}
+
+        switch (names[i]){
+          case 'AuthorId':
+            query[names[i]] =  {'$eq': ObjectId(values[i])};
+          case 'Id':
+            query['_id'] =  {'$eq': ObjectId(values[i])};     
+          default :
+            query[names[i]] =  {'$eq': values[i]}
         }
         queries.push(query);
       }
