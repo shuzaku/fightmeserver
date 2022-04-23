@@ -5,12 +5,12 @@ var ObjectId = require('mongodb').ObjectId;
 function addNote(req, res) {
   var db = req.db;
   var Type = req.body.Type;
-  var Target1 = req.body.Target1;
-  var Target2 = req.body.Target2;
+  var Target1 = req.body.Target1 ? ObjectId(req.body.Target1) : null;
+  var Target2 = req.body.Target2 ? ObjectId(req.body.Target2) : null;
   var Heading = req.body.Heading;
   var Content = req.body.Content;
-  var AuthorId = req.body.AuthorId;
-  var GameId = req.body.GameId;
+  var AuthorId = ObjectId(req.body.AuthorId);
+  var GameId = ObjectId(req.body.GameId);
 
   var new_note = new Note({
     Type: Type,
@@ -42,36 +42,32 @@ function queryNote(req, res) {
   var queries = [];
   var aggregate = [];
   
-  
   if (names.length > 0){
-      for(var i = 0; i < names.length; i++){
+    for(var i = 0; i < names.length; i++){
+      var query = {};
+      if (names[i] === 'AuthorId') {
+        query[names[i]] =  {'$eq': ObjectId(values[i])};
+      }
+      if (names[i] === 'Id') {
+        query['_id'] =  {'$eq': ObjectId(values[i])};
+      }
+      else {
+        query[names[i]] =  {'$eq': values[i]}
+      }
+      queries.push(query);
+    }
+} 
+else {
+    for(var i = 0; i < names.length; i++){
         var query = {};
-
-        switch (names[i]){
-          case 'AuthorId':
-            query[names[i]] =  {'$eq': ObjectId(values[i])};
-          case 'Id':
-            query['_id'] =  {'$eq': ObjectId(values[i])};     
-          default :
-            query[names[i]] =  {'$eq': values[i]}
-        }
+        query[names[i]] = values[i];
         queries.push(query);
-      }
-  } 
-  else {
-      for(var i = 0; i < names.length; i++){
-          var query = {};
-          query[names[i]] = values[i];
-          queries.push(query);
-      }
-  }
-  
+    }
+}
+
+
   if(queries.length > 0) {
-      aggregate.push({$match: {$or: queries}});
-  }
-  
-  if(queries.length > 0) {
-      Note.find({ $or: queries }, 'Type Target1 Target2 Heading Content CreatedAt UpdatedAt AuthorId GameId', function (error, notes) {
+      Note.find({ $and: queries }, 'Type Target1 Target2 Heading Content CreatedAt UpdatedAt AuthorId GameId', function (error, notes) {
           if (error) { console.error(error); }
           res.send({
             notes: notes
@@ -113,11 +109,15 @@ function updateNote(req, res) {
   var db = req.db;
   Note.findById(req.params.id, 'Type Target1 Target2 Heading Content CreatedAt UpdatedAt AuthorId GameId', function (error, note) {
     if (error) { console.error(error); }
-
-    note.Name = req.body.Name;
-    note.GameIds = req.body.GameIds;
-    note.LogoUrl = req.body.LogoUrl;
-    note.Date = req.body.Date;
+    console.log(req.body)
+    note.Type = req.body.Type;
+    note.Target1 = req.body.Target1 ? ObjectId(req.body.Target1) : null;
+    note.Target2 = req.body.Target2 ? ObjectId(req.body.Target2) : null;
+    note.Heading = req.body.Heading;
+    note.Content = req.body.Content;
+    note.AuthorId = ObjectId(req.body.AuthorId);
+    note.GameId = ObjectId(req.body.GameId)
+  
 
     note.save(function (error) {
       if (error) {

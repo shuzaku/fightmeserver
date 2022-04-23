@@ -83,7 +83,6 @@ function getAccount(req, res) {
 function patchAccount(req, res) {
   Account.findById(req.params.id, 'FavoriteVideos, FollowedPlayers, FollowedCharacters, FollowedGames, Collections', function (error, account) {
     if (error) { console.error(error); }
-    console.log(req.body)
     account.FavoriteVideos = req.body.FavoriteVideos;
     account.FollowedPlayers = req.body.FollowedPlayers.map(player => {
       return {
