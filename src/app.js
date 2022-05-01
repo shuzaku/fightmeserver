@@ -15,6 +15,9 @@ let collectionController = require("../controller/collections");
 let montageController = require("../controller/montages");
 let moveController = require("../controller/moves");
 let noteController = require("../controller/notes");
+let ratingUpdateScrapperController = require("../controller/scrapper");
+const schedule = require('node-schedule');
+const cheerio = require('cheerio');
 
 const express = require('express')
 const bodyParser = require('body-parser')
@@ -41,6 +44,15 @@ db.once("open", function () {
 
 // app.listen(process.env.PORT || 8081);
 app.listen(process.env.PORT || 80);
+
+
+const rule = new schedule.RecurrenceRule();
+
+const job = schedule.scheduleJob({hour: 00, minute: 00}, function(){
+  console.log('job running');
+  ratingUpdateScrapperController.scrapeContent();
+});
+
 
 //Accounts
 app.post('/accounts', (req, res) => accountController.addAccount(req,res));
