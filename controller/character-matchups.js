@@ -63,4 +63,20 @@ function patchCharacterMatchup(matchupId, matchup){
   })
 }
 
-module.exports = { addCharacterMatchup }
+function queryCharacterMatchup(req, res){
+  var characterId = req.query.characterId;
+  var opposingCharacterId = req.query.opposingCharacterId;
+  CharacterMatchups.find({
+    '$and': [
+      {"CharacterId": ObjectId(characterId) } , 
+      {"OpposingCharacterId": ObjectId(opposingCharacterId) }
+    ]
+  }, function (error, matchups) {
+    if (error) { console.error(error); reject()}
+    res.send({
+      matchups: matchups
+    })
+  })
+}
+
+module.exports = { addCharacterMatchup, queryCharacterMatchup }

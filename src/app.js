@@ -15,7 +15,12 @@ let collectionController = require("../controller/collections");
 let montageController = require("../controller/montages");
 let moveController = require("../controller/moves");
 let noteController = require("../controller/notes");
+let characterMatchupController = require("../controller/character-matchups");
+
 let ratingUpdateScrapperController = require("../controller/scrapper");
+
+
+var moment = require('moment'); // require
 const schedule = require('node-schedule');
 const cheerio = require('cheerio');
 
@@ -42,9 +47,8 @@ db.once("open", function () {
   console.log("Connection Succeeded");
 });
 
-// app.listen(process.env.PORT || 8081);
-app.listen(process.env.PORT || 80);
-
+app.listen(process.env.PORT || 8081);
+// app.listen(process.env.PORT || 80);
 
 const rule = new schedule.RecurrenceRule();
 
@@ -52,7 +56,6 @@ const job = schedule.scheduleJob({hour: 00, minute: 00}, function(){
   console.log('job running');
   ratingUpdateScrapperController.scrapeContent();
 });
-
 
 //Accounts
 app.post('/accounts', (req, res) => accountController.addAccount(req,res));
@@ -62,7 +65,7 @@ app.put('/accounts/:id', (req, res) => accountController.patchAccount(req,res));
 //Characters
 app.post('/characters', (req, res) => characterController.addCharacter(req,res));
 app.get('/characterQuery', (req, res) => characterController.queryCharacter(req,res));
-app.get('/characters', (req, res) => characterController.getCharacters(req,res));
+app.get('/characters', (req, res) => characterController.getCharacters(res));
 app.get('/characters/:id', (req, res) => characterController.getCharacter(req,res));
 app.put('/characters/:id', (req, res) => characterController.updateCharacter(req,res));
 app.delete('/characters/:id', (req, res) => characterController.deleteCharacter(req,res));
@@ -153,3 +156,7 @@ app.get('/notes', (req, res) => noteController.getNotes(req,res));
 app.get('/notes/:id', (req, res) => noteController.getNote(req,res));
 app.put('/notes/:id', (req, res) => noteController.updateNote(req,res));
 app.delete('/notes/:id', (req, res) => noteController.deleteNote(req,res));
+
+
+//Moves
+app.get('/characterMatchupStat/', (req, res) => characterMatchupController.queryCharacterMatchup(req,res));
