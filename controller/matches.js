@@ -71,7 +71,12 @@ function addMatches(req, res) {
               Id: ObjectId(match.Team2Players[0].Id),
               CharacterIds: match.Team2Players[0].CharacterIds.map(id => { return ObjectId(id)})
             }
-          ]
+          ],
+          StartTime: match.StartTime,
+          EndTime: match.EndTime,
+          SubmittedBy: match.SubmittedBy,
+          UpdatedBy: match.UpdatedBy,
+          TournamentId: ObjectId(match.TournamentId),
         }
       })
 
