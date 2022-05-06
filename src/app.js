@@ -65,7 +65,7 @@ app.put('/accounts/:id', (req, res) => accountController.patchAccount(req,res));
 //Characters
 app.post('/characters', (req, res) => characterController.addCharacter(req,res));
 app.get('/characterQuery', (req, res) => characterController.queryCharacter(req,res));
-app.get('/characters', (req, res) => characterController.getCharacters(res));
+app.get('/characters', (req, res) => characterController.getCharacters(req,res));
 app.get('/characters/:id', (req, res) => characterController.getCharacter(req,res));
 app.put('/characters/:id', (req, res) => characterController.updateCharacter(req,res));
 app.delete('/characters/:id', (req, res) => characterController.deleteCharacter(req,res));
