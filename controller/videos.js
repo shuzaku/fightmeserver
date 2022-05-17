@@ -229,6 +229,15 @@ function queryVideo(req, res) {
           queries.push({$or: playerQuery});
         break
 
+        case 'Slug':
+          var playerQuery= [
+            {"Team1Players": { '$elemMatch': { 'Slug':  values[i] } }},
+            {"Team2Players": { '$elemMatch': { 'Slug': values[i] } }}
+          ];  
+          queries.push({$or: playerQuery});
+        break
+
+
         case 'PlayerMatchupCharacterId':
           queries = [];
           var playerId = values[names.indexOf('PlayerId')];
