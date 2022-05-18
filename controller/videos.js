@@ -271,10 +271,10 @@ function queryVideo(req, res) {
 
           case 'CharacterSlug':
             var characterQuery= [
-              {"Team1PlayerCharacters": { '$elemMatch': { '_id':  ObjectId(values[i]) } }},
-              {"Team2PlayerCharacters": { '$elemMatch': { '_id':  ObjectId(values[i]) } }},
-              {'MontageCharacters': { '$elemMatch': { '_id':  ObjectId(values[i]) } }},
-              {'Combo.CharacterId': {'$eq': ObjectId(values[i])}},
+              {"Team1PlayerCharacters": { '$elemMatch': { 'Slug': values[i] } }},
+              {"Team2PlayerCharacters": { '$elemMatch': { 'Slug': values[i] } }},
+              {'MontageCharacters': { '$elemMatch': { 'Slug': values[i] } }},
+              // {'Combo.CharacterId': {'$eq': ObjectId(values[i])}},
             ];
             queries.push({$or: characterQuery});
             break
