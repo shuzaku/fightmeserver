@@ -229,15 +229,14 @@ function queryVideo(req, res) {
           queries.push({$or: playerQuery});
         break
 
-        case 'Slug':
+        case 'PlayerSlug':
           var playerQuery= [
-            {"Team1Players": { '$elemMatch': { 'Slug':  values[i] } }},
+            {"Team1Players": { '$elemMatch': { 'Slug': values[i] } }},
             {"Team2Players": { '$elemMatch': { 'Slug': values[i] } }}
           ];  
           queries.push({$or: playerQuery});
         break
-
-
+        
         case 'PlayerMatchupCharacterId':
           queries = [];
           var playerId = values[names.indexOf('PlayerId')];
@@ -269,6 +268,16 @@ function queryVideo(req, res) {
           ];
           queries.push({$or: characterQuery});
           break
+
+          case 'CharacterSlug':
+            var characterQuery= [
+              {"Team1PlayerCharacters": { '$elemMatch': { '_id':  ObjectId(values[i]) } }},
+              {"Team2PlayerCharacters": { '$elemMatch': { '_id':  ObjectId(values[i]) } }},
+              {'MontageCharacters': { '$elemMatch': { '_id':  ObjectId(values[i]) } }},
+              {'Combo.CharacterId': {'$eq': ObjectId(values[i])}},
+            ];
+            queries.push({$or: characterQuery});
+            break
 
         case 'VideoId':
             queries.push({'_id': {'$eq': ObjectId(values[i])}});
