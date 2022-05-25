@@ -58,7 +58,7 @@ function queryCharacter(req, res) {
     }
     
     if(queries.length > 1) {
-      Character.find({ $or: queries }, 'Name ImageUrl AvatarUrl', function (error, characters) {
+      Character.find({ $or: queries }, 'Name ImageUrl AvatarUrl Slug', function (error, characters) {
         if (error) { console.error(error); }
         res.send({
           characters: characters
@@ -66,7 +66,7 @@ function queryCharacter(req, res) {
       }).sort({ Name: 1 })    
     }
     else {
-      Character.find(queries[0], 'Name ImageUrl AvatarUrl', function (error, characters) {
+      Character.find(queries[0], 'Name ImageUrl AvatarUrl Slug', function (error, characters) {
         if (error) { console.error(error); }
         console.log(2)
 

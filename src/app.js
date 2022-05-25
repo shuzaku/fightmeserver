@@ -122,6 +122,7 @@ app.post('/getVideos', (req, res) => videoController.getVideos(req,res));
 app.get('/comboVideo/:url', (req, res) => videoController.getComboVideo(req,res));
 app.get('/matchVideo/:url', (req, res) => videoController.getMatchVideo(req,res));
 app.get('/characterMatchup', (req, res) => videoController.getMatchupVideos(req,res));
+app.get('/characterSlugMatchup', (req, res) => videoController.getSlugMatchupVideos(req,res));
 
 //Search
 app.get('/initialSearch', (req, res) => searchController.defaultSearch(req,res));
