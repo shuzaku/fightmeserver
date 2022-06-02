@@ -4,12 +4,16 @@ var ObjectId = require('mongodb').ObjectId;
 // Add new player
 function addPlayer(req, res) {
   var db = req.db;
-  var Name = req.body.Name;
-  var ImageUrl = req.body.ImageUrl;
+  var name = req.body.Name;
+  var imageUrl = req.body.ImageUrl;
+  var randomNumber = Math.floor(1000 + Math.random() * 9000);
+  var formattedName = name.replace(/ /g, '').replace('-','').replace('_','');
+  var slug  = `${formattedName}-${randomNumber}`;
 
   var new_player = new Player({
-    Name: Name,
-    ImageUrl: ImageUrl,
+    Name: name,
+    ImageUrl: imageUrl,
+    Slug: slug
   })
 
   new_player.save(function (error, player) {
@@ -22,6 +26,10 @@ function addPlayer(req, res) {
       playerId: player.id
     })
   })
+}
+
+function capitalizeFirstLetter(string) {
+  return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
 // Fetch all players

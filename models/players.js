@@ -8,6 +8,9 @@ var PlayerSchema = new Schema({
   },
   ImageUrl: {
     type: String
+  },
+  Slug: {
+    type: String
   }
 }, {
   timestamps: true, 
