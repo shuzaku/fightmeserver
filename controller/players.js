@@ -34,7 +34,7 @@ function capitalizeFirstLetter(string) {
 
 // Fetch all players
 function getPlayers(req, res) {
-  Player.find({}, 'Name PlayerImg', function (error, players) {
+  Player.find({}, 'Name PlayerImg Slug', function (error, players) {
     if (error) { console.error(error); }
     res.send({
       players: players
@@ -45,7 +45,7 @@ function getPlayers(req, res) {
 // Fetch single player
 function getPlayer(req, res) {
   var db = req.db;
-  Player.findById(req.params.id, 'Name PlayerImg', function (error, player) {
+  Player.findById(req.params.id, 'Name PlayerImg Slug', function (error, player) {
     if (error) { console.error(error); }
     res.send(player)
   })
