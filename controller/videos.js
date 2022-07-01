@@ -67,6 +67,64 @@ function addVideo(req, res) {
     })    
   }
 }
+// Query Videos
+function fetchVideos(req, res) {
+  var skip =  parseInt(req.query.skip);
+  var aggregate = [
+    {
+      '$sort': 
+        {'_id': -1}
+      
+    },{
+      '$lookup': {
+        'from': 'matches', 
+        'localField': 'Url', 
+        'foreignField': 'VideoUrl', 
+        'as': 'Match'
+      }
+    }, {
+      '$unwind': {
+        'path': '$Match', 
+        'preserveNullAndEmptyArrays': true
+      }
+    },{
+      '$lookup': {
+        'from': 'combo-clips', 
+        'localField': 'Url', 
+        'foreignField': 'Url', 
+        'as': 'ComboClip'
+      }
+    }, {
+      '$unwind': {
+        'path': '$ComboClip', 
+        'preserveNullAndEmptyArrays': true
+      }
+    },{
+      '$lookup': {
+        'from': 'combos', 
+        'localField': 'ComboClip.ComboId', 
+        'foreignField': '_id', 
+        'as': 'Combo'
+      }
+    },{
+      '$unwind': {
+        'path': '$Combo', 
+        'preserveNullAndEmptyArrays': true
+      }
+    },
+  ];
+
+  
+  aggregate.push({$skip: skip});
+  aggregate.push({$limit: 5});  
+  
+  Video.aggregate(aggregate, function (error, videos) {
+    if (error) { console.error(error); }
+    res.send({
+      videos: videos
+    })
+  })
+}
 
 // Query Videos
 function queryVideo(req, res) {
@@ -77,11 +135,6 @@ function queryVideo(req, res) {
   var filter = req.query.filter;
   var tagFilter = req.query.tag ? ObjectId(req.query.tag): null;
   var aggregate = [
-    {
-      '$sort': 
-        {'_id': -1}
-      
-    },
     {
       '$lookup': {
         'from': 'games', 
@@ -887,4 +940,4 @@ function getSlugMatchupVideos(req, res) {
 
 
 
-module.exports = {  addVideo, queryVideo, getVideo, patchVideo, deleteVideo, getVideos, getComboVideo, getMatchVideo, getMatchupVideos, getSlugMatchupVideos}
+module.exports = {  addVideo, queryVideo, getVideo, patchVideo, deleteVideo, getVideos, getComboVideo, getMatchVideo, getMatchupVideos, getSlugMatchupVideos, fetchVideos}

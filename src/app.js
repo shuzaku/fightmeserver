@@ -114,6 +114,7 @@ app.delete('/tournaments/:id', (req, res) => tournamentController.deleteTourname
 
 //Videos
 app.post('/video', (req, res) => videoController.addVideo(req,res));
+app.get('/videos', (req, res) => videoController.fetchVideos(req,res));
 app.get('/videoQuery', (req, res) => videoController.queryVideo(req,res));
 app.get('/video/:id', (req, res) => videoController.getVideo(req,res));
 app.put('/video/:id', (req, res) => videoController.patchVideo(req,res));
