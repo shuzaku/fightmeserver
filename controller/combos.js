@@ -130,7 +130,6 @@ function getComboClip(req, res) {
   aggregate.unshift({$match: { _id: ObjectId(comboClipId) }});
   ComboClip.aggregate(aggregate, function (error, comboClip) {
     if (error) { console.error(error); }
-    console.log(res)
     res.send({
       comboClip: comboClip
     })

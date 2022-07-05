@@ -6,7 +6,6 @@ var ObjectId = require('mongodb').ObjectId;
   // Fetch single character
   function getCharacterMoves(req, res) {
     var aggregate = [];
-    console.log(req.params)
     aggregate.push({$match: { "CharacterId" : ObjectId(req.params.id) }});
   
     Move.aggregate(aggregate, function (error, moves) {

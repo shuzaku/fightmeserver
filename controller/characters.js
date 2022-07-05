@@ -68,7 +68,6 @@ function queryCharacter(req, res) {
     else {
       Character.find(queries[0], 'Name ImageUrl AvatarUrl Slug', function (error, characters) {
         if (error) { console.error(error); }
-        console.log(2)
 
         res.send({
           characters: characters

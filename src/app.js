@@ -47,8 +47,8 @@ db.once("open", function () {
   console.log("Connection Succeeded");
 });
 
-// app.listen(process.env.PORT || 8081);
-app.listen(process.env.PORT || 80);
+app.listen(process.env.PORT || 8081);
+// app.listen(process.env.PORT || 80);
 
 const rule = new schedule.RecurrenceRule();
 
@@ -116,7 +116,11 @@ app.delete('/tournaments/:id', (req, res) => tournamentController.deleteTourname
 app.post('/video', (req, res) => videoController.addVideo(req,res));
 app.get('/videos', (req, res) => videoController.fetchVideos(req,res));
 app.get('/videoQuery', (req, res) => videoController.queryVideo(req,res));
+app.get('/videoQuery', (req, res) => videoController.queryVideo(req,res));
 app.get('/video/:id', (req, res) => videoController.getVideo(req,res));
+app.get('/videoCharacterQuery', (req, res) => videoController.queryVideoByCharacter(req,res));
+app.get('/videoPlayerQuery', (req, res) => videoController.queryVideoByPlayer(req,res));
+app.get('/videoGameQuery', (req, res) => videoController.queryVideoByGame(req,res));
 app.put('/video/:id', (req, res) => videoController.patchVideo(req,res));
 app.delete('/videos/:id', (req, res) => videoController.deleteVideo(req,res));
 app.post('/getVideos', (req, res) => videoController.getVideos(req,res));

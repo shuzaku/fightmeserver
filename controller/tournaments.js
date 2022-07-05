@@ -15,7 +15,6 @@ function addTournament(req, res) {
     Date: Date
   })
 
-  console.log(new_tournament)
 
   new_tournament.save(function (error, tournament) {
     if (error) {

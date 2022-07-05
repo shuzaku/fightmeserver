@@ -109,7 +109,6 @@ function updateNote(req, res) {
   var db = req.db;
   Note.findById(req.params.id, 'Type Target1 Target2 Heading Content CreatedAt UpdatedAt AuthorId GameId', function (error, note) {
     if (error) { console.error(error); }
-    console.log(req.body)
     note.Type = req.body.Type;
     note.Target1 = req.body.Target1 ? ObjectId(req.body.Target1) : null;
     note.Target2 = req.body.Target2 ? ObjectId(req.body.Target2) : null;

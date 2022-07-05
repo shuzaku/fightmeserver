@@ -375,7 +375,327 @@ function queryVideo(req, res) {
   if(tagFilter){
     aggregate.push({$match: {"Combo.Tags": { '$elemMatch': { '_id':  ObjectId(tagFilter) } }}});
   }
+  
+  aggregate.push({$sort: {'_id': -1}})
+  aggregate.push({$skip: skip});
+  aggregate.push({$limit: 5});  
+  
+  Video.aggregate(aggregate, function (error, videos) {
+    if (error) { console.error(error); }
+    res.send({
+      videos: videos
+    })
+  })
+}
 
+// Query Videos
+function queryVideoByCharacter(req, res) {
+  var queries = [];
+  var skip =  parseInt(req.query.skip);
+  var aggregate = [ 
+    {
+      '$lookup': {
+        'from': 'montages', 
+        'localField': 'Url', 
+        'foreignField': 'VideoUrl', 
+        'as': 'Montage'
+      }
+    }, {
+      '$unwind': {
+        'path': '$Montage', 
+        'preserveNullAndEmptyArrays': true
+      }
+    },{
+      '$lookup': {
+        'from': 'characters',
+        'localField': 'Montage.Characters',
+        'foreignField': '_id',
+        'as': 'MontageCharacters'
+      }
+    },{
+      '$lookup': {
+        'from': 'matches', 
+        'localField': 'Url', 
+        'foreignField': 'VideoUrl', 
+        'as': 'Match'
+      }
+    }, {
+      '$unwind': {
+        'path': '$Match', 
+        'preserveNullAndEmptyArrays': true
+      }
+    }, {
+      '$lookup': {
+        'from': 'players', 
+        'localField': 'Match.Team1Players.Id', 
+        'foreignField': '_id', 
+        'as': 'Team1Players'
+      }
+    }, {
+      '$lookup': {
+        'from': 'players', 
+        'localField': 'Match.Team2Players.Id', 
+        'foreignField': '_id', 
+        'as': 'Team2Players'
+      }
+    }, {
+      '$lookup': {
+        'from': 'characters', 
+        'localField': 'Match.Team1Players.CharacterIds', 
+        'foreignField': '_id', 
+        'as': 'Team1PlayerCharacters'
+      }
+    }, {
+      '$lookup': {
+        'from': 'characters', 
+        'localField': 'Match.Team2Players.CharacterIds', 
+        'foreignField': '_id', 
+        'as': 'Team2PlayerCharacters'
+      }
+    }, {
+      '$lookup': {
+        'from': 'combo-clips', 
+        'localField': 'Url', 
+        'foreignField': 'Url', 
+        'as': 'ComboClip'
+      }
+    }, {
+      '$unwind': {
+        'path': '$ComboClip', 
+        'preserveNullAndEmptyArrays': true
+      }
+    },{
+      '$lookup': {
+        'from': 'combos', 
+        'localField': 'ComboClip.ComboId', 
+        'foreignField': '_id', 
+        'as': 'Combo'
+      }
+    },{
+      '$unwind': {
+        'path': '$Combo', 
+        'preserveNullAndEmptyArrays': true
+      }
+    },{
+      '$lookup': {
+        'from': 'characters', 
+        'localField': 'Combo.CharacterId', 
+        'foreignField': '_id', 
+        'as': 'Character'
+      }
+    },{
+      '$unwind': {
+        'path': '$Character', 
+        'preserveNullAndEmptyArrays': true
+      }
+    }
+  ];
+
+  if (req.query.queryName || req.query.queryValue){
+    var names = req.query.queryName.split(",");
+    var values = req.query.queryValue.split(",");
+    //parse query for player id
+    for(var i = 0; i < names.length; i++){
+      switch (names[i]){
+        case 'CharacterId':
+          var characterQuery= [
+            {"Team1PlayerCharacters": { '$elemMatch': { '_id':  ObjectId(values[i]) } }},
+            {"Team2PlayerCharacters": { '$elemMatch': { '_id':  ObjectId(values[i]) } }},
+            {'MontageCharacters': { '$elemMatch': { '_id':  ObjectId(values[i]) } }},
+            {'Combo.CharacterId': {'$eq': ObjectId(values[i])}},
+          ];
+          queries.push({$or: characterQuery});
+          break
+
+          case 'CharacterSlug':
+            var characterQuery= [
+              {"Team1PlayerCharacters": { '$elemMatch': { 'Slug': values[i] } }},
+              {"Team2PlayerCharacters": { '$elemMatch': { 'Slug': values[i] } }},
+              {'MontageCharacters': { '$elemMatch': { 'Slug': values[i] } }},
+            ];
+            queries.push({$or: characterQuery});
+            break
+      }
+    }
+  };
+
+  if(queries.length > 0) {
+    aggregate.push({$match: {$and: queries}});
+  }
+  aggregate.push({$sort: { _id: -1 }});  
+  aggregate.push({$skip: skip});
+  aggregate.push({$limit: 5});  
+  Video.aggregate(aggregate, function (error, videos) {
+    if (error) { console.error(error); }
+    res.send({
+      videos: videos
+    })
+  })
+}
+
+// Query Videos
+function queryVideoByPlayer(req, res) {
+  console.log('test')
+  var queries = [];
+  var query = null;
+  var skip =  parseInt(req.query.skip);
+  var sort = req.query.sort || '_id';
+  var filter = req.query.filter;
+  var tagFilter = req.query.tag ? ObjectId(req.query.tag): null;
+  var aggregate = [{
+      '$lookup': {
+        'from': 'matches', 
+        'localField': 'Url', 
+        'foreignField': 'VideoUrl', 
+        'as': 'Match'
+      }
+    }, {
+      '$unwind': {
+        'path': '$Match', 
+        'preserveNullAndEmptyArrays': true
+      }
+    }, {
+      '$lookup': {
+        'from': 'players', 
+        'localField': 'Match.Team1Players.Id', 
+        'foreignField': '_id', 
+        'as': 'Team1Players'
+      }
+    }, {
+      '$lookup': {
+        'from': 'players', 
+        'localField': 'Match.Team2Players.Id', 
+        'foreignField': '_id', 
+        'as': 'Team2Players'
+      }
+    }
+  ];
+
+  if (req.query.queryName || req.query.queryValue){
+    var names = req.query.queryName.split(",");
+    var values = req.query.queryValue.split(",");
+    var query = {};
+    //parse query for player id
+    for(var i = 0; i < names.length; i++){
+      var query = {};
+
+      switch (names[i]){
+        case 'PlayerId':
+          var playerQuery= [
+            {"Team1Players": { '$elemMatch': { '_id':  ObjectId(values[i]) } }},
+            {"Team2Players": { '$elemMatch': { '_id':  ObjectId(values[i]) } }}
+          ];  
+          queries.push({$or: playerQuery});
+        break
+
+        case 'PlayerSlug':
+          var playerQuery= [
+            {"Team1Players": { '$elemMatch': { 'Slug': values[i] } }},
+            {"Team2Players": { '$elemMatch': { 'Slug': values[i] } }}
+          ];  
+          queries.push({$or: playerQuery});
+        break
+      }
+    }
+  };
+
+  if(queries.length > 0) {
+    aggregate.push({$match: {$and: queries}});
+  }
+
+  aggregate.push({$sort: {'_id': -1}})
+  aggregate.push({$skip: skip});
+  aggregate.push({$limit: 5});  
+  
+  Video.aggregate(aggregate, function (error, videos) {
+    if (error) { console.error(error); }
+    res.send({
+      videos: videos
+    })
+  })
+}
+
+// Query Videos
+function queryVideoByGame(req, res) {
+  console.log('test')
+  var queries = [];
+  var query = null;
+  var skip =  parseInt(req.query.skip);
+  var sort = req.query.sort || '_id';
+  var filter = req.query.filter;
+  var aggregate = [
+    {
+      '$lookup': {
+        'from': 'games', 
+        'localField': 'GameId', 
+        'foreignField': '_id', 
+        'as': 'Game'
+      }
+    }, {
+      '$unwind': '$Game'
+    },{
+      '$lookup': {
+        'from': 'matches', 
+        'localField': 'Url', 
+        'foreignField': 'VideoUrl', 
+        'as': 'Match'
+      }
+    },{
+      '$unwind': {
+        'path': '$Match', 
+        'preserveNullAndEmptyArrays': true
+      } 
+    }, {
+        '$lookup': {
+          'from': 'combo-clips', 
+          'localField': 'Url', 
+          'foreignField': 'Url', 
+          'as': 'ComboClip'
+        }
+      }, {
+        '$unwind': {
+          'path': '$ComboClip', 
+          'preserveNullAndEmptyArrays': true
+        }
+      },{
+        '$lookup': {
+          'from': 'combos', 
+          'localField': 'ComboClip.ComboId', 
+          'foreignField': '_id', 
+          'as': 'Combo'
+        }
+      },{
+        '$unwind': {
+          'path': '$Combo', 
+          'preserveNullAndEmptyArrays': true
+        }
+      }
+  ];
+
+  if (req.query.queryName || req.query.queryValue){
+    var names = req.query.queryName.split(",");
+    var values = req.query.queryValue.split(",");
+    var query = {};
+    for(var i = 0; i < names.length; i++){
+      var query = {};
+      switch (names[i]){
+        default: 
+          if(names[i].includes('Id')){
+            query[names[i]] =  {'$eq': ObjectId(values[i])};
+            queries.push(query);
+          } else {
+            query[names[0]] =  {'$eq': values[0]};
+            queries.push(query);
+          }
+      }
+    }
+  };
+
+  if(queries.length > 0) {
+    aggregate.push({$match: {$and: queries}});
+  }
+
+  aggregate.push({$sort: {'_id': -1}})
   aggregate.push({$skip: skip});
   aggregate.push({$limit: 5});  
   
@@ -940,4 +1260,4 @@ function getSlugMatchupVideos(req, res) {
 
 
 
-module.exports = {  addVideo, queryVideo, getVideo, patchVideo, deleteVideo, getVideos, getComboVideo, getMatchVideo, getMatchupVideos, getSlugMatchupVideos, fetchVideos}
+module.exports = {  addVideo, queryVideo, queryVideoByCharacter, queryVideoByPlayer, queryVideoByGame, getVideo, patchVideo, deleteVideo, getVideos, getComboVideo, getMatchVideo, getMatchupVideos, getSlugMatchupVideos, fetchVideos}
