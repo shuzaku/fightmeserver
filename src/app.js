@@ -67,9 +67,12 @@ app.post('/characters', (req, res) => characterController.addCharacter(req,res))
 app.get('/characterQuery', (req, res) => characterController.queryCharacter(req,res));
 app.get('/characters', (req, res) => characterController.getCharacters(req,res));
 app.get('/characters/:id', (req, res) => characterController.getCharacter(req,res));
+app.get('/characterSlug/:slug', (req, res) => characterController.getCharacterBySlug(req,res));
+
 app.put('/characters/:id', (req, res) => characterController.updateCharacter(req,res));
 app.delete('/characters/:id', (req, res) => characterController.deleteCharacter(req,res));
 app.get('/characterMatchupInfo', (req, res) => characterController.getMatchupInfo(req,res));
+app.get('/characterIdbySlug', (req, res) => characterController.getIdBySlug(req,res));
 
 //Combos
 app.post('/combos', (req, res) => comboController.addCombo(req,res));

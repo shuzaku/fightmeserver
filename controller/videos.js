@@ -388,31 +388,12 @@ function queryVideo(req, res) {
   })
 }
 
-// Query Videos
+// Query by character
 function queryVideoByCharacter(req, res) {
   var queries = [];
   var skip =  parseInt(req.query.skip);
   var aggregate = [ 
     {
-      '$lookup': {
-        'from': 'montages', 
-        'localField': 'Url', 
-        'foreignField': 'VideoUrl', 
-        'as': 'Montage'
-      }
-    }, {
-      '$unwind': {
-        'path': '$Montage', 
-        'preserveNullAndEmptyArrays': true
-      }
-    },{
-      '$lookup': {
-        'from': 'characters',
-        'localField': 'Montage.Characters',
-        'foreignField': '_id',
-        'as': 'MontageCharacters'
-      }
-    },{
       '$lookup': {
         'from': 'matches', 
         'localField': 'Url', 
@@ -501,7 +482,6 @@ function queryVideoByCharacter(req, res) {
           var characterQuery= [
             {"Team1PlayerCharacters": { '$elemMatch': { '_id':  ObjectId(values[i]) } }},
             {"Team2PlayerCharacters": { '$elemMatch': { '_id':  ObjectId(values[i]) } }},
-            {'MontageCharacters': { '$elemMatch': { '_id':  ObjectId(values[i]) } }},
             {'Combo.CharacterId': {'$eq': ObjectId(values[i])}},
           ];
           queries.push({$or: characterQuery});
@@ -511,7 +491,6 @@ function queryVideoByCharacter(req, res) {
             var characterQuery= [
               {"Team1PlayerCharacters": { '$elemMatch': { 'Slug': values[i] } }},
               {"Team2PlayerCharacters": { '$elemMatch': { 'Slug': values[i] } }},
-              {'MontageCharacters': { '$elemMatch': { 'Slug': values[i] } }},
             ];
             queries.push({$or: characterQuery});
             break
@@ -533,7 +512,7 @@ function queryVideoByCharacter(req, res) {
   })
 }
 
-// Query Videos
+// Query by player
 function queryVideoByPlayer(req, res) {
   console.log('test')
   var queries = [];
@@ -615,7 +594,7 @@ function queryVideoByPlayer(req, res) {
   })
 }
 
-// Query Videos
+// Query by game
 function queryVideoByGame(req, res) {
   console.log('test')
   var queries = [];

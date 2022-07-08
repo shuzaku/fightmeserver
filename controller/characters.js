@@ -106,6 +106,28 @@ function getCharacter(req, res) {
     })
   }
 
+
+    // Fetch single character
+function getCharacterBySlug(req, res) {
+  var aggregate = [{
+    '$lookup': {
+      'from': 'players', 
+      'localField': 'FeaturedPlayers', 
+      'foreignField': '_id', 
+      'as': 'Players'
+    }
+  }];
+  aggregate.push({$match: { "Slug" : req.params.slug }});
+
+    Character.aggregate(aggregate, function (error, characters) {
+      if (error) { console.error(error); }
+      res.send({
+        characters: characters
+      })
+    })
+  }
+
+
   // Update a character
 function updateCharacter(req, res) {
     var db = req.db;
@@ -159,4 +181,4 @@ function getMatchupInfo(req, res) {
    
 }
 
-module.exports = { addCharacter, queryCharacter, getCharacters, getCharacter, updateCharacter, deleteCharacter, getMatchupInfo}
+module.exports = { addCharacter, queryCharacter, getCharacters, getCharacter, updateCharacter, deleteCharacter, getMatchupInfo, getCharacterBySlug }
