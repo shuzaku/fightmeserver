@@ -286,4 +286,184 @@ function patchMatches(req, res) {
   })
 
 }
-module.exports = { addMatches, getMatches, patchMatch, getMatch, deleteMatch, queryMatches, patchMatches }
+
+// Query by character
+function queryByCharacter(req, res) {
+  var queries = [];
+  var skip =  parseInt(req.query.skip);
+  var aggregate = [ 
+    {
+      '$lookup': {
+        'from': 'characters', 
+        'localField': 'Team1Players.CharacterIds', 
+        'foreignField': '_id', 
+        'as': 'Team1PlayerCharacters'
+      }
+    }, {
+      '$lookup': {
+        'from': 'characters', 
+        'localField': 'Team2Players.CharacterIds', 
+        'foreignField': '_id', 
+        'as': 'Team2PlayerCharacters'
+      }
+    },{
+      '$unwind': {
+        'path': '$Character', 
+        'preserveNullAndEmptyArrays': true
+      }
+    }
+  ];
+
+  if (req.query.queryName || req.query.queryValue){
+    var names = req.query.queryName.split(",");
+    var values = req.query.queryValue.split(",");
+    //parse query for player id
+    for(var i = 0; i < names.length; i++){
+      switch (names[i]){
+        case 'CharacterId':
+          var characterQuery= [
+            {"Team1PlayerCharacters": { '$elemMatch': { '_id':  ObjectId(values[i]) } }},
+            {"Team2PlayerCharacters": { '$elemMatch': { '_id':  ObjectId(values[i]) } }},
+          ];
+          queries.push({$or: characterQuery});
+          break
+
+          case 'CharacterSlug':
+            var characterQuery= [
+              {"Team1PlayerCharacters": { '$elemMatch': { 'Slug': values[i] } }},
+              {"Team2PlayerCharacters": { '$elemMatch': { 'Slug': values[i] } }},
+            ];
+            queries.push({$or: characterQuery});
+            break
+      }
+    }
+  };
+
+  if(queries.length > 0) {
+    aggregate.push({$match: {$and: queries}});
+  }
+
+  aggregate.push({$sort: { _id: -1 }});  
+  aggregate.push({$skip: skip});
+  aggregate.push({$limit: 5});  
+
+  Match.aggregate(aggregate, function (error, matches) {
+    if (error) { console.error(error); }
+    res.send({
+      matches: matches
+    })
+  })
+}
+
+
+
+// Query Videos
+function getMatchupVideos(req, res) {
+  var queries = [];
+
+  var skip =  parseInt(req.query.skip);
+  var aggregate = [
+    {
+      '$sort': 
+        {'_id': -1}
+      
+    },{
+      '$lookup': {
+        'from': 'characters', 
+        'localField': 'Team1Players.CharacterIds', 
+        'foreignField': '_id', 
+        'as': 'Team1PlayerCharacters'
+      }
+    }, {
+      '$lookup': {
+        'from': 'characters', 
+        'localField': 'Team2Players.CharacterIds', 
+        'foreignField': '_id', 
+        'as': 'Team2PlayerCharacters'
+      }
+    }
+  ];
+  var character1 = ObjectId(req.query.character1);
+  var character2 = ObjectId(req.query.character2);
+  queries.push({
+      $and: [
+        {"Team1PlayerCharacters": { '$elemMatch': { '_id':  character1 } }},
+        {"Team2PlayerCharacters": { '$elemMatch': { '_id':  character2 } }}
+      ]
+  })
+
+  queries.push({
+      $and: [
+        {"Team1PlayerCharacters": { '$elemMatch': { '_id':  character2 } }},
+        {"Team2PlayerCharacters": { '$elemMatch': { '_id':  character1 } }}
+      ]
+  })
+
+  aggregate.push({$match: {$or: queries}});
+
+  aggregate.push({$skip: skip});
+  aggregate.push({$limit: 5});  
+  
+  Match.aggregate(aggregate, function (error, matches) {
+    if (error) { console.error(error); }
+    res.send({
+      matches: matches
+    })
+  })
+}
+
+// Query Videos
+function getSlugMatchupVideos(req, res) {
+  var queries = [];
+
+  var skip =  parseInt(req.query.skip);
+  var aggregate = [
+    {
+      '$sort': 
+        {'_id': -1}
+      
+    },{
+      '$lookup': {
+        'from': 'characters', 
+        'localField': 'Team1Players.CharacterIds', 
+        'foreignField': '_id', 
+        'as': 'Team1PlayerCharacters'
+      }
+    }, {
+      '$lookup': {
+        'from': 'characters', 
+        'localField': 'Team2Players.CharacterIds', 
+        'foreignField': '_id', 
+        'as': 'Team2PlayerCharacters'
+      }
+    }
+  ];
+  var character1 = req.query.character1;
+  var character2 = req.query.character2;
+  queries.push({
+      $and: [
+        {"Team1PlayerCharacters": { '$elemMatch': { 'Slug':  character1 } }},
+        {"Team2PlayerCharacters": { '$elemMatch': { 'Slug':  character2 } }}
+      ]
+  })
+
+  queries.push({
+      $and: [
+        {"Team1PlayerCharacters": { '$elemMatch': { 'Slug':  character2 } }},
+        {"Team2PlayerCharacters": { '$elemMatch': { 'Slug':  character1 } }}
+      ]
+  })
+
+  aggregate.push({$match: {$or: queries}});
+
+  aggregate.push({$skip: skip});
+  aggregate.push({$limit: 5});  
+  
+  Match.aggregate(aggregate, function (error, matches) {
+    if (error) { console.error(error); }
+    res.send({
+      matches: matches
+    })
+  })
+}
+module.exports = { addMatches, getMatches, patchMatch, getMatch, deleteMatch, queryMatches, patchMatches, queryByCharacter, getMatchupVideos,getSlugMatchupVideos}

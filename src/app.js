@@ -129,8 +129,6 @@ app.delete('/videos/:id', (req, res) => videoController.deleteVideo(req,res));
 app.post('/getVideos', (req, res) => videoController.getVideos(req,res));
 app.get('/comboVideo/:url', (req, res) => videoController.getComboVideo(req,res));
 app.get('/matchVideo/:url', (req, res) => videoController.getMatchVideo(req,res));
-app.get('/characterMatchup', (req, res) => videoController.getMatchupVideos(req,res));
-app.get('/characterSlugMatchup', (req, res) => videoController.getSlugMatchupVideos(req,res));
 
 //Search
 app.get('/initialSearch', (req, res) => searchController.defaultSearch(req,res));
@@ -144,6 +142,9 @@ app.get('/match/:id', (req, res) => matchController.getMatch(req,res));
 app.delete('/match/:id', (req, res) => matchController.deleteMatch(req,res));
 app.get('/matchQuery', (req, res) => matchController.queryMatches(req,res));
 app.put('/matches/', (req, res) => matchController.patchMatches(req,res));
+app.get('/matchesCharacter/', (req, res) => matchController.queryByCharacter(req,res));
+app.get('/characterMatchup', (req, res) => matchController.getMatchupVideos(req,res));
+app.get('/characterSlugMatchup', (req, res) => matchController.getSlugMatchupVideos(req,res));
 
 //Collections
 app.post('/collections', (req, res) => collectionController.addCollection(req,res));
@@ -166,6 +167,5 @@ app.get('/notes/:id', (req, res) => noteController.getNote(req,res));
 app.put('/notes/:id', (req, res) => noteController.updateNote(req,res));
 app.delete('/notes/:id', (req, res) => noteController.deleteNote(req,res));
 
-
-//Moves
+//Matchups
 app.get('/characterMatchupStat/', (req, res) => characterMatchupController.queryCharacterMatchup(req,res));
