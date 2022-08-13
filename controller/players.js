@@ -8,7 +8,7 @@ function addPlayer(req, res) {
   var imageUrl = req.body.ImageUrl;
   var randomNumber = Math.floor(1000 + Math.random() * 9000);
   var formattedName = name.replace(/ /g, '').replace('-','').replace('_','');
-  var slug  = `${formattedName}-${randomNumber}`;
+  var slug  = `${formattedName.toLowerCase()}-${randomNumber}`;
 
   var new_player = new Player({
     Name: name,
