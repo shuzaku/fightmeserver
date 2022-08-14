@@ -355,6 +355,75 @@ function queryByCharacter(req, res) {
   })
 }
 
+// Query by character
+function queryByPlayer(req, res) {
+  var queries = [];
+  var skip =  parseInt(req.query.skip);
+  var aggregate = [     {
+    '$lookup': {
+      'from': 'players', 
+      'localField': 'Team1Players.Id', 
+      'foreignField': '_id', 
+      'as': 'Team1Player'
+    }
+  }, {
+    '$lookup': {
+      'from': 'players', 
+      'localField': 'Team2Players.Id', 
+      'foreignField': '_id', 
+      'as': 'Team2Player'
+    }
+  }, {
+    '$unwind': {
+      'path': '$Player', 
+      'preserveNullAndEmptyArrays': true
+    }
+  } ];
+
+  if (req.query.queryName || req.query.queryValue){
+    var names = req.query.queryName.split(",");
+    var values = req.query.queryValue.split(",");
+    var query = {};
+    //parse query for player id
+    for(var i = 0; i < names.length; i++){
+      var query = {};
+
+      switch (names[i]){
+        case 'PlayerId':
+          var playerQuery= [
+            {"Team1Players": { '$elemMatch': { 'Id':  ObjectId(values[i]) } }},
+            {"Team2Players": { '$elemMatch': { 'Id':  ObjectId(values[i]) } }}
+          ];  
+          queries.push({$or: playerQuery});
+        break
+
+        case 'PlayerSlug':
+          var playerQuery= [
+            {"Team1Player": { '$elemMatch': { 'Slug': values[i] } }},
+            {"Team2Player": { '$elemMatch': { 'Slug': values[i] } }}
+          ];  
+          queries.push({$or: playerQuery});
+        break
+      }
+    }
+  };
+
+  if(queries.length > 0) {
+    aggregate.push({$match: {$and: queries}});
+  }
+
+  aggregate.push({$sort: {'_id': -1}})
+  aggregate.push({$skip: skip});
+  aggregate.push({$limit: 5});  
+  Match.aggregate(aggregate, function (error, matches) {
+    if (error) { console.error(error); }
+    res.send({
+      matches: matches
+    })
+  })
+}
+
+
 
 
 // Query Videos
@@ -412,7 +481,7 @@ function getMatchupVideos(req, res) {
   })
 }
 
-// Query Videos
+// Query Videos by player
 function getSlugMatchupVideos(req, res) {
   var queries = [];
 
@@ -466,4 +535,16 @@ function getSlugMatchupVideos(req, res) {
     })
   })
 }
-module.exports = { addMatches, getMatches, patchMatch, getMatch, deleteMatch, queryMatches, patchMatches, queryByCharacter, getMatchupVideos,getSlugMatchupVideos}
+module.exports = { 
+  addMatches, 
+  getMatches, 
+  patchMatch, 
+  getMatch, 
+  deleteMatch, 
+  queryMatches, 
+  patchMatches, 
+  queryByCharacter, 
+  getMatchupVideos,
+  getSlugMatchupVideos,
+  queryByPlayer
+}

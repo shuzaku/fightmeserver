@@ -514,7 +514,6 @@ function queryVideoByCharacter(req, res) {
 
 // Query by player
 function queryVideoByPlayer(req, res) {
-  console.log('test')
   var queries = [];
   var query = null;
   var skip =  parseInt(req.query.skip);

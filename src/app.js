@@ -72,7 +72,6 @@ app.get('/characterSlug/:slug', (req, res) => characterController.getCharacterBy
 app.put('/characters/:id', (req, res) => characterController.updateCharacter(req,res));
 app.delete('/characters/:id', (req, res) => characterController.deleteCharacter(req,res));
 app.get('/characterMatchupInfo', (req, res) => characterController.getMatchupInfo(req,res));
-app.get('/characterIdbySlug', (req, res) => characterController.getIdBySlug(req,res));
 
 //Combos
 app.post('/combos', (req, res) => comboController.addCombo(req,res));
@@ -102,6 +101,7 @@ app.get('/players', (req, res) => playerController.getPlayers(req,res));
 app.get('/players/:id', (req, res) => playerController.getPlayer(req,res));
 app.put('/players/:id', (req, res) => playerController.updatePlayer(req,res));
 app.delete('/players/:id', (req, res) => playerController.deletePlayer(req,res));
+app.get('/playerSlug/:slug', (req, res) => playerController.getPlayerBySlug(req,res));
 
 //Tags
 app.post('/tags', (req, res) => tagController.addTag(req,res));
@@ -143,6 +143,7 @@ app.delete('/match/:id', (req, res) => matchController.deleteMatch(req,res));
 app.get('/matchQuery', (req, res) => matchController.queryMatches(req,res));
 app.put('/matches/', (req, res) => matchController.patchMatches(req,res));
 app.get('/matchesCharacter/', (req, res) => matchController.queryByCharacter(req,res));
+app.get('/matchesPlayer/', (req, res) => matchController.queryByPlayer(req,res));
 app.get('/characterMatchup', (req, res) => matchController.getMatchupVideos(req,res));
 app.get('/characterSlugMatchup', (req, res) => matchController.getSlugMatchupVideos(req,res));
 
