@@ -48,12 +48,12 @@ db.once("open", function () {
 });
 
 // app.listen(process.env.PORT || 8081);
-app.listen(process.env.PORT || 80); 
+app.listen(process.env.PORT || 80);   
 
 const rule = new schedule.RecurrenceRule();
 
 const job = schedule.scheduleJob({hour: 00, minute: 00}, function(){
-  console.log('job running');
+  console.log('job running now....');
   ratingUpdateScrapperController.scrapeContent();
 });
 
