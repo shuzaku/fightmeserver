@@ -595,7 +595,6 @@ function queryVideoByPlayer(req, res) {
 
 // Query by game
 function queryVideoByGame(req, res) {
-  console.log('test')
   var queries = [];
   var query = null;
   var skip =  parseInt(req.query.skip);
@@ -623,31 +622,7 @@ function queryVideoByGame(req, res) {
         'path': '$Match', 
         'preserveNullAndEmptyArrays': true
       } 
-    }, {
-        '$lookup': {
-          'from': 'combo-clips', 
-          'localField': 'Url', 
-          'foreignField': 'Url', 
-          'as': 'ComboClip'
-        }
-      }, {
-        '$unwind': {
-          'path': '$ComboClip', 
-          'preserveNullAndEmptyArrays': true
-        }
-      },{
-        '$lookup': {
-          'from': 'combos', 
-          'localField': 'ComboClip.ComboId', 
-          'foreignField': '_id', 
-          'as': 'Combo'
-        }
-      },{
-        '$unwind': {
-          'path': '$Combo', 
-          'preserveNullAndEmptyArrays': true
-        }
-      }
+    }
   ];
 
   if (req.query.queryName || req.query.queryValue){
