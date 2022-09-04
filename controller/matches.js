@@ -423,8 +423,35 @@ function queryByPlayer(req, res) {
   })
 }
 
+// Query by Game
+function queryByGame(req, res) {
+  var queries = [];
+  var skip =  parseInt(req.query.skip);
+  var aggregate = [     
+  {
+    '$lookup': {
+      'from': 'games', 
+      'localField': 'GameId', 
+      'foreignField': '_id', 
+      'as': 'Game'
+    },
 
+  }
+  ];
 
+  aggregate.push({$match: {'GameId': ObjectId(req.query.queryValue)}});
+
+  aggregate.push({$sort: {'_id': -1}})
+  aggregate.push({$skip: skip});
+  aggregate.push({$limit: 5});  
+  console.log(aggregate)
+  Match.aggregate(aggregate, function (error, matches) {
+    if (error) { console.error(error); }
+    res.send({
+      matches: matches
+    })
+  })
+}
 
 // Query Videos
 function getMatchupVideos(req, res) {
@@ -546,5 +573,6 @@ module.exports = {
   queryByCharacter, 
   getMatchupVideos,
   getSlugMatchupVideos,
-  queryByPlayer
+  queryByPlayer,
+  queryByGame
 }

@@ -1,6 +1,9 @@
 
 var Account = require("../models/accounts");
 var ObjectId = require('mongodb').ObjectId;
+const nodemailer = require("nodemailer");
+let dotenv = require('dotenv');
+dotenv.config();
 
 // Add new Account
 function addAccount(req, res) {
@@ -30,8 +33,30 @@ function addAccount(req, res) {
       success: true,
       message: 'Account saved successfully!'
     })
+    sendAdminNotification(new_account);
   })
+
 };
+
+async function sendAdminNotification(account){
+  let transporter = nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 587,
+    secure: false, // true for 465, false for other ports
+    auth: {
+      user: process.env.SMTP_USERNAME, // generated ethereal user
+      pass: process.env.SMTP_PASSWORD, // generated ethereal password
+    },
+  });
+
+  let info = await transporter.sendMail({
+    from: '"Fighters Edge Accounts', // sender address
+    to: "mtchau@fighters-edge.com", // list of receivers
+    subject: `${account.DisplayName} : New account signup`, // Subject line
+    text: `${account.DisplayName} signed up with email ${account.Email}`, // plain text body
+    html: `${account.DisplayName} signed up with email ${account.Email}`, // html body
+  });
+}
 
 // Fetch single account
 function getAccount(req, res) {
@@ -114,4 +139,4 @@ function patchAccount(req, res) {
     })
   })
 }
-module.exports = { addAccount, getAccount, patchAccount }
+module.exports = { addAccount, getAccount, patchAccount, sendAdminNotification }

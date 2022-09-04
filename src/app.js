@@ -146,6 +146,7 @@ app.get('/matchesCharacter/', (req, res) => matchController.queryByCharacter(req
 app.get('/matchesPlayer/', (req, res) => matchController.queryByPlayer(req,res));
 app.get('/characterMatchup', (req, res) => matchController.getMatchupVideos(req,res));
 app.get('/characterSlugMatchup', (req, res) => matchController.getSlugMatchupVideos(req,res));
+app.get('/matchesGame/', (req, res) => matchController.queryByGame(req,res));
 
 //Collections
 app.post('/collections', (req, res) => collectionController.addCollection(req,res));
