@@ -30,7 +30,7 @@ function addPlayer(req, res) {
 
 // Fetch all players
 function getPlayers(req, res) {
-  Player.find({}, 'Name PlayerImg Slug', function (error, players) {
+  Player.find({}, 'Name PlayerImg Slug MatchupAppearance Twitter Stream Youtube', function (error, players) {
     if (error) { console.error(error); }
     res.send({
       players: players
