@@ -19,7 +19,7 @@ function addGame(req, res) {
       message: 'Post saved successfully!'
     })
   })
-}
+} 
 
 // Fetch all games
 function getGames(req, res) {
