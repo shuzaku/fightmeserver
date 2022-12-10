@@ -41,7 +41,7 @@ function getPlayers(req, res) {
 // Fetch single player
 function getPlayer(req, res) {
   var db = req.db;
-  Player.findById(req.params.id, 'Name PlayerImg Slug', function (error, player) {
+  Player.findById(req.params.id, 'Name PlayerImg Slug MatchupAppearance Twitter Stream Youtube', function (error, player) {
     if (error) { console.error(error); }
     res.send(player)
   })
