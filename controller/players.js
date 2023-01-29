@@ -1,5 +1,8 @@
 var Player = require("../models/players");
 var ObjectId = require('mongodb').ObjectId;
+var MatchService = require("../service/matches-service");
+var Match = require("../models/matches");
+
 
 // Add new player
 function addPlayer(req, res) {
@@ -69,7 +72,6 @@ function updatePlayer(req, res) {
 
 // Delete a player
 function deletePlayer(req, res) {
-  var db = req.db;
   Player.remove({
     _id: req.params.id
   }, function (err, player) {
@@ -130,6 +132,33 @@ function getPlayerBySlug(req, res) {
     })
 }
 
+async function mergePlayers(req, res){
+  var player1Id = ObjectId(req.params.player1Id);
+  var player2Id = ObjectId(req.params.player2Id);
+  var player1Query = {'Team1Players': {$elemMatch: { Id: player1Id}}};
+  var player2Query = {'Team2Players': {$elemMatch: { Id: player1Id}}};
+
+  var player1setQuery = {$set:{ 'Team1Players.$[].Id': player2Id } };
+  var player2setQuery = {$set:{ 'Team2Players.$[].Id': player2Id } };
+
+  Match.updateMany(player1Query,player1setQuery, function (res,error) {
+    if (error) { console.error(error); }
+  })
+  Match.updateMany(player2Query,player2setQuery, function (res,error) {
+    if (error) { console.error(error); }
+  })
+  Player.remove({
+    _id: req.params.player1Id
+  }, function (err) {
+    if (err)
+      res.send(err)
+    res.send({
+      success: true
+    })
+  })  
+  res.send('Player Merged');
+}
+
 module.exports = 
 {
   addPlayer, 
@@ -138,5 +167,6 @@ module.exports =
   updatePlayer, 
   deletePlayer, 
   queryPlayer, 
-  getPlayerBySlug
+  getPlayerBySlug,
+  mergePlayers
 }
