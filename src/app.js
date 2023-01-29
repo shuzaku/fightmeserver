@@ -47,8 +47,8 @@ db.once("open", function () {
   console.log("Connection Succeeded");
 });
 
-// app.listen(process.env.PORT || 8081);
-app.listen(process.env.PORT || 80);   
+app.listen(process.env.PORT || 8081);
+// app.listen(process.env.PORT || 80);   
 
 const rule = new schedule.RecurrenceRule();
 
@@ -102,7 +102,7 @@ app.get('/players/:id', (req, res) => playerController.getPlayer(req,res));
 app.put('/players/:id', (req, res) => playerController.updatePlayer(req,res));
 app.delete('/players/:id', (req, res) => playerController.deletePlayer(req,res));
 app.get('/playerSlug/:slug', (req, res) => playerController.getPlayerBySlug(req,res));
-
+app.get('/mergePlayers/:player1Id/:player2Id', (req, res) => playerController.mergePlayers(req,res));
 //Tags
 app.post('/tags', (req, res) => tagController.addTag(req,res));
 app.get('/tags', (req, res) => tagController.getTags(req,res));
