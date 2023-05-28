@@ -3,7 +3,7 @@ var ObjectId = require('mongodb').ObjectId;
 
 // Add new article
 function addArticle(req, res) {
-  var Title = req.body.Name;
+  var Title = req.body.Title;
   var FeaturedImage = req.body.FeaturedImage
   var Content = req.body.Content;
   var AuthorId =  ObjectId(req.body.AuthorId);
