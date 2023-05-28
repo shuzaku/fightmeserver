@@ -13,6 +13,13 @@ var ArticleSchema = new Schema({
       type: String,
       required: '{PATH} is required!'
     },
+    Content: {
+      type: String,
+      required: '{PATH} is required!'
+    },
+    AuthorId: {
+      type: ObjectId
+    },
 
   }, {
     timestamps: true, 

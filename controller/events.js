@@ -7,12 +7,14 @@ function addEvent(req, res) {
   var Url = req.body.Url;
   var Date = req.body.Date;
   var Type = req.body.Type;
+  var ImageUrl = req.body.ImageUrl;
 
   var new_event = new Event({
     Name: Name,
     Url: Url,
     Date: Date,
-    Type: Type
+    Type: Type,
+    ImageUrl: ImageUrl
   })
 
   new_event.save(function (error, event) {
@@ -29,7 +31,7 @@ function addEvent(req, res) {
 
 // Fetch all events
 function getEvents(req, res) {
-  Event.find({}, 'Name Url Date Type', function (error, events) {
+  Event.find({}, 'Name Url Date Type ImageUrl', function (error, events) {
     if (error) { console.error(error); }
     res.send({
       events: events
@@ -39,7 +41,7 @@ function getEvents(req, res) {
 
 // Fetch single event
 function getEvent(req, res) {
-  Event.findById(req.params.id, 'Name Url Date Type', function (error, event) {
+  Event.findById(req.params.id, 'Name Url Date Type ImageUrl', function (error, event) {
     if (error) { console.error(error); }
     res.send(event)
   })
@@ -48,12 +50,14 @@ function getEvent(req, res) {
 // Update a event
 function updateEvent(req, res) {
   var db = req.db;
-  Event.findById(req.params.id, 'Name Url Date Type', function (error, event) {
+  Event.findById(req.params.id, 'Name Url Date Type ImageUrl', function (error, event) {
     if (error) { console.error(error); }
 
     event.Name = req.body.Name;
-    event.LogoUrl = req.body.LogoUrl;
-    event.YoutubeUrl = req.body.YoutubeUrl;
+    event.Url = req.body.Url;
+    event.Type = req.body.Type;
+    event.ImageUrl = req.body.ImageUrl;
+    event.Date = req.body.Date;
 
     event.save(function (error) {
       if (error) {
