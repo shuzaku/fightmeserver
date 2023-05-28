@@ -15,6 +15,9 @@ let collectionController = require("../controller/collections");
 let montageController = require("../controller/montages");
 let moveController = require("../controller/moves");
 let noteController = require("../controller/notes");
+let eventController = require("../controller/events");
+let articleController = require("../controller/articles");
+
 let characterMatchupController = require("../controller/character-matchups");
 
 let ratingUpdateScrapperController = require("../controller/scrapper");
@@ -171,3 +174,15 @@ app.delete('/notes/:id', (req, res) => noteController.deleteNote(req,res));
 
 //Matchups
 app.get('/characterMatchupStat/', (req, res) => characterMatchupController.queryCharacterMatchup(req,res));
+
+//Notes
+app.post('/events', (req, res) => eventController.addEvent(req,res));
+app.get('/events', (req, res) => eventController.queryEvent(req,res));
+app.put('/events/:id', (req, res) => eventController.updateEvent(req,res));
+app.delete('/events/:id', (req, res) => eventController.deleteEvent(req,res));
+
+//Article
+app.post('/articles', (req, res) => articleController.addArticle(req,res));
+app.get('/articles', (req, res) => articleController.queryArticle(req,res));
+app.put('/articles/:id', (req, res) => articleController.updateArticle(req,res));
+app.delete('/articles/:id', (req, res) => articleController.deleteArticle(req,res));
