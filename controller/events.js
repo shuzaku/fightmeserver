@@ -24,7 +24,6 @@ function addEvent(req, res) {
     res.send({
       success: true,
       message: 'Post saved successfully!',
-      id: event.id
     })
   })
 };
