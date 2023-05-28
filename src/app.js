@@ -23,7 +23,6 @@ let characterMatchupController = require("../controller/character-matchups");
 let ratingUpdateScrapperController = require("../controller/scrapper");
 
 
-var moment = require('moment'); // require
 const schedule = require('node-schedule');
 
 const express = require('express')
