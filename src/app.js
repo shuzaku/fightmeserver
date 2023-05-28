@@ -182,5 +182,5 @@ app.delete('/events/:id', (req, res) => eventController.deleteEvent(req,res));
 //Article
 app.post('/articles', (req, res) => articleController.addArticle(req,res));
 app.get('/articles', (req, res) => articleController.queryArticle(req,res));
-app.put('/articles/:id', (req, res) => articleController.updateArticle(req,res));
+app.put('/articles/:id', (req, res) => articleController.updateArticle(req,res)); 
 app.delete('/articles/:id', (req, res) => articleController.deleteArticle(req,res));
