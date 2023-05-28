@@ -17,6 +17,10 @@ var EventSchema = new Schema({
       type: String,
       required: '{PATH} is required!'
     },
+    ImageUrl: {
+      type: String,
+      required: '{PATH} is required!'
+    }
   }, {
     timestamps: true, 
   });

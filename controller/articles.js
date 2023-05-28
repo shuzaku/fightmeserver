@@ -11,6 +11,7 @@ function addArticle(req, res) {
     Title: Title,
     FeaturedImage: FeaturedImage,
     Content: Content,
+    AuthorId: AuthorId
   })
 
   new_article.save(function (error, article) {
@@ -27,7 +28,7 @@ function addArticle(req, res) {
 
 // Fetch all articles
 function getArticles(req, res) {
-  Article.find({}, 'Title FeaturedImage Content', function (error, articles) {
+  Article.find({}, 'Title FeaturedImage Content AuthorId', function (error, articles) {
     if (error) { console.error(error); }
     res.send({
       articles: articles
@@ -37,7 +38,7 @@ function getArticles(req, res) {
 
 // Fetch single article
 function getArticle(req, res) {
-  Article.findById(req.params.id, 'Title FeaturedImage Content', function (error, article) {
+  Article.findById(req.params.id, 'Title FeaturedImage Content AuthorId', function (error, article) {
     if (error) { console.error(error); }
     res.send(article)
   })
@@ -46,12 +47,13 @@ function getArticle(req, res) {
 // Update a article
 function updateArticle(req, res) {
   var db = req.db;
-  Article.findById(req.params.id, 'Title FeaturedImage Content', function (error, article) {
+  Article.findById(req.params.id, 'Title FeaturedImage Content AuthorId', function (error, article) {
     if (error) { console.error(error); }
 
-    article.Name = req.body.Name;
-    article.LogoUrl = req.body.LogoUrl;
-    article.YoutubeUrl = req.body.YoutubeUrl;
+    article.Title = req.body.Title;
+    article.FeaturedImage = req.body.FeaturedImage;
+    article.Content = req.body.Content;
+    article.Author = req.body.Author;
 
     article.save(function (error) {
       if (error) {

@@ -25,7 +25,6 @@ let ratingUpdateScrapperController = require("../controller/scrapper");
 
 var moment = require('moment'); // require
 const schedule = require('node-schedule');
-const cheerio = require('cheerio');
 
 const express = require('express')
 const bodyParser = require('body-parser')
