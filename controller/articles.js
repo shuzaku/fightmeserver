@@ -6,7 +6,8 @@ function addArticle(req, res) {
   var Title = req.body.Name;
   var FeaturedImage = req.body.FeaturedImage
   var Content = req.body.Content;
-
+  var AuthorId = req.body.AuthorId;
+  
   var new_article = new Article({
     Title: Title,
     FeaturedImage: FeaturedImage,
