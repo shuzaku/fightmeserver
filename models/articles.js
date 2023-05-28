@@ -1,5 +1,6 @@
 var mongoose = require("mongoose");
 var Schema = mongoose.Schema;
+const ObjectId = Schema.Types.ObjectId;
 
 var ArticleSchema = new Schema({
     Title: {
