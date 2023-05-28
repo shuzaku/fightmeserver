@@ -29,7 +29,7 @@ function addEvent(req, res) {
 
 // Fetch all events
 function getEvents(req, res) {
-  Event.find({}, 'Name Url Date', function (error, events) {
+  Event.find({}, 'Name Url Date Type', function (error, events) {
     if (error) { console.error(error); }
     res.send({
       events: events
