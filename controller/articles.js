@@ -53,7 +53,7 @@ function updateArticle(req, res) {
     article.Title = req.body.Title;
     article.FeaturedImage = req.body.FeaturedImage;
     article.Content = req.body.Content;
-    article.Author = req.body.Author;
+    article.AuthorId = req.body.AuthorId;
 
     article.save(function (error) {
       if (error) {
