@@ -7,7 +7,7 @@ function addArticle(req, res) {
   var FeaturedImage = req.body.FeaturedImage
   var Content = req.body.Content;
   var AuthorId = req.body.AuthorId;
-  
+
   var new_article = new Article({
     Title: Title,
     FeaturedImage: FeaturedImage,
@@ -22,7 +22,6 @@ function addArticle(req, res) {
     res.send({
       success: true,
       message: 'Post saved successfully!',
-      id: article.id
     })
   })
 };
