@@ -30,6 +30,9 @@ var MatchessSchema = new Schema({
   TournamentId: {
     type: ObjectId
   },
+  TournamentMatchType: {
+    type: String
+  },
   SubmittedBy: {
     type: ObjectId
   },
