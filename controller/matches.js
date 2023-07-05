@@ -9,8 +9,8 @@ function addMatches(req, res) {
       var VideoUrl = req.body.VideoUrl;
       var GameId = ObjectId(req.body.GameId);
       var GameVersion = req.body.GameVersion
-      var WinningPlayersId = req.body.WinningPlayersId ? req.body.WinningPlayersId.map(id => {return ObjectId(id)}) : null;
-      var LosingPlayersId = req.body.LosingPlayersId ? req.body.LosingPlayersId.map(id => {return ObjectId(id)}) : null;
+      var WinningPlayersId = req.body.WinningPlayersId ? req.body.WinningPlayersId : null;
+      var LosingPlayersId = req.body.LosingPlayersId ? req.body.LosingPlayersId : null;
       var TournamentId = ObjectId(req.body.TournamentId);
       var TournamentMatchType = ObjectId(req.body.TournamentMatchType)
       var StartTime = req.body.StartTime;
@@ -37,7 +37,8 @@ function addMatches(req, res) {
         WinningPlayersId: WinningPlayersId,
         LosingPlayersId: LosingPlayersId,
         StartTime: StartTime,
-        EndTime: EndTime
+        EndTime: EndTime,
+        TournamentMatchType:TournamentMatchType
       });
     
       new_match.save(function (error,match) {
