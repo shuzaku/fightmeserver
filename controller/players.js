@@ -6,7 +6,7 @@ var Match = require("../models/matches");
 
 // Add new player
 function addPlayer(req, res) {
-  var db = req.db;
+  if(!req.query.bulk){
   var name = req.body.Name;
   var imageUrl = req.body.ImageUrl;
   var randomNumber = Math.floor(1000 + Math.random() * 9000);
@@ -29,6 +29,18 @@ function addPlayer(req, res) {
       playerId: player.id
     })
   })
+}
+else {
+  Player.insertMany(req.body, function(error){
+    if (error) {
+      console.log(error)
+    }
+    res.send({
+      success: true,
+      message: 'Players saved successfully!'
+    })      
+  })
+}
 }
 
 // Fetch all players
