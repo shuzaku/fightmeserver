@@ -4,17 +4,20 @@ var Tournament = require("../models/tournaments");
 function addTournament(req, res) {
   var db = req.db;
   var Name = req.body.Name;
-  var GameIds = req.body.GameIds;
-  var LogoUrl = req.body.LogoUrl;
-  var Date = req.body.Date;
+  var Games = req.body.Games;
+  var Image = req.body.Image;
+  var EventDate = req.body.EventDate;
+  var TournamentSeries = req.body.TournamentSeries;
+  var Location = req.body.Location;
 
   var new_tournament = new Tournament({
     Name: Name,
-    GameIds: GameIds,
-    LogoUrl: LogoUrl,
-    Date: Date
+    Games: Games,
+    Image: Image,
+    EventDate: EventDate,
+    TournamentSeries: TournamentSeries,
+    Location: Location
   })
-
 
   new_tournament.save(function (error, tournament) {
     if (error) {
@@ -30,7 +33,7 @@ function addTournament(req, res) {
 
 // Fetch all tournament
 function getTournaments(req, res) {
-  Tournament.find({}, 'Name GameIds LogoUrl Date', function (error, tournaments) {
+  Tournament.find({}, 'Name Games Image EventDate TournamentSeries Location', function (error, tournaments) {
     if (error) { console.error(error); }
     res.send({
       tournaments: tournaments
@@ -41,7 +44,7 @@ function getTournaments(req, res) {
 // Fetch single tournament
 function getTournament(req, res) {
   var db = req.db;
-  Tournament.findById(req.params.id, 'Name GameIds LogoUrl Date', function (error, tournament) {
+  Tournament.findById(req.params.id, 'Name Games Image EventDate TournamentSeries Location', function (error, tournament) {
     if (error) { console.error(error); }
     res.send(tournament)
   })
@@ -50,13 +53,15 @@ function getTournament(req, res) {
 // Update a tournament
 function updateTournament(req, res) {
   var db = req.db;
-  Tournament.findById(req.params.id, 'Name GameIds LogoUrl Date', function (error, tournament) {
+  Tournament.findById(req.params.id, 'Name Games Image EventDate TournamentSeries Location', function (error, tournament) {
     if (error) { console.error(error); }
 
     tournament.Name = req.body.Name;
-    tournament.GameIds = req.body.GameIds;
-    tournament.LogoUrl = req.body.LogoUrl;
-    tournament.Date = req.body.Date;
+    tournament.Games = req.body.Games;
+    tournament.Image = req.body.Image;
+    tournament.EventDate = req.body.EventDate;
+    tournament.TournamentSeries = req.body.TournamentSeries;
+    tournament.Location = req.body.Location;
 
     tournament.save(function (error) {
       if (error) {
