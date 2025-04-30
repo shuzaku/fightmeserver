@@ -66,4 +66,4 @@ function deleteUpdate(req, res) {
   })
 }
 
-module.exports = { addUpdate, getUpdates, getUpdate, updateUpdate, deleteUpdate}
+module.exports = { addUpdate, getUpdates, getUpdate, deleteUpdate}
