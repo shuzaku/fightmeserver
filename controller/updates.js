@@ -1,4 +1,4 @@
-var Update = require("../models/update");
+var Update = require("../models/updates");
 
 // Add new tournament
 function addUpdate(req, res) {
