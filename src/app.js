@@ -17,6 +17,9 @@ let moveController = require("../controller/moves");
 let noteController = require("../controller/notes");
 let eventController = require("../controller/events");
 let articleController = require("../controller/articles");
+let updateController = require("../controller/updates");
+
+
 
 let characterMatchupController = require("../controller/character-matchups");
 
@@ -184,3 +187,9 @@ app.post('/articles', (req, res) => articleController.addArticle(req,res));
 app.get('/articles', (req, res) => articleController.queryArticle(req,res));
 app.put('/articles/:id', (req, res) => articleController.updateArticle(req,res)); 
 app.delete('/articles/:id', (req, res) => articleController.deleteArticle(req,res));
+
+//Update
+app.post('/updates', (req, res) => updateController.addUpdate(req,res));
+app.get('/updates', (req, res) => updateController.queryUpdate(req,res));
+app.put('/updates/:id', (req, res) => updateController.updateUpdate(req,res)); 
+app.delete('/updates/:id', (req, res) => updateController.deleteUpdate(req,res));

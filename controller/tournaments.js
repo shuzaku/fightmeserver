@@ -41,6 +41,16 @@ function getTournaments(req, res) {
   }).sort({ _id: -1 })
 }
 
+// Fetch all tournament
+function getTournamentSeries(req, res) {
+  TournamentSeries.find({}, 'Name Youtube Twitter BannerUrl', function (error, series) {
+    if (error) { console.error(error); }
+    res.send({
+      series: series
+    })
+  }).sort({ _id: -1 })
+}
+
 // Fetch single tournament
 function getTournament(req, res) {
   var db = req.db;
@@ -88,4 +98,4 @@ function deleteTournament(req, res) {
   })
 }
 
-module.exports = { addTournament, getTournaments, getTournament, updateTournament, deleteTournament}
+module.exports = { addTournament, getTournaments, getTournament, updateTournament, deleteTournament, getTournamentSeries}
