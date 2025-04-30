@@ -190,6 +190,6 @@ app.delete('/articles/:id', (req, res) => articleController.deleteArticle(req,re
 
 //Update
 app.post('/updates', (req, res) => updateController.addUpdate(req,res));
-app.get('/updates', (req, res) => updateController.queryUpdate(req,res));
+app.get('/updates', (req, res) => updateController.getUpdates(req,res));
 app.put('/updates/:id', (req, res) => updateController.updateUpdate(req,res)); 
 app.delete('/updates/:id', (req, res) => updateController.deleteUpdate(req,res));
