@@ -8,7 +8,16 @@ var GameSchema = new Schema({
   },
   LogoUrl: {
     type: String
-  }
+  },
+  CoverArt:{
+    type: String
+  },
+  Abbreviation:{
+    type: String
+  },
+  ReleaseDate:{
+    type: Date
+  },
 }, {
   timestamps: true, 
 });

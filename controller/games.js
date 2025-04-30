@@ -21,20 +21,15 @@ function addGame(req, res) {
   })
 } 
 
-// Fetch all games
-function getGames(req, res) {
-  Game.aggregate([{$match: {
-    _id: {
-      $ne: ObjectId("000000000000000000000000")
-    }
-  }
-  }], function (error, games) {
-    if (error) { console.error(error); }
-    res.send({
-      games: games
-    })
-  })
-}
+  // Fetch all characters
+  function getGames(req, res) {
+    Game.find({}, 'Title LogoUrl CoverArt Abbreviation ReleaseDate', function (error, games) {
+      if (error) { console.error(error); }
+      res.send({
+        games: games
+      })
+    }).sort({ ReleaseDate: -1 })
+  };
 
 // Fetch single game
 function getGame(req, res) {
