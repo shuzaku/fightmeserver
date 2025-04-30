@@ -1,6 +1,6 @@
 var Update = require("../models/updates");
 
-// Add new tournament
+// Add new Update
 function addUpdate(req, res) {
   var db = req.db;
   var Type = req.body.Type;
@@ -33,7 +33,7 @@ function addUpdate(req, res) {
   })
 }
 
-// Fetch all tournament
+// Fetch all Update
 function getUpdates(req, res) {
   Update.find({}, 'Type SubType Games Note Date Image Link', function (error, updates) {
     if (error) { console.error(error); }
@@ -43,36 +43,12 @@ function getUpdates(req, res) {
   }).sort({ _id: -1 })
 }
 
-// Fetch single tournament
+// Fetch single Update
 function getUpdate(req, res) {
   var db = req.db;
   Update.findById(req.params.id, 'Type SubType Games Note Date Image Link', function (error, update) {
     if (error) { console.error(error); }
     res.send(update)
-  })
-}
-
-// Update a tournament
-function updateUpdate(req, res) {
-  var db = req.db;
-  Tournament.findById(req.params.id, 'Type SubType Games Note Date Image Link', function (error, update) {
-    if (error) { console.error(error); }
-
-    tournament.Name = req.body.Name;
-    tournament.Games = req.body.Games;
-    tournament.Image = req.body.Image;
-    tournament.EventDate = req.body.EventDate;
-    tournament.TournamentSeries = req.body.TournamentSeries;
-    tournament.Location = req.body.Location;
-
-    tournament.save(function (error) {
-      if (error) {
-        console.log(error)
-      }
-      res.send({
-        success: true
-      })
-    })
   })
 }
 

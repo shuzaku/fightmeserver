@@ -185,3 +185,7 @@ app.get('/articles', (req, res) => articleController.queryArticle(req,res));
 app.put('/articles/:id', (req, res) => articleController.updateArticle(req,res)); 
 app.delete('/articles/:id', (req, res) => articleController.deleteArticle(req,res));
 
+//Update
+app.post('/updates', (req, res) => updateController.addUpdate(req,res));
+app.get('/updates', (req, res) => updateController.getUpdates(req,res));
+app.delete('/updates/:id', (req, res) => updateController.deleteUpdate(req,res));
