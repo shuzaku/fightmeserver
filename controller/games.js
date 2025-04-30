@@ -28,7 +28,7 @@ function addGame(req, res) {
       res.send({
         games: games
       })
-    }).sort({ ReleaseDate: -1 })
+    }).sort({ ReleaseDate: 1 })
   };
 
 // Fetch single game
