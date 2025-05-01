@@ -40,7 +40,7 @@ function getUpdates(req, res) {
     res.send({
       updates: updates
     })
-  }).sort({ _id: -1 })
+  }).sort({ Date: 1 })
 }
 
 // Fetch single Update
