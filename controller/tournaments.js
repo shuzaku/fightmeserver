@@ -40,7 +40,7 @@ function getTournaments(req, res) {
     res.send({
       tournaments: tournaments
     })
-  }).sort({ _id: -1 })
+  }).sort({ EventDate: 1 })
 }
 
 // Fetch all tournament
