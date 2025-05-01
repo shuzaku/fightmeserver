@@ -18,7 +18,7 @@ function addTournament(req, res) {
     EventDate: EventDate,
     TournamentSeries: TournamentSeries,
     Location: Location,
-    BracketUrl: req.body.BracketUrl
+    BracketUrl: BracketUrl
   })
 
   new_tournament.save(function (error, tournament) {
