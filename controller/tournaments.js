@@ -9,6 +9,7 @@ function addTournament(req, res) {
   var EventDate = req.body.EventDate;
   var TournamentSeries = req.body.TournamentSeries;
   var Location = req.body.Location;
+  var BracketUrl = req.body.BracketUrl;
 
   var new_tournament = new Tournament({
     Name: Name,
@@ -16,7 +17,8 @@ function addTournament(req, res) {
     Image: Image,
     EventDate: EventDate,
     TournamentSeries: TournamentSeries,
-    Location: Location
+    Location: Location,
+    BracketUrl: req.body.BracketUrl
   })
 
   new_tournament.save(function (error, tournament) {
@@ -33,7 +35,7 @@ function addTournament(req, res) {
 
 // Fetch all tournament
 function getTournaments(req, res) {
-  Tournament.find({}, 'Name Games Image EventDate TournamentSeries Location', function (error, tournaments) {
+  Tournament.find({}, 'Name Games Image EventDate TournamentSeries Location BracketUrl', function (error, tournaments) {
     if (error) { console.error(error); }
     res.send({
       tournaments: tournaments
@@ -43,7 +45,7 @@ function getTournaments(req, res) {
 
 // Fetch all tournament
 function getTournamentSeries(req, res) {
-  TournamentSeries.find({}, 'Name Youtube Twitter BannerUrl', function (error, series) {
+  TournamentSeries.find({}, 'Name Games Image EventDate TournamentSeries Location BracketUrl', function (error, series) {
     if (error) { console.error(error); }
     res.send({
       series: series
@@ -54,7 +56,7 @@ function getTournamentSeries(req, res) {
 // Fetch single tournament
 function getTournament(req, res) {
   var db = req.db;
-  Tournament.findById(req.params.id, 'Name Games Image EventDate TournamentSeries Location', function (error, tournament) {
+  Tournament.findById(req.params.id, 'Name Games Image EventDate TournamentSeries Location BracketUrl', function (error, tournament) {
     if (error) { console.error(error); }
     res.send(tournament)
   })
@@ -63,7 +65,7 @@ function getTournament(req, res) {
 // Update a tournament
 function updateTournament(req, res) {
   var db = req.db;
-  Tournament.findById(req.params.id, 'Name Games Image EventDate TournamentSeries Location', function (error, tournament) {
+  Tournament.findById(req.params.id, 'Name Games Image EventDate TournamentSeries Location BracketUrl', function (error, tournament) {
     if (error) { console.error(error); }
 
     tournament.Name = req.body.Name;
@@ -72,6 +74,7 @@ function updateTournament(req, res) {
     tournament.EventDate = req.body.EventDate;
     tournament.TournamentSeries = req.body.TournamentSeries;
     tournament.Location = req.body.Location;
+    tournament.BracketUrl = req.body.BracketUrl;
 
     tournament.save(function (error) {
       if (error) {
