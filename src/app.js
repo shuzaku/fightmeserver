@@ -19,7 +19,7 @@ let eventController = require("../controller/events");
 let articleController = require("../controller/articles");
 let updateController = require("../controller/updates");
 let characterMatchupController = require("../controller/character-matchups");
-
+let featuredPlayerController = require("../controller/featured-players");
 let ratingUpdateScrapperController = require("../controller/scrapper");
 
 
@@ -189,3 +189,6 @@ app.delete('/articles/:id', (req, res) => articleController.deleteArticle(req,re
 app.post('/updates', (req, res) => updateController.addUpdate(req,res));
 app.get('/updates', (req, res) => updateController.getUpdates(req,res));
 app.delete('/updates/:id', (req, res) => updateController.deleteUpdate(req,res));
+
+//Featured Players
+app.get('/featuredPlayers', (req, res) => featuredPlayerController.getFeaturedPlayers(req,res));
