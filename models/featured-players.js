@@ -13,6 +13,6 @@ var FeaturedPlayerSchema = new Schema({
   timestamps: true, 
 });
 
-var FeaturedPlayers = mongoose.model("FeaturedPlayer", FeaturedPlayerSchema);
+var FeaturedPlayers = mongoose.model("Featured-Players", FeaturedPlayerSchema);
 
 module.exports = FeaturedPlayers; 
