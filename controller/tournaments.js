@@ -141,7 +141,7 @@ function queryTournament(req, res) {
       res.send({
         tournaments: tournaments
       })
-    }).sort({ Name: 1 })    
+    }).sort({ EventDate: 1 })
   }
   else {
     Tournament.find(queries[0], 'Name Games Image EventDate TournamentSeries Location BracketUrl', function (error, tournaments) {
@@ -150,7 +150,7 @@ function queryTournament(req, res) {
       res.send({
         tournaments: tournaments
       })
-    }).sort({ Name: 1 })    
+    }).sort({ EventDate: 1 })  
   }
 };
 
