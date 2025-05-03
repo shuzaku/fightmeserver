@@ -53,10 +53,10 @@ app.listen(process.env.PORT || 80);
 
 const rule = new schedule.RecurrenceRule();
 
-const job = schedule.scheduleJob({hour: 00, minute: 00}, function(){
-  console.log('job running now....');
-  ratingUpdateScrapperController.scrapeContent();
-});
+// const job = schedule.scheduleJob({hour: 00, minute: 00}, function(){
+//   console.log('job running now....');
+//   ratingUpdateScrapperController.scrapeContent();
+// });
 
 //Accounts
 app.post('/accounts', (req, res) => accountController.addAccount(req,res));
@@ -115,6 +115,8 @@ app.get('/tournaments/:id', (req, res) => tournamentController.getTournament(req
 app.get('/completed-tournaments/', (req, res) => tournamentController.getCompletedTournaments(req,res));
 app.put('/tournaments/:id', (req, res) => tournamentController.updateTournament(req,res));
 app.delete('/tournaments/:id', (req, res) => tournamentController.deleteTournament(req,res));
+app.get('/tournamentQuery', (req, res) => tournamentController.queryTournament(req,res));
+
 
 //Videos
 app.post('/video', (req, res) => videoController.addVideo(req,res));
