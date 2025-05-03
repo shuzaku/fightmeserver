@@ -112,4 +112,46 @@ function deleteTournament(req, res) {
   })
 }
 
-module.exports = { addTournament, getTournaments, getTournament, updateTournament, deleteTournament, getTournamentSeries,getCompletedTournaments}
+// Query Player
+function queryTournament(req, res) {
+  var db = req.db;
+  var names = req.query.queryName.split(",");
+  var values = req.query.queryValue.split(",");
+  var queries = [];
+
+  for(var i = 0; i < names.length; i++){
+    var query = {};
+    if(names[i] === ('Id')){
+      var query = {'_id':   ObjectId(values[i])};
+      queries.push(query);
+    }  
+    else if(values[i].toLowerCase() === "true" || values[i].toLowerCase() === "false"){
+      query[names[i]] = values[i].toLowerCase() === "true"  ? true : false;
+      queries.push(query);
+    }
+    else {
+      query[names[i]] = values[i];
+      queries.push(query);
+    }
+  }
+  
+  if(queries.length > 1) {
+    Tournament.find({ $or: queries }, 'Name Games Image EventDate TournamentSeries Location BracketUrl', function (error, tournaments) {
+      if (error) { console.error(error); }
+      res.send({
+        tournaments: tournaments
+      })
+    }).sort({ Name: 1 })    
+  }
+  else {
+    Tournament.find(queries[0], 'Name Games Image EventDate TournamentSeries Location BracketUrl', function (error, tournaments) {
+      if (error) { console.error(error); }
+
+      res.send({
+        tournaments: tournaments
+      })
+    }).sort({ Name: 1 })    
+  }
+};
+
+module.exports = { addTournament, getTournaments, getTournament, updateTournament, deleteTournament, getTournamentSeries,getCompletedTournaments, queryTournament}
