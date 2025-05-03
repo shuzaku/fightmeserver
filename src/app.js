@@ -21,7 +21,7 @@ let updateController = require("../controller/updates");
 let characterMatchupController = require("../controller/character-matchups");
 let featuredPlayerController = require("../controller/featured-players");
 let ratingUpdateScrapperController = require("../controller/scrapper");
-
+let tournamentMatchesController = require("../controller/tournament-matches");
 
 const schedule = require('node-schedule');
 
@@ -117,6 +117,7 @@ app.put('/tournaments/:id', (req, res) => tournamentController.updateTournament(
 app.delete('/tournaments/:id', (req, res) => tournamentController.deleteTournament(req,res));
 app.get('/tournamentQuery', (req, res) => tournamentController.queryTournament(req,res));
 
+app.get('/tournament-matches/:id', (req, res) => tournamentMatchesController.queryTournamentMatchesByTournamentId(req,res));
 
 //Videos
 app.post('/video', (req, res) => videoController.addVideo(req,res));
