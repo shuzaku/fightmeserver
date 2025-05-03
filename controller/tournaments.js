@@ -43,6 +43,17 @@ function getTournaments(req, res) {
   }).sort({ EventDate: 1 })
 }
 
+// Fetch completed tournaments
+function getCompletedTournaments(req, res) {
+  const today = new Date();
+  Tournament.find({ IsFinished: true}, 'Name Games Image EventDate TournamentSeries Location BracketUrl', function (error, tournaments) {
+    if (error) { console.error(error); }
+    res.send({
+      tournaments: tournaments
+    })
+  }).sort({ EventDate: 1 })
+}
+
 // Fetch all tournament
 function getTournamentSeries(req, res) {
   TournamentSeries.find({}, 'Name Games Image EventDate TournamentSeries Location BracketUrl', function (error, series) {
@@ -101,4 +112,4 @@ function deleteTournament(req, res) {
   })
 }
 
-module.exports = { addTournament, getTournaments, getTournament, updateTournament, deleteTournament, getTournamentSeries}
+module.exports = { addTournament, getTournaments, getTournament, updateTournament, deleteTournament, getTournamentSeries,getCompletedTournaments}
