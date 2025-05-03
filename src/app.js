@@ -48,8 +48,8 @@ db.once("open", function () {
   console.log("Connection Succeeded");
 });
 
-app.listen(process.env.PORT || 8081);
-// app.listen(process.env.PORT || 80);   
+// app.listen(process.env.PORT || 8081);
+app.listen(process.env.PORT || 80);   
 
 const rule = new schedule.RecurrenceRule();
 
@@ -110,9 +110,9 @@ app.get('/tags', (req, res) => tagController.getTags(req,res));
 
 //Tournament
 app.post('/tournaments', (req, res) => tournamentController.addTournament(req,res));
-app.get('/tournamentQuery', (req, res) => tournamentController.queryTournament(req,res));
 app.get('/tournaments', (req, res) => tournamentController.getTournaments(req,res));
 app.get('/tournaments/:id', (req, res) => tournamentController.getTournament(req,res));
+app.get('/completed-tournaments/', (req, res) => tournamentController.getCompletedTournaments(req,res));
 app.put('/tournaments/:id', (req, res) => tournamentController.updateTournament(req,res));
 app.delete('/tournaments/:id', (req, res) => tournamentController.deleteTournament(req,res));
 
