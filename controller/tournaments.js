@@ -35,7 +35,7 @@ function addTournament(req, res) {
 
 // Fetch all tournament
 function getTournaments(req, res) {
-  Tournament.find({}, 'Name Games Image EventDate TournamentSeries Location BracketUrl', function (error, tournaments) {
+  Tournament.find({}, 'Name Games Image EventDate TournamentSeries Location BracketUrl IsFinished', function (error, tournaments) {
     if (error) { console.error(error); }
     res.send({
       tournaments: tournaments
@@ -46,7 +46,7 @@ function getTournaments(req, res) {
 // Fetch completed tournaments
 function getCompletedTournaments(req, res) {
   const today = new Date();
-  Tournament.find({ IsFinished: true}, 'Name Games Image EventDate TournamentSeries Location BracketUrl', function (error, tournaments) {
+  Tournament.find({ IsFinished: true}, 'Name Games Image EventDate TournamentSeries Location BracketUrl IsFinished', function (error, tournaments) {
     if (error) { console.error(error); }
     res.send({
       tournaments: tournaments
@@ -56,7 +56,7 @@ function getCompletedTournaments(req, res) {
 
 // Fetch all tournament
 function getTournamentSeries(req, res) {
-  TournamentSeries.find({}, 'Name Games Image EventDate TournamentSeries Location BracketUrl', function (error, series) {
+  TournamentSeries.find({}, 'Name Games Image EventDate TournamentSeries Location BracketUrl IsFinished', function (error, series) {
     if (error) { console.error(error); }
     res.send({
       series: series
@@ -67,7 +67,7 @@ function getTournamentSeries(req, res) {
 // Fetch single tournament
 function getTournament(req, res) {
   var db = req.db;
-  Tournament.findById(req.params.id, 'Name Games Image EventDate TournamentSeries Location BracketUrl', function (error, tournament) {
+  Tournament.findById(req.params.id, 'Name Games Image EventDate TournamentSeries Location BracketUrl IsFinished', function (error, tournament) {
     if (error) { console.error(error); }
     res.send(tournament)
   })
@@ -76,7 +76,7 @@ function getTournament(req, res) {
 // Update a tournament
 function updateTournament(req, res) {
   var db = req.db;
-  Tournament.findById(req.params.id, 'Name Games Image EventDate TournamentSeries Location BracketUrl', function (error, tournament) {
+  Tournament.findById(req.params.id, 'Name Games Image EventDate TournamentSeries Location BracketUrl IsFinished', function (error, tournament) {
     if (error) { console.error(error); }
 
     tournament.Name = req.body.Name;
@@ -136,7 +136,7 @@ function queryTournament(req, res) {
   }
   
   if(queries.length > 1) {
-    Tournament.find({ $or: queries }, 'Name Games Image EventDate TournamentSeries Location BracketUrl', function (error, tournaments) {
+    Tournament.find({ $or: queries }, 'Name Games Image EventDate TournamentSeries Location BracketUrl IsFinished', function (error, tournaments) {
       if (error) { console.error(error); }
       res.send({
         tournaments: tournaments
@@ -144,7 +144,7 @@ function queryTournament(req, res) {
     }).sort({ EventDate: 1 })
   }
   else {
-    Tournament.find(queries[0], 'Name Games Image EventDate TournamentSeries Location BracketUrl', function (error, tournaments) {
+    Tournament.find(queries[0], 'Name Games Image EventDate TournamentSeries Location BracketUrl IsFinished', function (error, tournaments) {
       if (error) { console.error(error); }
 
       res.send({
