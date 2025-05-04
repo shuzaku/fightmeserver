@@ -117,7 +117,16 @@ function queryTournament(req, res) {
   var db = req.db;
   var names = req.query.queryName.split(",");
   var values = req.query.queryValue.split(",");
+  var sort = req.query.sort || '_id';
   var queries = [];
+  var sortParameter = {};
+
+  var sortProperty = sort.split(' ')[0] || 'EventDate';
+  var sortDirection = sort.split(' ')[1] || 'asc';
+
+  sortParameter[sortProperty] = sortDirection === 'asc' ? 1 : -1;
+
+  console.log(sortParameter);
 
   for(var i = 0; i < names.length; i++){
     var query = {};
@@ -141,7 +150,7 @@ function queryTournament(req, res) {
       res.send({
         tournaments: tournaments
       })
-    }).sort({ EventDate: 1 })
+    }).sort(sortParameter)
   }
   else {
     Tournament.find(queries[0], 'Name Games Image EventDate TournamentSeries Location BracketUrl IsFinished', function (error, tournaments) {
@@ -150,7 +159,7 @@ function queryTournament(req, res) {
       res.send({
         tournaments: tournaments
       })
-    }).sort({ EventDate: 1 })  
+    }).sort(sortParameter)  
   }
 };
 
