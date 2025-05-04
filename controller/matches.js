@@ -447,7 +447,7 @@ function queryByGame(req, res) {
   aggregate.push({$sort: {'_id': -1}})
   aggregate.push({$skip: skip});
   aggregate.push({$limit: 5});  
-  console.log(aggregate)
+  
   Match.aggregate(aggregate, function (error, matches) {
     if (error) { console.error(error); }
     res.send({
