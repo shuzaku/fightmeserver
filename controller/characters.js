@@ -51,7 +51,10 @@ function queryCharacter(req, res) {
       if(names[i] === ('Id')){
         var query = {'_id':   ObjectId(values[i])};
         queries.push(query);
-      }  else {
+      } else if (names[i] === 'GameId') {
+        queries[names[i]] =  ObjectId(values[i]);
+      }  
+      else {
         query[names[i]] = values[i];
         queries.push(query);
       }
