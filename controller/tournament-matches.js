@@ -43,6 +43,13 @@ function queryTournamentMatchesByTournamentId(req, res) {
         }
       }, {
         '$lookup': {
+          'from': 'tournaments', 
+          'localField': 'TournamentId', 
+          'foreignField': '_id', 
+          'as': 'Tournament'
+        }
+      }, {
+        '$lookup': {
           'from': 'games', 
           'localField': 'GameId', 
           'foreignField': '_id', 
@@ -136,8 +143,14 @@ function queryMatches(req, res, tournamentId =  null) {
         'foreignField': '_id', 
         'as': 'Game'
       }
-    },
-    {
+    },{
+      '$lookup': {
+        'from': 'tournaments', 
+        'localField': 'TournamentId', 
+        'foreignField': '_id', 
+        'as': 'Tournament'
+      }
+    },{
       '$unwind': {
         'path': '$Character', 
         'preserveNullAndEmptyArrays': true
