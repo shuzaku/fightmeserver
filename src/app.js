@@ -118,6 +118,7 @@ app.delete('/tournaments/:id', (req, res) => tournamentController.deleteTourname
 app.get('/tournamentQuery', (req, res) => tournamentController.queryTournament(req,res));
 
 app.get('/tournament-matches/:id', (req, res) => tournamentMatchesController.queryTournamentMatchesByTournamentId(req,res));
+app.get('/tournament-matches', (req, res) => tournamentMatchesController.queryMatches(req,res));
 
 //Videos
 app.post('/video', (req, res) => videoController.addVideo(req,res));

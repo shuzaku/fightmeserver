@@ -5,7 +5,9 @@ var ObjectId = require('mongodb').ObjectId;
 function queryTournamentMatchesByTournamentId(req, res) {
 
   if(req.query.queryName && req.query.queryValue) {
-    this.queryMatches(req, res);
+
+    var tournamentId =  ObjectId(req.params.id);
+    this.queryMatches(req, res, tournamentId);
   } 
   else {
     var tournamentId =  ObjectId(req.params.id);
@@ -60,25 +62,36 @@ function queryTournamentMatchesByTournamentId(req, res) {
   }
 };
 
-function queryMatches(req, res) {
-  var tournamentId =  req.params.id;
+function queryMatches(req, res, tournamentId =  null) {
 
   var names = req.query.queryName.split(",");
   var values = req.query.queryValue.split(",");
-  var queries = { TournamentId : ObjectId(tournamentId)};  
+  var queries = [];
+  if(tournamentId) {
+    queries.push({'TournamentId': ObjectId(tournamentId)})
+  }
   
   if (names.length > 0){
       for(var i = 0; i < names.length; i++){
         var query = {};
         if (names[i] === 'GameId') {
-          queries[names[i]] =  ObjectId(values[i]);
+          queries.push({'GameId':ObjectId(values[i])});
         }
         else if (names[i] === 'Id') {
-          queries['_id'] =   ObjectId(values[i]);
+          queries.push({'_id':ObjectId(values[i])});
+        }
+        else if (names[i] === 'CharacterId') {
+          var characterQuery= [
+            {"Team1PlayerCharacters": { '$elemMatch': { '_id':  ObjectId(values[i]) } }},
+            {"Team2PlayerCharacters": { '$elemMatch': { '_id':  ObjectId(values[i]) } }},
+          ];
+          queries.push({$or: characterQuery});
         }
         else {
-          query[names[i]] =  {'$eq': values[i]}
-        }queries
+          var newQuery = {}
+          newQuery[names[i]] = {'$eq': values[i]}
+          queries.push(newQuery);
+        }
       }
   } 
   else {
@@ -87,13 +100,7 @@ function queryMatches(req, res) {
     }
   }
 
-  console.log(queries);
-
   var aggregate = [
-    {
-      '$match':
-        queries
-    },
     {
       '$lookup': {
         'from': 'players', 
@@ -130,8 +137,18 @@ function queryMatches(req, res) {
         'as': 'Game'
       }
     },
+    {
+      '$unwind': {
+        'path': '$Character', 
+        'preserveNullAndEmptyArrays': true
+      }
+    },
   ];
   
+  if(queries.length > 0) {
+    aggregate.push({$match: {$and: queries}});
+  }
+
   TournamentMatches.aggregate(aggregate, function (error, matches) {
     if (error) { console.error(error); }
     res.send({
