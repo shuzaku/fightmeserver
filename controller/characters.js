@@ -52,13 +52,16 @@ function queryCharacter(req, res) {
         var query = {'_id':   ObjectId(values[i])};
         queries.push(query);
       } else if (names[i] === 'GameId') {
-        queries[names[i]] =  ObjectId(values[i]);
+        var query = {'GameId':   ObjectId(values[i])};
+        queries.push(query);
       }  
       else {
         query[names[i]] = values[i];
         queries.push(query);
       }
     }
+
+    console.log(queries)
     
     if(queries.length > 1) {
       Character.find({ $or: queries }, 'Name ImageUrl AvatarUrl Slug', function (error, characters) {

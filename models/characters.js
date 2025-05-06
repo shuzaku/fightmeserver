@@ -1,5 +1,6 @@
 var mongoose = require("mongoose");
 var Schema = mongoose.Schema;
+const ObjectId = Schema.Types.ObjectId;
 
 var CharacterSchema = new Schema({
   Name: {
@@ -13,7 +14,7 @@ var CharacterSchema = new Schema({
     type: String
   },
   GameId: {
-    type: String,
+    type: ObjectId,
     required: '{PATH} is required!'
   }
 }, {
