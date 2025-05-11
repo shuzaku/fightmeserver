@@ -98,6 +98,13 @@ function queryMatches(req, res, tournamentId =  null) {
           ];
           queries.push({$or: characterQuery});
         }
+        else if (names[i] === 'PlayerId') {
+          var characterQuery= [
+            {"Team1Player": { '$elemMatch': { '_id':  ObjectId(values[i]) } }},
+            {"Team2Player": { '$elemMatch': { '_id':  ObjectId(values[i]) } }},
+          ];
+          queries.push({$or: characterQuery});
+        }
         else {
           var newQuery = {}
           newQuery[names[i]] = {'$eq': values[i]}
