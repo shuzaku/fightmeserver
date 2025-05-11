@@ -22,6 +22,7 @@ let characterMatchupController = require("../controller/character-matchups");
 let featuredPlayerController = require("../controller/featured-players");
 let ratingUpdateScrapperController = require("../controller/scrapper");
 let tournamentMatchesController = require("../controller/tournament-matches");
+let featuredVideoController = require("../controller/featured-videos")
 
 const schedule = require('node-schedule');
 
@@ -196,3 +197,6 @@ app.delete('/updates/:id', (req, res) => updateController.deleteUpdate(req,res))
 
 //Featured Players
 app.get('/featuredPlayers', (req, res) => featuredPlayerController.getFeaturedPlayers(req,res));
+
+//Featured Video
+app.get('/featured-video', (req, res) => featuredVideoController.getFeaturedVideo(req,res));

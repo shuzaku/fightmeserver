@@ -58,6 +58,9 @@ function queryTournamentMatchesByTournamentId(req, res) {
       },
     ]
 
+    aggregate.push({$skip: skip});
+    aggregate.push({$limit: 5});  
+
     aggregate.unshift({$match: { TournamentId: tournamentId }});
 
     TournamentMatches.aggregate(aggregate, function (error, matches) {
@@ -161,6 +164,9 @@ function queryMatches(req, res, tournamentId =  null) {
   if(queries.length > 0) {
     aggregate.push({$match: {$and: queries}});
   }
+
+  aggregate.push({$skip: skip});
+  aggregate.push({$limit: 5});  
 
   TournamentMatches.aggregate(aggregate, function (error, matches) {
     if (error) { console.error(error); }
