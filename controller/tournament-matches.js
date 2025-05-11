@@ -3,6 +3,7 @@ var ObjectId = require('mongodb').ObjectId;
 
 // Query Tournament Matches
 function queryTournamentMatchesByTournamentId(req, res) {
+  var skip =  parseInt(req.query.skip) || 0;
 
   if(req.query.queryName && req.query.queryValue) {
 
@@ -73,7 +74,7 @@ function queryTournamentMatchesByTournamentId(req, res) {
 };
 
 function queryMatches(req, res, tournamentId =  null) {
-
+  var skip =  parseInt(req.query.skip) || 0;
   var names = req.query.queryName.split(",");
   var values = req.query.queryValue.split(",");
   var queries = [];
