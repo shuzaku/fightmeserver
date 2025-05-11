@@ -21,6 +21,9 @@ var TournamentMatchesSchema = new Schema({
   Notes: {
     type: String
   },
+  SecondaryNotes: {
+    type: String
+  },
   ClipStart: {
     type: String
   },
