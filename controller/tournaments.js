@@ -117,18 +117,16 @@ function queryTournament(req, res) {
   var db = req.db;
   var names = req.query.queryName.split(",");
   var values = req.query.queryValue.split(",");
-  var sort = req.query.sort || '_id';
+  var sort = req.query.sort || 'EventDate';
   var queries = [];
   var sortParameter = {};
 
   var sortProperty = sort.split(' ')[0] || 'EventDate';
   var sortDirection = sort.split(' ')[1] || 'asc';
 
-  if(sortProperty) {
+
+
     sortParameter[sortProperty] = sortDirection === 'asc' ? 1 : -1;
-  } else {
-    sortParameter['EventDate'] = 1;
-  }
 
   for(var i = 0; i < names.length; i++){
     var query = {};
@@ -145,6 +143,7 @@ function queryTournament(req, res) {
       queries.push(query);
     }
   }
+
   
   if(queries.length > 1) {
     Tournament.find({ $or: queries }, 'Name Games Image EventDate TournamentSeries Location BracketUrl IsFinished', function (error, tournaments) {
