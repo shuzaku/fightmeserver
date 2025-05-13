@@ -118,6 +118,8 @@ function queryMatches(req, res, tournamentId =  null) {
     }
   }
 
+  console.log(queries)
+
   var aggregate = [
     {
       '$lookup': {
