@@ -124,9 +124,11 @@ function queryTournament(req, res) {
   var sortProperty = sort.split(' ')[0] || 'EventDate';
   var sortDirection = sort.split(' ')[1] || 'asc';
 
-  sortParameter[sortProperty] = sortDirection === 'asc' ? 1 : -1;
-
-  console.log(sortParameter);
+  if(sortProperty) {
+    sortParameter[sortProperty] = sortDirection === 'asc' ? 1 : -1;
+  } else {
+    sortParameter['EventDate'] = 1;
+  }
 
   for(var i = 0; i < names.length; i++){
     var query = {};
