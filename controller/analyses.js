@@ -24,19 +24,19 @@ function getAnalysisByMatchId(req, res) {
     }
 
     if(queries.length > 1) {
-      Analyses.find({ $or: queries }, 'MatchType MatchId Detections', function (error, anlyses) {
+      Analyses.find({ $or: queries }, 'MatchType MatchId Detections', function (error, analyses) {
         if (error) { console.error(error); }
         res.send({
-          anlyses: anlyses
+          analyses: analyses
         })
       })
     }
     else {
-      Analyses.find(queries[0], 'MatchType MatchId Detections', function (error, anlyses) {
+      Analyses.find(queries[0], 'MatchType MatchId Detections', function (error, analyses) {
         if (error) { console.error(error); }
 
         res.send({
-          anlyses: v
+          analyses: analyses
         })
       })  
     }
