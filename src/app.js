@@ -23,6 +23,7 @@ let featuredPlayerController = require("../controller/featured-players");
 let ratingUpdateScrapperController = require("../controller/scrapper");
 let tournamentMatchesController = require("../controller/tournament-matches");
 let featuredVideoController = require("../controller/featured-videos")
+let analysesController = require("../controller/analyses")
 
 const schedule = require('node-schedule');
 
@@ -153,6 +154,7 @@ app.get('/matchesPlayer/', (req, res) => matchController.queryByPlayer(req,res))
 app.get('/characterMatchup', (req, res) => matchController.getMatchupVideos(req,res));
 app.get('/characterSlugMatchup', (req, res) => matchController.getSlugMatchupVideos(req,res));
 app.get('/matchesGame/', (req, res) => matchController.queryByGame(req,res));
+app.get('/matchAnalysis/:id', (req, res) => analysesController.getAnalysisByMatchId(req,res));
 
 //Collections
 app.post('/collections', (req, res) => collectionController.addCollection(req,res));
