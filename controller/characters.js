@@ -60,8 +60,6 @@ function queryCharacter(req, res) {
         queries.push(query);
       }
     }
-
-    console.log(queries)
     
     if(queries.length > 1) {
       Character.find({ $or: queries }, 'Name ImageUrl AvatarUrl Slug', function (error, characters) {

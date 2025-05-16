@@ -3,16 +3,43 @@ var ObjectId = require('mongodb').ObjectId;
 
 // Fetch all matches
 function getAnalysisByMatchId(req, res) {
-    var aggregate = [];
-    aggregate.push({$match: { "MatchId" : ObjectId(req.params.id) }});
+    var db = req.db;
+    var names = req.query.queryName.split(",");
+    var values = req.query.queryValue.split(",");
+    var queries = [];
+  
+    for(var i = 0; i < names.length; i++){
+      var query = {};
+      if(names[i] === ('Id')){
+        var query = {'_id':   ObjectId(values[i])};
+        queries.push(query);
+      } else if (names[i] === 'MatchId') {
+        var query = {'MatchId':   ObjectId(values[i])};
+        queries.push(query);
+      }  
+      else {
+        query[names[i]] = values[i];
+        queries.push(query);
+      }
+    }
 
-  Analyses.aggregate(aggregate, function (error, data) {
-    if (error) { console.error(error); }
-    console.log(data)
-    res.send({
-      data: data
-    })
-  })
+    if(queries.length > 1) {
+      Analyses.find({ $or: queries }, 'MatchType MatchId Detections', function (error, anlyses) {
+        if (error) { console.error(error); }
+        res.send({
+          anlyses: anlyses
+        })
+      })
+    }
+    else {
+      Analyses.find(queries[0], 'MatchType MatchId Detections', function (error, anlyses) {
+        if (error) { console.error(error); }
+
+        res.send({
+          anlyses: v
+        })
+      })  
+    }
 }
 
 module.exports = { getAnalysisByMatchId}
