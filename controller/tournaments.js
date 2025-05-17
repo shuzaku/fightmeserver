@@ -144,7 +144,7 @@ function queryTournament(req, res) {
 
   
   if(queries.length > 1) {
-    Tournament.find({ $or: queries }, 'Name Games Image EventDate TournamentSeries Location BracketUrl IsFinished', function (error, tournaments) {
+    Tournament.find({ $or: queries }, 'Name Games Image EventDate TournamentSeries Location BracketUrl IsFinished BracketFilters', function (error, tournaments) {
       if (error) { console.error(error); }
       res.send({
         tournaments: tournaments
@@ -152,7 +152,7 @@ function queryTournament(req, res) {
     }).sort(sortParameter)
   }
   else {
-    Tournament.find(queries[0], 'Name Games Image EventDate TournamentSeries Location BracketUrl IsFinished', function (error, tournaments) {
+    Tournament.find(queries[0], 'Name Games Image EventDate TournamentSeries Location BracketUrl IsFinished BracketFilters', function (error, tournaments) {
       if (error) { console.error(error); }
 
       res.send({
