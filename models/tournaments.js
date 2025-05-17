@@ -6,15 +6,37 @@ var TournamentsSchema = new Schema({
     type: String,
     required: '{PATH} is required!'
   },
-  GameIds: {
+  Games: {
     type: Array,
   },
   LogoUrl: {
     type: String
   },
-  Date: {
+  EventDate: {
+    type: Date
+  },
+  Location: {
     type: String
-  }
+  },
+  Series: {
+    type: String
+  },
+  Image: {
+    type: String
+  },
+  Tier: {
+    type: Number
+  },
+  IsFinished: {
+    type: Boolean,
+    default: false
+  },
+  BracketUrl: {
+    type: String
+  },
+  BracketFilter: {
+    type: Array
+  },
 }, {
   timestamps: true, 
 });
