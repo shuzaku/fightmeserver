@@ -10,6 +10,7 @@ function addTournament(req, res) {
   var TournamentSeries = req.body.TournamentSeries;
   var Location = req.body.Location;
   var BracketUrl = req.body.BracketUrl;
+  var BracketFilters = req.body.BracketFilters;
 
   var new_tournament = new Tournament({
     Name: Name,
@@ -18,7 +19,8 @@ function addTournament(req, res) {
     EventDate: EventDate,
     TournamentSeries: TournamentSeries,
     Location: Location,
-    BracketUrl: BracketUrl
+    BracketUrl: BracketUrl,
+    BracketFilters: BracketFilters
   })
 
   new_tournament.save(function (error, tournament) {
@@ -35,7 +37,7 @@ function addTournament(req, res) {
 
 // Fetch all tournament
 function getTournaments(req, res) {
-  Tournament.find({}, 'Name Games Image EventDate TournamentSeries Location BracketUrl IsFinished', function (error, tournaments) {
+  Tournament.find({}, 'Name Games Image EventDate TournamentSeries Location BracketUrl IsFinished BracketFilters', function (error, tournaments) {
     if (error) { console.error(error); }
     res.send({
       tournaments: tournaments
@@ -46,7 +48,7 @@ function getTournaments(req, res) {
 // Fetch completed tournaments
 function getCompletedTournaments(req, res) {
   const today = new Date();
-  Tournament.find({ IsFinished: true}, 'Name Games Image EventDate TournamentSeries Location BracketUrl IsFinished', function (error, tournaments) {
+  Tournament.find({ IsFinished: true}, 'Name Games Image EventDate TournamentSeries Location BracketUrl IsFinished BracketFilters', function (error, tournaments) {
     if (error) { console.error(error); }
     res.send({
       tournaments: tournaments
@@ -67,7 +69,7 @@ function getTournamentSeries(req, res) {
 // Fetch single tournament
 function getTournament(req, res) {
   var db = req.db;
-  Tournament.findById(req.params.id, 'Name Games Image EventDate TournamentSeries Location BracketUrl IsFinished', function (error, tournament) {
+  Tournament.findById(req.params.id, 'Name Games Image EventDate TournamentSeries Location BracketUrl IsFinished BracketFilters', function (error, tournament) {
     if (error) { console.error(error); }
     res.send(tournament)
   })
@@ -76,7 +78,7 @@ function getTournament(req, res) {
 // Update a tournament
 function updateTournament(req, res) {
   var db = req.db;
-  Tournament.findById(req.params.id, 'Name Games Image EventDate TournamentSeries Location BracketUrl IsFinished', function (error, tournament) {
+  Tournament.findById(req.params.id, 'Name Games Image EventDate TournamentSeries Location BracketUrl IsFinished BracketFilters', function (error, tournament) {
     if (error) { console.error(error); }
 
     tournament.Name = req.body.Name;
