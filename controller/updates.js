@@ -43,6 +43,17 @@ function getUpdates(req, res) {
   }).sort({ Date: 1 })
 }
 
+function queryRecentUpdates(req, res) {
+    Update.find({$and: [{Date: { $lt: new Date(new Date().setHours(0, 0, 0, 0)) }},{Type: "Game Update"}]}, 'Type SubType Games Note Date Image Link', function (error, updates) {
+      if (error) { console.error(error); }
+      res.send({
+        updates: updates
+      })
+    }).sort({ Date: -1 })  
+  
+};
+
+
 // Fetch single Update
 function getUpdate(req, res) {
   var db = req.db;
@@ -66,4 +77,4 @@ function deleteUpdate(req, res) {
   })
 }
 
-module.exports = { addUpdate, getUpdates, getUpdate, deleteUpdate}
+module.exports = { addUpdate, getUpdates, getUpdate, deleteUpdate, queryRecentUpdates}
