@@ -195,6 +195,7 @@ app.delete('/articles/:id', (req, res) => articleController.deleteArticle(req,re
 //Update
 app.post('/updates', (req, res) => updateController.addUpdate(req,res));
 app.get('/updates', (req, res) => updateController.getUpdates(req,res));
+app.get('/recentUpdates', (req, res) => updateController.queryRecentUpdates(req,res));
 app.delete('/updates/:id', (req, res) => updateController.deleteUpdate(req,res));
 
 //Featured Players
