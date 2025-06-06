@@ -2,7 +2,7 @@ var Player = require("../models/players");
 var ObjectId = require('mongodb').ObjectId;
 var MatchService = require("../service/matches-service");
 var Match = require("../models/matches");
-
+var TournamentMatch = require("../models/tournament-matches");
 
 // Add new player
 function addPlayer(req, res) {
@@ -159,16 +159,21 @@ async function mergePlayers(req, res){
   Match.updateMany(player2Query,player2setQuery, function (res,error) {
     if (error) { console.error(error); }
   })
-  Player.remove({
+  TournamentMatch.updateMany(player1Query,player1setQuery, function (res,error) {
+    if (error) { console.error(error); }
+  })
+  TournamentMatch.updateMany(player2Query,player2setQuery, function (res,error) {
+    if (error) { console.error(error); }
+  })
+  Player.deleteOne({
     _id: req.params.player1Id
   }, function (err) {
-    if (err)
+    if (err){
       res.send(err)
-    res.send({
-      success: true
-    })
+    }
+      res.send('Player Merged');
   })  
-  res.send('Player Merged');
+  
 }
 
 module.exports = 
