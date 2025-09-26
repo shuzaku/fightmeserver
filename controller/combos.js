@@ -59,15 +59,42 @@ function addCombo(req, res) {
     })
   }
   else {
-    Combo.insertMany(req.body, function(error,combos){
+    var comboRequest = req.body.map((combo) => {
+      return {
+        CharacterId: combo.CharacterId,
+        ComboInputs: combo.Inputs,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+    });
+
+    Combo.insertMany(comboRequest, function(error, combos){
       if (error) {
         console.log(error)
       }
-      res.send({
-        success: true,
-        message: 'Characters saved successfully!',
-        combos: combos
-      })      
+
+      var comboClipRequest = combos.map((combo, index) => {
+        return {
+          Url: req.body[index].Url,
+          StartTime: req.body[index].StartTime,
+          EndTime: req.body[index].EndTime,
+          ComboId: combo._id,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }});
+
+        ComboClip.insertMany(comboClipRequest, function(error, comboClip){
+        if (error) {
+          console.log(error)
+        }
+
+        res.send({
+          success: true,
+          message: 'Combos saved successfully!',
+          combos: combos,
+          comboClips: comboClip
+        })      
+      })
     })
   }
 };
