@@ -11,13 +11,6 @@ function addVideo(req, res) {
     var GameId = req.body.GameId;
     var StartTime = req.body.StartTime;
     var EndTime = req.body.EndTime;
-    var Combos = ContentType === 'Combo' ? req.body.Combos.map(combo => {
-      return {
-        Id: ObjectId(combo.Id),
-        StartTime: combo.StartTime,
-        Endtime: combo.EndTime
-      }
-    }): null;
     var Tags = req.body.Tags;
 
     var isDuplicate = Video.find({ "Url" : Url}).limit(1).size();
@@ -37,7 +30,6 @@ function addVideo(req, res) {
         EndTime: EndTime,
         GameId: GameId,
         Tags: Tags,
-        Combos: Combos
       })
 
       if(ContentCreatorId) {
