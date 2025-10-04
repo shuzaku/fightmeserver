@@ -24,7 +24,7 @@ let ratingUpdateScrapperController = require("../controller/scrapper");
 let tournamentMatchesController = require("../controller/tournament-matches");
 let featuredVideoController = require("../controller/featured-videos")
 let analysesController = require("../controller/analyses")
-let homeController = require("../controller/home")
+let homeController = require("../controller/featured-matches")
 
 const schedule = require('node-schedule');
 
