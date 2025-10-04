@@ -1,5 +1,6 @@
 var FeaturedVideos = require("../models/featured-videos");
 var ObjectId = require('mongodb').ObjectId;
+var { parseLimit, parseSkip, parseSortWithDirection } = require("../utils/query-utils");
 
   function getFeaturedVideo(req, res) {
     var limit = parseLimit(req, 20, 100);
