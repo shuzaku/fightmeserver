@@ -1,5 +1,6 @@
 //controllers
 let accountController = require("../controller/accounts");
+let authController = require("../controller/auth");
 let characterController = require("../controller/characters");
 let comboController = require("../controller/combos");
 let comboClipController = require("../controller/combo-clip");
@@ -32,6 +33,10 @@ const bodyParser = require('body-parser')
 const morgan = require('morgan')
 const cors = require('cors')
 
+// Import authentication middleware
+const { authenticateToken, requireRole, requireAdmin } = require('../middleware/auth');
+const { requirePermission } = require('../middleware/permissions');
+
 let dotenv = require('dotenv');
 dotenv.config();
 var connectionString  = `mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@cluster0.vdh52.mongodb.net/Fighters-Edge?retryWrites=true&w=majority`;
@@ -42,8 +47,14 @@ app.use(morgan('combined'))
 app.use(bodyParser.json())
 app.use(cors())
 
+// Apply authentication middleware to all routes
+app.use(authenticateToken)
 
-mongoose.connect(connectionString);
+
+mongoose.connect(connectionString, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+});
 var db = mongoose.connection;
 db.on("error", console.error.bind(console, "connection error"));
 db.once("open", function () {
@@ -60,26 +71,41 @@ const rule = new schedule.RecurrenceRule();
 //   ratingUpdateScrapperController.scrapeContent();
 // });
 
+// Authentication routes (no auth required)
+app.post('/auth/login', (req, res) => authController.login(req, res));
+app.post('/auth/register', (req, res) => authController.register(req, res));
+
+// Protected authentication routes
+app.get('/auth/profile', (req, res) => authController.getProfile(req, res));
+app.put('/auth/profile', (req, res) => authController.updateProfile(req, res));
+
+// Password reset routes (no auth required)
+app.post('/auth/reset-password', (req, res) => authController.resetPassword(req, res));
+app.get('/auth/check-password-reset', (req, res) => authController.checkPasswordReset(req, res));
+
 //Accounts
 app.post('/accounts', (req, res) => accountController.addAccount(req,res));
 app.get('/accounts/:id', (req, res) => accountController.getAccount(req,res));
-app.put('/accounts/:id', (req, res) => accountController.patchAccount(req,res));
+app.put('/accounts/:id', requireRole(['admin']), (req, res) => accountController.patchAccount(req,res));
+
+//HomePage
+app.get('/featured-matches', (req, res) => homeController.getFeaturedMatches(req, res));
 
 //Characters
-app.post('/characters', (req, res) => characterController.addCharacter(req,res));
+app.post('/characters', requireRole(['admin']), (req, res) => characterController.addCharacter(req,res));
 app.get('/characterQuery', (req, res) => characterController.queryCharacter(req,res));
 app.get('/characters', (req, res) => characterController.getCharacters(req,res));
 app.get('/characters/:id', (req, res) => characterController.getCharacter(req,res));
 app.get('/characterSlug/:slug', (req, res) => characterController.getCharacterBySlug(req,res));
 
-app.put('/characters/:id', (req, res) => characterController.updateCharacter(req,res));
-app.delete('/characters/:id', (req, res) => characterController.deleteCharacter(req,res));
+app.put('/characters/:id', requireRole(['admin']), (req, res) => characterController.updateCharacter(req,res));
+app.delete('/characters/:id', requireRole(['admin']), (req, res) => characterController.deleteCharacter(req,res));
 app.get('/characterMatchupInfo', (req, res) => characterController.getMatchupInfo(req,res));
 
 //Combos
-app.post('/combos', (req, res) => comboController.addCombo(req,res));
-app.put('/combo/:id', (req, res) => comboController.patchCombo(req,res));
-app.delete('/combo/:id', (req, res) => comboController.deleteCombo(req,res));
+app.post('/combos', requireRole(['admin', 'user']), (req, res) => comboController.addCombo(req,res));
+app.put('/combo/:id', requireRole(['admin', 'user']), (req, res) => comboController.patchCombo(req,res));
+app.delete('/combo/:id', requireRole(['admin', 'user']), (req, res) => comboController.deleteCombo(req,res));
 app.get('/comboClip/:id', (req, res) => comboClipController.getComboClip(req,res));
 
 //Creators

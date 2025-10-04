@@ -10,11 +10,17 @@ var AccountSchema = new Schema({
     type: String,
     required: '{PATH} is required!'
   },
+  Password: {
+    type: String,
+    required: false // Make optional for existing users
+  },
   IsEmailVerified: {
     type: Boolean
   },
   AccountType: {
-    type: String
+    type: String,
+    enum: ['admin', 'user'],
+    default: 'user'
   },
   Uid: {
     type: String
@@ -33,6 +39,10 @@ var AccountSchema = new Schema({
   },
   FollowedGames: {
     type: Array
+  },
+  NeedsPasswordReset: {
+    type: Boolean,
+    default: false
   }
 }, {
   timestamps: true, 

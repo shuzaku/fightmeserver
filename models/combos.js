@@ -23,6 +23,10 @@ var ComboSchema = new Schema({
   },
   UpdatedBy: {
     type: ObjectId
+  },
+  isReviewed: {
+    type: Boolean,
+    default: false
   }
 }, {
   timestamps: true, 

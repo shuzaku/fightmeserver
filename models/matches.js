@@ -44,6 +44,10 @@ var MatchessSchema = new Schema({
   },
   EndTime: {
     type: String
+  },
+  isReviewed: {
+    type: Boolean,
+    default: false
   }
 }, {
   timestamps: true, 

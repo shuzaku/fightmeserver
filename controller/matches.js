@@ -38,7 +38,8 @@ function addMatches(req, res) {
         LosingPlayersId: LosingPlayersId,
         StartTime: StartTime,
         EndTime: EndTime,
-        TournamentMatchType:TournamentMatchType
+        TournamentMatchType:TournamentMatchType,
+        IsReviewed: false
       });
     
       new_match.save(function (error,match) {
@@ -79,7 +80,8 @@ function addMatches(req, res) {
           SubmittedBy: match.SubmittedBy,
           UpdatedBy: match.UpdatedBy,
           TournamentId: ObjectId(match.TournamentId),
-          TournamentMatchType: match.TournamentMatchType
+          TournamentMatchType: match.TournamentMatchType,
+          IsReviewed: false
         }
       })
 
