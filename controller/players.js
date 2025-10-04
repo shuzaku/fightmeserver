@@ -3,6 +3,7 @@ var ObjectId = require('mongodb').ObjectId;
 var MatchService = require("../service/matches-service");
 var Match = require("../models/matches");
 var TournamentMatch = require("../models/tournament-matches");
+var { parseLimit, parseSkip, parseSort, parseSortWithDirection } = require("../utils/query-utils");
 
 // Add new player
 function addPlayer(req, res) {
@@ -45,12 +46,16 @@ else {
 
 // Fetch all players
 function getPlayers(req, res) {
+  var limit = parseLimit(req, 20, 100);
+  var skip = parseSkip(req);
+  var sortObj = parseSortWithDirection(req, '_id', -1);
+  
   Player.find({}, 'Name PlayerImg Slug MatchupAppearance Twitter Stream Youtube', function (error, players) {
     if (error) { console.error(error); }
     res.send({
       players: players
     })
-  }).sort({ _id: -1 })
+  }).sort(sortObj).skip(skip).limit(limit)
 }
 
 // Fetch single player
@@ -101,6 +106,9 @@ function queryPlayer(req, res) {
   var names = req.query.queryName.split(",");
   var values = req.query.queryValue.split(",");
   var queries = [];
+  var limit = parseLimit(req, 10, 50);
+  var skip = parseSkip(req);
+  var sortObj = parseSortWithDirection(req, 'Name', 1);
 
   for(var i = 0; i < names.length; i++){
     var query = {};
@@ -119,7 +127,7 @@ function queryPlayer(req, res) {
       res.send({
         players: players
       })
-    }).sort({ Name: 1 })    
+    }).sort(sortObj).skip(skip).limit(limit)    
   }
   else {
     Player.find(queries[0], 'Name PlayerImg ', function (error, players) {
@@ -128,7 +136,7 @@ function queryPlayer(req, res) {
       res.send({
         players: players
       })
-    }).sort({ Name: 1 })    
+    }).sort(sortObj).skip(skip).limit(limit)    
   }
 };
 
