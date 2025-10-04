@@ -1,5 +1,6 @@
 var Video = require("../models/videos");
 var ObjectId = require('mongodb').ObjectId;
+var { parseLimit, parseSkip, parseSort, parseSortWithDirection } = require("../utils/query-utils");
 
 // Add new Video
 function addVideo(req, res) {
@@ -61,7 +62,8 @@ function addVideo(req, res) {
 }
 // Query Videos
 function fetchVideos(req, res) {
-  var skip =  parseInt(req.query.skip);
+  var skip = parseSkip(req);
+  var limit = parseLimit(req, 5, 20);
   var aggregate = [
     {
       '$sort': 
@@ -108,7 +110,7 @@ function fetchVideos(req, res) {
 
   
   aggregate.push({$skip: skip});
-  aggregate.push({$limit: 5});  
+  aggregate.push({$limit: limit});  
   
   Video.aggregate(aggregate, function (error, videos) {
     if (error) { console.error(error); }
@@ -122,8 +124,9 @@ function fetchVideos(req, res) {
 function queryVideo(req, res) {
   var queries = [];
   var query = null;
-  var skip =  parseInt(req.query.skip);
-  var sort = req.query.sort || '_id';
+  var skip = parseSkip(req);
+  var limit = parseLimit(req, 5, 20);
+  var sortObj = parseSortWithDirection(req, '_id', -1);
   var filter = req.query.filter;
   var tagFilter = req.query.tag ? ObjectId(req.query.tag): null;
   var aggregate = [
@@ -352,7 +355,7 @@ function queryVideo(req, res) {
   } else if(sort === "Hits") {
     aggregate.push({$sort: {'Combo.Hits': -1}})
   } else {
-    aggregate.push({$sort: {'_id': -1}})
+    aggregate.push({$sort: sortObj})
   }
   
   if(filter){
@@ -368,9 +371,9 @@ function queryVideo(req, res) {
     aggregate.push({$match: {"Combo.Tags": { '$elemMatch': { '_id':  ObjectId(tagFilter) } }}});
   }
   
-  aggregate.push({$sort: {'_id': -1}})
+  aggregate.push({$sort: sortObj})
   aggregate.push({$skip: skip});
-  aggregate.push({$limit: 5});  
+  aggregate.push({$limit: limit});  
   
   Video.aggregate(aggregate, function (error, videos) {
     if (error) { console.error(error); }
@@ -383,7 +386,9 @@ function queryVideo(req, res) {
 // Query by character
 function queryVideoByCharacter(req, res) {
   var queries = [];
-  var skip =  parseInt(req.query.skip);
+  var skip = parseSkip(req);
+  var limit = parseLimit(req, 5, 20);
+  var sortObj = parseSortWithDirection(req, '_id', -1);
   var aggregate = [ 
     {
       '$lookup': {
@@ -493,9 +498,9 @@ function queryVideoByCharacter(req, res) {
   if(queries.length > 0) {
     aggregate.push({$match: {$and: queries}});
   }
-  aggregate.push({$sort: { _id: -1 }});  
+  aggregate.push({$sort: sortObj});  
   aggregate.push({$skip: skip});
-  aggregate.push({$limit: 5});  
+  aggregate.push({$limit: limit});  
   Video.aggregate(aggregate, function (error, videos) {
     if (error) { console.error(error); }
     res.send({
@@ -508,8 +513,9 @@ function queryVideoByCharacter(req, res) {
 function queryVideoByPlayer(req, res) {
   var queries = [];
   var query = null;
-  var skip =  parseInt(req.query.skip);
-  var sort = req.query.sort || '_id';
+  var skip = parseSkip(req);
+  var limit = parseLimit(req, 5, 20);
+  var sortObj = parseSortWithDirection(req, '_id', -1);
   var filter = req.query.filter;
   var tagFilter = req.query.tag ? ObjectId(req.query.tag): null;
   var aggregate = [{
@@ -573,9 +579,9 @@ function queryVideoByPlayer(req, res) {
     aggregate.push({$match: {$and: queries}});
   }
 
-  aggregate.push({$sort: {'_id': -1}})
+  aggregate.push({$sort: sortObj})
   aggregate.push({$skip: skip});
-  aggregate.push({$limit: 5});  
+  aggregate.push({$limit: limit});  
   
   Video.aggregate(aggregate, function (error, videos) {
     if (error) { console.error(error); }
@@ -589,8 +595,9 @@ function queryVideoByPlayer(req, res) {
 function queryVideoByGame(req, res) {
   var queries = [];
   var query = null;
-  var skip =  parseInt(req.query.skip);
-  var sort = req.query.sort || '_id';
+  var skip = parseSkip(req);
+  var limit = parseLimit(req, 5, 20);
+  var sortObj = parseSortWithDirection(req, '_id', -1);
   var filter = req.query.filter;
   var aggregate = [
     {
@@ -640,9 +647,9 @@ function queryVideoByGame(req, res) {
     aggregate.push({$match: {$and: queries}});
   }
 
-  aggregate.push({$sort: {'_id': -1}})
+  aggregate.push({$sort: sortObj})
   aggregate.push({$skip: skip});
-  aggregate.push({$limit: 5});  
+  aggregate.push({$limit: limit});  
   
   Video.aggregate(aggregate, function (error, videos) {
     if (error) { console.error(error); }
@@ -831,9 +838,11 @@ function deleteVideo(req, res) {
 
 // Fetch all Tag
 function getVideos(req, res) {
-  var skip =  parseInt(req.query.skip);
+  var skip = parseSkip(req);
+  var limit = parseLimit(req, 5, 20);
+  var sortObj = parseSortWithDirection(req, '_id', -1);
   var aggregate = [
-    {'$sort': {'_id': -1}},
+    {'$sort': sortObj},
     {
       '$lookup': {
         'from': 'combos', 
@@ -879,7 +888,7 @@ function getVideos(req, res) {
   ]
 
   aggregate.push({$skip: skip});
-  aggregate.push({$limit: 5});  
+  aggregate.push({$limit: limit});  
   aggregate.push({$project:{
     "Match._id": 1, 
     "Combo":{
@@ -993,12 +1002,12 @@ function getMatchVideo(req, res) {
 function getMatchupVideos(req, res) {
   var queries = [];
 
-  var skip =  parseInt(req.query.skip);
+  var skip = parseSkip(req);
+  var limit = parseLimit(req, 5, 20);
+  var sortObj = parseSortWithDirection(req, '_id', -1);
   var aggregate = [
     {
-      '$sort': 
-        {'_id': -1}
-      
+      '$sort': sortObj
     },
     {
       '$lookup': {
@@ -1086,7 +1095,7 @@ function getMatchupVideos(req, res) {
   aggregate.push({$match: {$or: queries}});
 
   aggregate.push({$skip: skip});
-  aggregate.push({$limit: 5});  
+  aggregate.push({$limit: limit});  
   
   Video.aggregate(aggregate, function (error, videos) {
     if (error) { console.error(error); }

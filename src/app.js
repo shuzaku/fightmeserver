@@ -24,6 +24,7 @@ let ratingUpdateScrapperController = require("../controller/scrapper");
 let tournamentMatchesController = require("../controller/tournament-matches");
 let featuredVideoController = require("../controller/featured-videos")
 let analysesController = require("../controller/analyses")
+let homeController = require("../controller/home")
 
 const schedule = require('node-schedule');
 
@@ -64,6 +65,9 @@ const rule = new schedule.RecurrenceRule();
 app.post('/accounts', (req, res) => accountController.addAccount(req,res));
 app.get('/accounts/:id', (req, res) => accountController.getAccount(req,res));
 app.put('/accounts/:id', (req, res) => accountController.patchAccount(req,res));
+
+//Home
+app.get('/featured-matches/', (req, res) => homeController.getFeaturedMatches(req,res));
 
 //Characters
 app.post('/characters', (req, res) => characterController.addCharacter(req,res));
