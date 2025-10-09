@@ -350,13 +350,13 @@ function queryVideo(req, res) {
     aggregate.push({$match: {$and: queries}});
   }
 
-  if(sort === "Damage"){
-    aggregate.push({$sort: {'Combo.Damage': -1}})
-  } else if(sort === "Hits") {
-    aggregate.push({$sort: {'Combo.Hits': -1}})
-  } else {
-    aggregate.push({$sort: sortObj})
-  }
+  // if(sort === "Damage"){
+  //   aggregate.push({$sort: {'Combo.Damage': -1}})
+  // } else if(sort === "Hits") {
+  //   aggregate.push({$sort: {'Combo.Hits': -1}})
+  // } else {
+  //   aggregate.push({$sort: sortObj})
+  // }
   
   if(filter){
     if (filter === 'Combo'){
