@@ -20,11 +20,11 @@ let articleController = require("../controller/articles");
 let updateController = require("../controller/updates");
 let characterMatchupController = require("../controller/character-matchups");
 let featuredPlayerController = require("../controller/featured-players");
-let ratingUpdateScrapperController = require("../controller/scrapper");
 let tournamentMatchesController = require("../controller/tournament-matches");
 let featuredVideoController = require("../controller/featured-videos")
 let analysesController = require("../controller/analyses")
-let homeController = require("../controller/featured-matches")
+let featuredMatchesController = require("../controller/featured-matches")
+let homeController = require("../controller/home")
 
 const schedule = require('node-schedule');
 
@@ -61,13 +61,16 @@ const rule = new schedule.RecurrenceRule();
 //   ratingUpdateScrapperController.scrapeContent();
 // });
 
+app.get('/counts', (req, res) => homeController.getCounts(req,res));
+
+
 //Accounts
 app.post('/accounts', (req, res) => accountController.addAccount(req,res));
 app.get('/accounts/:id', (req, res) => accountController.getAccount(req,res));
 app.put('/accounts/:id', (req, res) => accountController.patchAccount(req,res));
 
 //Home
-app.get('/featured-matches/', (req, res) => homeController.getFeaturedMatches(req,res));
+app.get('/featured-matches/', (req, res) => featuredMatchesController.getFeaturedMatches(req,res));
 
 //Characters
 app.post('/characters', (req, res) => characterController.addCharacter(req,res));
@@ -129,7 +132,6 @@ app.get('/tournament-matches', (req, res) => tournamentMatchesController.queryMa
 //Videos
 app.post('/video', (req, res) => videoController.addVideo(req,res));
 app.get('/videos', (req, res) => videoController.fetchVideos(req,res));
-app.get('/videoQuery', (req, res) => videoController.queryVideo(req,res));
 app.get('/videoQuery', (req, res) => videoController.queryVideo(req,res));
 app.get('/video/:id', (req, res) => videoController.getVideo(req,res));
 app.get('/videoCharacterQuery', (req, res) => videoController.queryVideoByCharacter(req,res));
