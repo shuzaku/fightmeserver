@@ -46,7 +46,7 @@ function queryCharacter(req, res) {
     var names = req.query.queryName?.split(",");
     var values = req.query.queryValue?.split(",");
     var queries = [];
-    var limit = parseLimit(req, 10, 50);
+    var limit = parseLimit(req, undefined, 50);
     var skip = parseSkip(req);
     var sortObj = parseSortWithDirection(req, 'Name', 1);
   
@@ -68,36 +68,48 @@ function queryCharacter(req, res) {
     }
     
     if(queries.length > 1) {
-      Character.find({ $or: queries }, 'Name ImageUrl AvatarUrl Slug', function (error, characters) {
+      var query = Character.find({ $or: queries }, 'Name ImageUrl AvatarUrl Slug').sort(sortObj).skip(skip);
+      if (limit !== undefined) {
+        query = query.limit(limit);
+      }
+      query.exec(function (error, characters) {
         if (error) { console.error(error); }
         res.send({
           characters: characters
         })
-      }).sort(sortObj).skip(skip).limit(limit)    
+      });
     }
     else {
-      Character.find(queries[0], 'Name ImageUrl AvatarUrl Slug', function (error, characters) {
+      var query = Character.find(queries[0], 'Name ImageUrl AvatarUrl Slug').sort(sortObj).skip(skip);
+      if (limit !== undefined) {
+        query = query.limit(limit);
+      }
+      query.exec(function (error, characters) {
         if (error) { console.error(error); }
 
         res.send({
           characters: characters
         })
-      }).sort(sortObj).skip(skip).limit(limit)    
+      });
     }
   };
   
   // Fetch all characters
 function getCharacters(req, res) {
-    var limit = parseLimit(req, 20, 100);
+    var limit = parseLimit(req, undefined, 100);
     var skip = parseSkip(req);
     var sortObj = parseSortWithDirection(req, '_id', -1);
     
-    Character.find({}, 'Name GameId ImageUrl AvatarUrl FeaturedPlayers', function (error, characters) {
+    var query = Character.find({}, 'Name GameId ImageUrl AvatarUrl FeaturedPlayers').sort(sortObj).skip(skip);
+    if (limit !== undefined) {
+      query = query.limit(limit);
+    }
+    query.exec(function (error, characters) {
       if (error) { console.error(error); }
       res.send({
         characters: characters
       })
-    }).sort(sortObj).skip(skip).limit(limit)
+    });
   };
   
   // Fetch single character
