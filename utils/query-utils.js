@@ -5,14 +5,14 @@
 /**
  * Parse and validate limit parameter from request query
  * @param {Object} req - Express request object
- * @param {number} defaultLimit - Default limit if not specified (default: 10)
+ * @param {number} defaultLimit - Default limit if not specified (default: undefined)
  * @param {number} maxLimit - Maximum allowed limit (default: 100)
- * @returns {number} - Validated limit value
+ * @returns {number|undefined} - Validated limit value or undefined if not specified
  */
-function parseLimit(req, defaultLimit = 10, maxLimit = 100) {
+function parseLimit(req, defaultLimit = undefined, maxLimit = 100) {
   const limit = parseInt(req.query.limit);
   
-  // If no limit specified, use default
+  // If no limit specified, return undefined (no default)
   if (isNaN(limit)) {
     return defaultLimit;
   }
