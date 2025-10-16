@@ -1,59 +1,51 @@
-var Tournament = require("../models/tournaments");
+var tournamentService = require("../service/tournaments-service");
 
 // Add new tournament
 function addTournament(req, res) {
-  var db = req.db;
-  var Name = req.body.Name;
-  var Games = req.body.Games;
-  var Image = req.body.Image;
-  var EventDate = req.body.EventDate;
-  var TournamentSeries = req.body.TournamentSeries;
-  var Location = req.body.Location;
-  var BracketUrl = req.body.BracketUrl;
-  var BracketFilters = req.body.BracketFilters;
-
-  var new_tournament = new Tournament({
-    Name: Name,
-    Games: Games,
-    Image: Image,
-    EventDate: EventDate,
-    TournamentSeries: TournamentSeries,
-    Location: Location,
-    BracketUrl: BracketUrl,
-    BracketFilters: BracketFilters
-  })
-
-  new_tournament.save(function (error, tournament) {
-    if (error) {
-      console.log(error)
-    }
-    res.send({
-      success: true,
-      message: 'Post saved successfully!',
-      tournamentId: tournament.id
-    })
-  })
+    tournamentService.addTournament(req.body)
+        .then(result => {
+            res.send(result);
+        })
+        .catch(error => {
+            console.log(error);
+            res.status(500).send({
+                success: false,
+                message: 'Error saving tournament',
+                error: error.message
+            });
+        });
 }
 
-// Fetch all tournament
+// Fetch all tournaments
 function getTournaments(req, res) {
-  Tournament.find({}, 'Name Games Image EventDate TournamentSeries Location BracketUrl IsFinished BracketFilters', function (error, tournaments) {
-    if (error) { console.error(error); }
-    res.send({
-      tournaments: tournaments
-    })
-  }).sort({ EventDate: 1 })
+    tournamentService.getTournaments()
+        .then(result => {
+            res.send(result);
+        })
+        .catch(error => {
+            console.error(error);
+            res.status(500).send({
+                success: false,
+                message: 'Error fetching tournaments',
+                error: error.message
+            });
+        });
 }
 
 // Fetch completed tournaments
 function getCompletedTournaments(req, res) {
-  const today = new Date();
-  Tournament.find({ IsFinished: true}, 'Name Games Image EventDate TournamentSeries Location BracketUrl IsFinished BracketFilters', function (error, tournaments) {
-    if (error) { console.error(error); }
-    res.send({
-      tournaments: tournaments
-    })
-  }).sort({ EventDate: 1 })
+    tournamentService.getCompletedTournaments()
+        .then(result => {
+            res.send(result);
+        })
+        .catch(error => {
+            console.error(error);
+            res.status(500).send({
+                success: false,
+                message: 'Error fetching completed tournaments',
+                error: error.message
+            });
+        });
 }
 
 // Fetch all tournament
@@ -68,100 +60,66 @@ function getTournamentSeries(req, res) {
 
 // Fetch single tournament
 function getTournament(req, res) {
-  var db = req.db;
-  Tournament.findById(req.params.id, 'Name Games Image EventDate TournamentSeries Location BracketUrl IsFinished BracketFilters', function (error, tournament) {
-    if (error) { console.error(error); }
-    res.send(tournament)
-  })
+    tournamentService.getTournament(req.params.id)
+        .then(result => {
+            res.send(result);
+        })
+        .catch(error => {
+            console.error(error);
+            res.status(500).send({
+                success: false,
+                message: 'Error fetching tournament',
+                error: error.message
+            });
+        });
 }
 
 // Update a tournament
 function updateTournament(req, res) {
-  var db = req.db;
-  Tournament.findById(req.params.id, 'Name Games Image EventDate TournamentSeries Location BracketUrl IsFinished BracketFilters', function (error, tournament) {
-    if (error) { console.error(error); }
-
-    tournament.Name = req.body.Name;
-    tournament.Games = req.body.Games;
-    tournament.Image = req.body.Image;
-    tournament.EventDate = req.body.EventDate;
-    tournament.TournamentSeries = req.body.TournamentSeries;
-    tournament.Location = req.body.Location;
-    tournament.BracketUrl = req.body.BracketUrl;
-
-    tournament.save(function (error) {
-      if (error) {
-        console.log(error)
-      }
-      res.send({
-        success: true
-      })
-    })
-  })
+    tournamentService.updateTournament(req.params.id, req.body)
+        .then(result => {
+            res.send(result);
+        })
+        .catch(error => {
+            console.log(error);
+            res.status(500).send({
+                success: false,
+                message: 'Error updating tournament',
+                error: error.message
+            });
+        });
 }
 
 // Delete a tournament
 function deleteTournament(req, res) {
-  var db = req.db;
-  Tournament.remove({
-    _id: req.params.id
-  }, function (err, tournament) {
-    if (err)
-      res.send(err)
-    res.send({
-      success: true
-    })
-  })
+    tournamentService.deleteTournament(req.params.id)
+        .then(result => {
+            res.send(result);
+        })
+        .catch(error => {
+            console.log(error);
+            res.status(500).send({
+                success: false,
+                message: 'Error deleting tournament',
+                error: error.message
+            });
+        });
 }
 
-// Query Player
+// Query Tournament
 function queryTournament(req, res) {
-  var db = req.db;
-  var names = req.query.queryName.split(",");
-  var values = req.query.queryValue.split(",");
-  var sort = req.query.sort || 'EventDate';
-  var queries = [];
-  var sortParameter = {};
-
-  var sortProperty = sort.split(' ')[0] || 'EventDate';
-  var sortDirection = sort.split(' ')[1] || 'asc';
-
-  sortParameter[sortProperty] = sortDirection === 'asc' ? 1 : -1;
-
-  for(var i = 0; i < names.length; i++){
-    var query = {};
-    if(names[i] === ('Id')){
-      var query = {'_id':   ObjectId(values[i])};
-      queries.push(query);
-    }  
-    else if(values[i].toLowerCase() === "true" || values[i].toLowerCase() === "false"){
-      query[names[i]] = values[i].toLowerCase() === "true"  ? true : false;
-      queries.push(query);
-    }
-    else {
-      query[names[i]] = values[i];
-      queries.push(query);
-    }
-  }
-
-  
-  if(queries.length > 1) {
-    Tournament.find({ $or: queries }, 'Name Games Image EventDate TournamentSeries Location BracketUrl IsFinished BracketFilters', function (error, tournaments) {
-      if (error) { console.error(error); }
-      res.send({
-        tournaments: tournaments
-      })
-    }).sort(sortParameter)
-  }
-  else {
-    Tournament.find(queries[0], 'Name Games Image EventDate TournamentSeries Location BracketUrl IsFinished BracketFilters', function (error, tournaments) {
-      if (error) { console.error(error); }
-
-      res.send({
-        tournaments: tournaments
-      })
-    }).sort(sortParameter)  
-  }
+    tournamentService.queryTournament(req.query)
+        .then(result => {
+            res.send(result);
+        })
+        .catch(error => {
+            console.error(error);
+            res.status(500).send({
+                success: false,
+                message: 'Error querying tournaments',
+                error: error.message
+            });
+        });
 };
 
 module.exports = { addTournament, getTournaments, getTournament, updateTournament, deleteTournament, getTournamentSeries,getCompletedTournaments, queryTournament}

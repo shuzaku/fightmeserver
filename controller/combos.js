@@ -1,7 +1,4 @@
-var Combo = require("../models/combos");
-var ComboClip = require("../models/combo-clips");
-
-var ObjectId = require('mongodb').ObjectId;
+var comboService = require("../service/combos-service");
 
 // // Add new Combo
 // function addCombo(req, res) {
