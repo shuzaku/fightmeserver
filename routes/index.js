@@ -1,0 +1,62 @@
+const express = require('express');
+const router = express.Router();
+
+// Import route modules
+const characterRoutes = require('./characters');
+const videoValidateRoutes = require('./video-validate');
+const accountRoutes = require('./accounts');
+const gameRoutes = require('./games');
+const playerRoutes = require('./players');
+const tournamentRoutes = require('./tournaments');
+const tagRoutes = require('./tags');
+const creatorRoutes = require('./creators');
+const comboRoutes = require('./combos');
+const homeRoutes = require('./home');
+const featuredMatchesRoutes = require('./featured-matches');
+const comboClipRoutes = require('./combo-clip');
+const videoRoutes = require('./videos');
+const searchRoutes = require('./searches');
+const matchRoutes = require('./matches');
+const tournamentMatchesRoutes = require('./tournament-matches');
+const analysesRoutes = require('./analyses');
+const collectionRoutes = require('./collections');
+const montageRoutes = require('./montages');
+const moveRoutes = require('./moves');
+const noteRoutes = require('./notes');
+const characterMatchupRoutes = require('./character-matchups');
+const eventRoutes = require('./events');
+const articleRoutes = require('./articles');
+const updateRoutes = require('./updates');
+const featuredPlayerRoutes = require('./featured-players');
+const featuredVideoRoutes = require('./featured-videos');
+
+// Use route modules
+router.use('/', characterRoutes);
+router.use('/', videoValidateRoutes);
+router.use('/', accountRoutes);
+router.use('/', gameRoutes);
+router.use('/', playerRoutes);
+router.use('/', tournamentRoutes);
+router.use('/', tagRoutes);
+router.use('/', creatorRoutes);
+router.use('/', comboRoutes);
+router.use('/', homeRoutes);
+router.use('/', featuredMatchesRoutes);
+router.use('/', comboClipRoutes);
+router.use('/', videoRoutes);
+router.use('/', searchRoutes);
+router.use('/', matchRoutes);
+router.use('/', tournamentMatchesRoutes);
+router.use('/', analysesRoutes);
+router.use('/', collectionRoutes);
+router.use('/', montageRoutes);
+router.use('/', moveRoutes);
+router.use('/', noteRoutes);
+router.use('/', characterMatchupRoutes);
+router.use('/', eventRoutes);
+router.use('/', articleRoutes);
+router.use('/', updateRoutes);
+router.use('/', featuredPlayerRoutes);
+router.use('/', featuredVideoRoutes);
+
+module.exports = router;

@@ -1,210 +1,142 @@
-var Character = require("../models/characters");
-var ObjectId = require('mongodb').ObjectId;
-var { parseLimit, parseSkip, parseSort, parseSortWithDirection } = require("../utils/query-utils");
+var characterService = require("../service/characters-service");
 
 // Add new character(s)
 function addCharacter(req, res) {
-    if(!req.query.bulk){
-      var Name = req.body.Name;
-      var GameId = req.body.GameId
-      var ImageUrl = req.body.ImageUrl;
-      var AvatarUrl = req.body.AvatarUrl;
+    const isBulk = req.query.bulk;
+    const characterData = isBulk ? req.body : {
+        Name: req.body.Name,
+        GameId: req.body.GameId,
+        ImageUrl: req.body.ImageUrl,
+        AvatarUrl: req.body.AvatarUrl
+    };
 
-      var new_character = new Character({
-        Name: Name,
-        GameId: GameId,
-        ImageUrl: ImageUrl,
-        AvatarUrl: AvatarUrl
-      })
-    
-      new_character.save(function (error) {
-        if (error) {
-          console.log(error)
-        }
-        res.send({
-          success: true,
-          message: 'Character saved successfully!'
+    characterService.addCharacter(characterData, isBulk)
+        .then(result => {
+            res.send(result);
         })
-      })
-    }
-    else {
-      Character.insertMany(req.body, function(error){
-        if (error) {
-          console.log(error)
-        }
-        res.send({
-          success: true,
-          message: 'Characters saved successfully!'
-        })      
-      })
-    }
-  };
+        .catch(error => {
+            console.log(error);
+            res.status(500).send({
+                success: false,
+                message: 'Error saving character',
+                error: error.message
+            });
+        });
+};
   
-  // Query Characters
+// Query Characters
 function queryCharacter(req, res) {
-    var db = req.db;
-    var names = req.query.queryName?.split(",");
-    var values = req.query.queryValue?.split(",");
-    var queries = [];
-    var limit = parseLimit(req, undefined, 50);
-    var skip = parseSkip(req);
-    var sortObj = parseSortWithDirection(req, 'Name', 1);
-  
-    if (names) {
-      for(var i = 0; i < names.length; i++){
-        var query = {};
-        if(names[i] === ('Id')){
-          var query = {'_id':   ObjectId(values[i])};
-          queries.push(query);
-        } else if (names[i] === 'GameId') {
-          var query = {'GameId':   ObjectId(values[i])};
-          queries.push(query);
-        }  
-        else {
-          query[names[i]] = values[i];
-          queries.push(query);
-        }
-      }
-    }
-    
-    if(queries.length > 1) {
-      var query = Character.find({ $or: queries }, 'Name ImageUrl AvatarUrl Slug').sort(sortObj).skip(skip);
-      if (limit !== undefined) {
-        query = query.limit(limit);
-      }
-      query.exec(function (error, characters) {
-        if (error) { console.error(error); }
-        res.send({
-          characters: characters
+    characterService.queryCharacter(req.query)
+        .then(result => {
+            res.send(result);
         })
-      });
-    }
-    else {
-      var query = Character.find(queries[0], 'Name ImageUrl AvatarUrl Slug').sort(sortObj).skip(skip);
-      if (limit !== undefined) {
-        query = query.limit(limit);
-      }
-      query.exec(function (error, characters) {
-        if (error) { console.error(error); }
-
-        res.send({
-          characters: characters
-        })
-      });
-    }
-  };
+        .catch(error => {
+            console.error(error);
+            res.status(500).send({
+                success: false,
+                message: 'Error querying characters',
+                error: error.message
+            });
+        });
+};
   
-  // Fetch all characters
+// Fetch all characters
 function getCharacters(req, res) {
-    var limit = parseLimit(req, undefined, 100);
-    var skip = parseSkip(req);
-    var sortObj = parseSortWithDirection(req, '_id', -1);
-    
-    var query = Character.find({}, 'Name GameId ImageUrl AvatarUrl FeaturedPlayers').sort(sortObj).skip(skip);
-    if (limit !== undefined) {
-      query = query.limit(limit);
-    }
-    query.exec(function (error, characters) {
-      if (error) { console.error(error); }
-      res.send({
-        characters: characters
-      })
-    });
-  };
-  
-  // Fetch single character
-function getCharacter(req, res) {
-  var aggregate = [{
-    '$lookup': {
-      'from': 'players', 
-      'localField': 'FeaturedPlayers', 
-      'foreignField': '_id', 
-      'as': 'Players'
-    }
-  }];
-  aggregate.push({$match: { "_id" : ObjectId(req.params.id) }});
-
-    Character.aggregate(aggregate, function (error, characters) {
-      if (error) { console.error(error); }
-      res.send({
-        characters: characters
-      })
-    })
-  }
-
-
-    // Fetch single character
-function getCharacterBySlug(req, res) {
-  var aggregate = [{
-    '$lookup': {
-      'from': 'players', 
-      'localField': 'FeaturedPlayers', 
-      'foreignField': '_id', 
-      'as': 'Players'
-    }
-  }];
-  aggregate.push({$match: { "Slug" : req.params.slug }});
-
-    Character.aggregate(aggregate, function (error, characters) {
-      if (error) { console.error(error); }
-      res.send({
-        characters: characters
-      })
-    })
-  }
-
-
-  // Update a character
-function updateCharacter(req, res) {
-    var db = req.db;
-    Character.findById(req.params.id, 'Name GameId ImageUrl AvatarUrl FeaturedPlayers', function (error, character) {
-      if (error) { console.error(error); }
-      character.Name = req.body.Name;
-      character.GameId = req.body.GameId
-      character.ImageUrl = req.body.ImageUrl;
-      character.save(function (error) {
-        if (error) {
-          console.log(error)
-        }
-        res.send({
-          success: true
+    characterService.getCharacters(req.query)
+        .then(result => {
+            res.send(result);
         })
-      }) 
-    })
-  }
+        .catch(error => {
+            console.error(error);
+            res.status(500).send({
+                success: false,
+                message: 'Error fetching characters',
+                error: error.message
+            });
+        });
+};
+  
+// Fetch single character
+function getCharacter(req, res) {
+    characterService.getCharacter(req.params.id)
+        .then(result => {
+            res.send(result);
+        })
+        .catch(error => {
+            console.error(error);
+            res.status(500).send({
+                success: false,
+                message: 'Error fetching character',
+                error: error.message
+            });
+        });
+}
 
-  // Delete a character
+
+// Fetch single character by slug
+function getCharacterBySlug(req, res) {
+    characterService.getCharacterBySlug(req.params.slug)
+        .then(result => {
+            res.send(result);
+        })
+        .catch(error => {
+            console.error(error);
+            res.status(500).send({
+                success: false,
+                message: 'Error fetching character by slug',
+                error: error.message
+            });
+        });
+}
+
+
+// Update a character
+function updateCharacter(req, res) {
+    characterService.updateCharacter(req.params.id, req.body)
+        .then(result => {
+            res.send(result);
+        })
+        .catch(error => {
+            console.log(error);
+            res.status(500).send({
+                success: false,
+                message: 'Error updating character',
+                error: error.message
+            });
+        });
+}
+
+// Delete a character
 function deleteCharacter(req, res) {
-    var db = req.db;
-    Character.remove({
-      _id: req.params.id
-    }, function (err, character) {
-      if (err)
-        res.send(err)
-      res.send({
-        success: true
-      })
-    })
-  }
+    characterService.deleteCharacter(req.params.id)
+        .then(result => {
+            res.send(result);
+        })
+        .catch(error => {
+            console.log(error);
+            res.status(500).send({
+                success: false,
+                message: 'Error deleting character',
+                error: error.message
+            });
+        });
+}
 
 
 // Query matchup info
 function getMatchupInfo(req, res) {
-  var queries = [];
-
-  var character1 = ObjectId(req.query.character1);
-  var character2 = ObjectId(req.query.character2);
-
-  queries.push({'_id':   character1});
-  queries.push({'_id':   character2});
-
-  Character.find({ $or: queries }, 'Name ImageUrl AvatarUrl GameId FeaturedPlayers', function (error, characters) {
-    if (error) { console.error(error); }
-    res.send({
-      characters: characters
-    })
-  });
-   
+    characterService.getMatchupInfo(req.query.character1, req.query.character2)
+        .then(result => {
+            res.send(result);
+        })
+        .catch(error => {
+            console.error(error);
+            res.status(500).send({
+                success: false,
+                message: 'Error fetching matchup info',
+                error: error.message
+            });
+        });
 }
 
 module.exports = { addCharacter, queryCharacter, getCharacters, getCharacter, updateCharacter, deleteCharacter, getMatchupInfo, getCharacterBySlug }

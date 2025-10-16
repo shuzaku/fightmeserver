@@ -1,106 +1,99 @@
-var Game = require("../models/games");
-var ObjectId = require('mongodb').ObjectId;
+var gameService = require("../service/games-service");
 
 // Add new game
 function addGame(req, res) {
-  var Title = req.body.Title;
-  var LogoUrl = req.body.LogoUrl;
-  var new_game = new Game({
-    Title: Title,
-    LogoUrl: LogoUrl,
-  })
-
-  new_game.save(function (error) {
-    if (error) {
-      console.log(error)
-    }
-    res.send({
-      success: true,
-      message: 'Post saved successfully!'
-    })
-  })
+    gameService.addGame(req.body)
+        .then(result => {
+            res.send(result);
+        })
+        .catch(error => {
+            console.log(error);
+            res.status(500).send({
+                success: false,
+                message: 'Error saving game',
+                error: error.message
+            });
+        });
 } 
 
-  // Fetch all characters
-  function getGames(req, res) {
-    Game.find({}, 'Title LogoUrl CoverArt Abbreviation ReleaseDate', function (error, games) {
-      if (error) { console.error(error); }
-      res.send({
-        games: games
-      })
-    }).sort({ ReleaseDate: 1 })
-  };
+// Fetch all games
+function getGames(req, res) {
+    gameService.getGames()
+        .then(result => {
+            res.send(result);
+        })
+        .catch(error => {
+            console.error(error);
+            res.status(500).send({
+                success: false,
+                message: 'Error fetching games',
+                error: error.message
+            });
+        });
+};
 
 // Fetch single game
 function getGame(req, res) {
-  var db = req.db;
-  Game.findById(req.params.id, 'Title LogoUrl FeaturedCharacter NewCharacter Banner', function (error, game) {
-    if (error) { console.error(error); }
-    res.send(game)
-  })
+    gameService.getGame(req.params.id)
+        .then(result => {
+            res.send(result);
+        })
+        .catch(error => {
+            console.error(error);
+            res.status(500).send({
+                success: false,
+                message: 'Error fetching game',
+                error: error.message
+            });
+        });
 }
 
 // Query Games
 function queryGame(req, res) {
-  var names = req.query.queryName.split(",");
-  var values = req.query.queryValue.split(",");
-  var queries = [];
-
-  for(var i = 0; i < names.length; i++){
-    var query = {};
-    query[names[i]] = values[i];
-    queries.push(query);
-  }
-  
-  if(queries.length > 1) {
-    Game.find({ $or: queries }, 'Title Logo', function (error, games) {
-      if (error) { console.error(error); }
-      res.send({
-        games: games
-      })
-    }).sort({ _id: -1 })    
-  }
-  else {
-    Game.find(queries[0], 'Title Logo', function (error, games) {
-      if (error) { console.error(error); }
-      res.send({
-        games: games
-      })
-    }).sort({ _id: -1 })    
-  }
+    gameService.queryGame(req.query)
+        .then(result => {
+            res.send(result);
+        })
+        .catch(error => {
+            console.error(error);
+            res.status(500).send({
+                success: false,
+                message: 'Error querying games',
+                error: error.message
+            });
+        });
 }
 
 // Update a game
 function updateGame(req, res) {
-  var db = req.db;
-  Game.findById(req.params.id, 'Title Logo', function (error, game) {
-    if (error) { console.error(error); }
-
-    game.Title = req.body.GameTitle;
-    game.Logo = req.body.Logo;
-    game.save(function (error) {
-      if (error) {
-        console.log(error)
-      }
-      res.send({
-        success: true
-      })
-    }) 
-  })
+    gameService.updateGame(req.params.id, req.body)
+        .then(result => {
+            res.send(result);
+        })
+        .catch(error => {
+            console.log(error);
+            res.status(500).send({
+                success: false,
+                message: 'Error updating game',
+                error: error.message
+            });
+        });
 }
 
 // Delete a game
 function deleteGame(req, res) {
-  var db = req.db;
-  Game.remove({
-    _id: req.params.id
-  }, function (err, game) {
-    if (err)
-      res.send(err)
-    res.send({
-      success: true
-    })
-  })
+    gameService.deleteGame(req.params.id)
+        .then(result => {
+            res.send(result);
+        })
+        .catch(error => {
+            console.log(error);
+            res.status(500).send({
+                success: false,
+                message: 'Error deleting game',
+                error: error.message
+            });
+        });
 }
 
 module.exports = { addGame, getGames, getGame, queryGame, updateGame, deleteGame}
