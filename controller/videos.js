@@ -1,64 +1,27 @@
+var videoService = require("../service/videos-service");
 var Video = require("../models/videos");
-var ObjectId = require('mongodb').ObjectId;
 var { parseLimit, parseSkip, parseSort, parseSortWithDirection } = require("../utils/query-utils");
 
 // Add new Video
 function addVideo(req, res) {
-  if(!req.query.bulk){
-    var Url = req.body.Url;
-    var ContentType = req.body.ContentType
-    var ContentCreatorId = req.body.ContentCreatorId;
-    var VideoType = req.body.VideoType;
-    var GameId = req.body.GameId;
-    var StartTime = req.body.StartTime;
-    var EndTime = req.body.EndTime;
-    var Tags = req.body.Tags;
-
-    var isDuplicate = Video.find({ "Url" : Url}).limit(1).size();
-  
-    // if(isDuplicate){
-    //   res.send({
-    //     success: true,
-    //     err: 'Video already exist',
-    //   });  
-    // }
-    // else {
-      var new_video = new Video({
-        Url: Url,
-        ContentType: ContentType,
-        VideoType: VideoType,
-        StartTime: StartTime,
-        EndTime: EndTime,
-        GameId: GameId,
-        Tags: Tags,
-      })
-
-      if(ContentCreatorId) {
-        new_video.ContentCreatorId = ContentCreatorId;
-      }
-      
-      new_video.save(function (error) {
-        if (error) {
-          console.log(error)
-        }
-        res.send({
-          success: true,
-          message: 'Post saved successfully!'
+    const isBulk = req.query.bulk;
+    videoService.addVideo(req.body, isBulk)
+        .then(result => {
+            res.send(result);
         })
-      })  
-    // }
-  } else {
-    Video.insertMany(req.body, function(error,videos){
-      if (error) {
-        console.log(error)
-      }
-      res.send({
-        success: true,
-        message: 'Videos saved successfully!',
-        videos: videos
-      })      
-    })    
-  }
+        .catch(error => {
+            console.log(error);
+            // Check if it's a duplicate URL error
+            if (error.success === false && error.message.includes('already exists')) {
+                res.status(409).send(error); // 409 Conflict
+            } else {
+                res.status(500).send({
+                    success: false,
+                    message: 'Error saving video',
+                    error: error.message
+                });
+            }
+        });
 }
 // Query Videos
 function fetchVideos(req, res) {

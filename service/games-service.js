@@ -4,20 +4,43 @@ var ObjectId = require('mongodb').ObjectId;
 // Add new game
 function addGame(gameData) {
     return new Promise((resolve, reject) => {
-        var new_game = new Game({
-            Title: gameData.Title,
-            LogoUrl: gameData.LogoUrl,
-        });
-
-        new_game.save(function (error) {
+        // First check if game title already exists
+        Game.findOne({ Title: gameData.Title }, function(error, existingGame) {
             if (error) {
                 reject(error);
-            } else {
-                resolve({
-                    success: true,
-                    message: 'Post saved successfully!'
-                });
+                return;
             }
+            
+            if (existingGame) {
+                reject({
+                    success: false,
+                    message: 'Game with this title already exists',
+                    existingGameId: existingGame._id,
+                    existingGameTitle: existingGame.Title
+                });
+                return;
+            }
+            
+            // Title is unique, proceed with creating new game
+            var new_game = new Game({
+                Title: gameData.Title,
+                LogoUrl: gameData.LogoUrl,
+                CoverArt: gameData.CoverArt,
+                Abbreviation: gameData.Abbreviation,
+                ReleaseDate: gameData.ReleaseDate
+            });
+
+            new_game.save(function (error, savedGame) {
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve({
+                        success: true,
+                        message: 'Post saved successfully!',
+                        gameId: savedGame._id
+                    });
+                }
+            });
         });
     });
 }

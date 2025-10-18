@@ -28,33 +28,6 @@ var VideoSchema = new Schema({
     Combos: {
       type: Array
     },
-    Player1Id: {
-      type: ObjectId
-    },
-    Player2Id: {
-      type: ObjectId
-    },
-    Player1CharacterId: {
-      type: ObjectId
-    },
-    Player2CharacterId: {
-      type: ObjectId
-    },
-    Player1Character2Id: {
-      type: ObjectId
-    },
-    Player2Character2Id: {
-      type: ObjectId
-    },
-    Player1Character3Id: {
-      type: ObjectId
-    },
-    Player2Character3Id: {
-      type: ObjectId
-    },
-    WinnerId: {
-      type: ObjectId
-    },
     Tags: {
       type: Array
     },

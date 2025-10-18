@@ -46,4 +46,24 @@ function approveVideoValidate(req, res) {
         });
 }
 
-module.exports = { addVideoValidate, getVideoValidate, approveVideoValidate };
+function rejectVideoValidate(req, res) {
+    videoValidateService.rejectVideoValidate(req.params.id)
+        .then(result => {
+            res.send(result);
+        })
+        .catch(error => {
+            console.log('Error:', error);
+            // Check if it's a "not found" error
+            if (error.success === false && error.message.includes('not found')) {
+                res.status(404).send(error); // 404 Not Found
+            } else {
+                res.status(500).send({
+                    success: false,
+                    message: 'Error rejecting video validation',
+                    error: error.message
+                });
+            }
+        });
+}
+
+module.exports = { addVideoValidate, getVideoValidate, approveVideoValidate, rejectVideoValidate };

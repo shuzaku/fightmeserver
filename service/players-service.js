@@ -52,17 +52,21 @@ function getPlayers(queryParams = {}) {
     return new Promise((resolve, reject) => {
         // Create a mock req object for the query utils
         const mockReq = { query: queryParams };
-        var limit = parseLimit(mockReq, 20, 100);
+        var limit = parseLimit(mockReq, undefined, 100);
         var skip = parseSkip(mockReq);
         var sortObj = parseSortWithDirection(mockReq, '_id', -1);
 
-        Player.find({}, 'Name PlayerImg Slug MatchupAppearance Twitter Stream Youtube', function (error, players) {
+        var query = Player.find({}, 'Name PlayerImg Slug MatchupAppearance Twitter Stream Youtube').sort(sortObj).skip(skip);
+        if (limit !== undefined) {
+            query = query.limit(limit);
+        }
+        query.exec(function (error, players) {
             if (error) {
                 reject(error);
             } else {
                 resolve({players: players});
             }
-        }).sort(sortObj).skip(skip).limit(limit);
+        });
     });
 }
 
@@ -123,7 +127,7 @@ function queryPlayer(queryParams) {
         var names = queryParams.queryName.split(",");
         var values = queryParams.queryValue.split(",");
         var queries = [];
-        var limit = parseLimit(queryParams, 10, 50);
+        var limit = parseLimit(queryParams, undefined, 50);
         var skip = parseSkip(queryParams);
         var sortObj = parseSortWithDirection(queryParams, 'Name', 1);
 
@@ -139,21 +143,29 @@ function queryPlayer(queryParams) {
         }
 
         if (queries.length > 1) {
-            Player.find({$or: queries}, 'Name PlayerImg ', function (error, players) {
+            var query = Player.find({$or: queries}, 'Name PlayerImg ').sort(sortObj).skip(skip);
+            if (limit !== undefined) {
+                query = query.limit(limit);
+            }
+            query.exec(function (error, players) {
                 if (error) {
                     reject(error);
                 } else {
                     resolve({players: players});
                 }
-            }).sort(sortObj).skip(skip).limit(limit);
+            });
         } else {
-            Player.find(queries[0], 'Name PlayerImg ', function (error, players) {
+            var query = Player.find(queries[0], 'Name PlayerImg ').sort(sortObj).skip(skip);
+            if (limit !== undefined) {
+                query = query.limit(limit);
+            }
+            query.exec(function (error, players) {
                 if (error) {
                     reject(error);
                 } else {
                     resolve({players: players});
                 }
-            }).sort(sortObj).skip(skip).limit(limit);
+            });
         }
     });
 }
