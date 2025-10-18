@@ -44,9 +44,11 @@ function queryCharacter(queryParams) {
         var names = queryParams.queryName?.split(",");
         var values = queryParams.queryValue?.split(",");
         var queries = [];
-        var limit = parseLimit(queryParams, undefined, 50);
-        var skip = parseSkip(queryParams);
-        var sortObj = parseSortWithDirection(queryParams, 'Name', 1);
+        // Create a mock req object for the query utils
+        const mockReq = { query: queryParams };
+        var limit = parseLimit(mockReq, undefined, 50);
+        var skip = parseSkip(mockReq);
+        var sortObj = parseSortWithDirection(mockReq, 'Name', 1);
 
         if (names) {
             for (var i = 0; i < names.length; i++) {

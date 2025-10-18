@@ -3,12 +3,30 @@ var Schema = mongoose.Schema;
 const ObjectId = Schema.Types.ObjectId;
 
 var MatchessSchema = new Schema({
-  Team1Players: {
-    type: Array,
-  },
-  Team2Players: {
-    type: Array,
-  },
+  Team1Players: [{
+    Slot: {
+      type: Number,
+    },
+    Id: {
+      type: ObjectId,
+      required: true
+    },
+    CharacterIds: [{
+      type: ObjectId
+    }]
+  }],
+  Team2Players: [{
+    Slot: {
+      type: Number,
+    },
+    Id: {
+      type: ObjectId,
+      required: true
+    },
+    CharacterIds: [{
+      type: ObjectId
+    }]
+  }],
   VideoUrl: {
     type: String
   },
@@ -26,12 +44,6 @@ var MatchessSchema = new Schema({
   },
   LosingPlayersId:{
     type: Array
-  },
-  TournamentId: {
-    type: ObjectId
-  },
-  TournamentMatchType: {
-    type: String
   },
   SubmittedBy: {
     type: ObjectId

@@ -6,41 +6,81 @@ var { parseLimit, parseSkip, parseSort, parseSortWithDirection } = require("../u
 function addVideo(videoData, isBulk = false) {
     return new Promise((resolve, reject) => {
         if (!isBulk) {
-            var new_video = new Video({
-                Url: videoData.Url,
-                ContentType: videoData.ContentType,
-                VideoType: videoData.VideoType,
-                StartTime: videoData.StartTime,
-                EndTime: videoData.EndTime,
-                GameId: videoData.GameId,
-                Tags: videoData.Tags,
-            });
-
-            if (videoData.ContentCreatorId) {
-                new_video.ContentCreatorId = videoData.ContentCreatorId;
-            }
-
-            new_video.save(function (error) {
+            // First check if URL already exists
+            Video.findOne({ Url: videoData.Url }, function(error, existingVideo) {
                 if (error) {
                     reject(error);
-                } else {
-                    resolve({
-                        success: true,
-                        message: 'Post saved successfully!'
-                    });
+                    return;
                 }
+                
+                if (existingVideo) {
+                    reject({
+                        success: false,
+                        message: 'Video with this URL already exists',
+                        existingVideoId: existingVideo._id
+                    });
+                    return;
+                }
+                
+                // URL is unique, proceed with creating new video
+                var new_video = new Video({
+                    Url: videoData.Url,
+                    ContentType: videoData.ContentType,
+                    VideoType: videoData.VideoType,
+                    StartTime: videoData.StartTime,
+                    EndTime: videoData.EndTime,
+                    GameId: videoData.GameId,
+                    Tags: videoData.Tags,
+                });
+
+                if (videoData.ContentCreatorId) {
+                    new_video.ContentCreatorId = videoData.ContentCreatorId;
+                }
+
+                new_video.save(function (error, savedVideo) {
+                    if (error) {
+                        reject(error);
+                    } else {
+                        resolve({
+                            success: true,
+                            message: 'Post saved successfully!',
+                            videoId: savedVideo._id
+                        });
+                    }
+                });
             });
         } else {
-            Video.insertMany(videoData, function(error, videos) {
+            // For bulk operations, check each URL individually
+            const urlsToCheck = videoData.map(video => video.Url);
+            Video.find({ Url: { $in: urlsToCheck } }, function(error, existingVideos) {
                 if (error) {
                     reject(error);
-                } else {
-                    resolve({
-                        success: true,
-                        message: 'Videos saved successfully!',
-                        videos: videos
-                    });
+                    return;
                 }
+                
+                if (existingVideos.length > 0) {
+                    const existingUrls = existingVideos.map(video => video.Url);
+                    reject({
+                        success: false,
+                        message: 'Some videos with these URLs already exist',
+                        existingUrls: existingUrls,
+                        existingVideos: existingVideos
+                    });
+                    return;
+                }
+                
+                // All URLs are unique, proceed with bulk insert
+                Video.insertMany(videoData, function(error, videos) {
+                    if (error) {
+                        reject(error);
+                    } else {
+                        resolve({
+                            success: true,
+                            message: 'Videos saved successfully!',
+                            videos: videos
+                        });
+                    }
+                });
             });
         }
     });

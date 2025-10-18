@@ -8,11 +8,16 @@ function addGame(req, res) {
         })
         .catch(error => {
             console.log(error);
-            res.status(500).send({
-                success: false,
-                message: 'Error saving game',
-                error: error.message
-            });
+            // Check if it's a duplicate title error
+            if (error.success === false && error.message.includes('already exists')) {
+                res.status(409).send(error); // 409 Conflict
+            } else {
+                res.status(500).send({
+                    success: false,
+                    message: 'Error saving game',
+                    error: error.message
+                });
+            }
         });
 } 
 

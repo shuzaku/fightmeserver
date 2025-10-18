@@ -11,14 +11,33 @@ var VideoValidateSchema = new Schema({
     type: String
   },
   GameId: {
-    type: ObjectId
+    type: ObjectId,
+    ref: 'Games'
   },
-  Team1Players: {
-    type: Array
-  },
-  Team2Players: {
-    type: Array
-  },
+  Team1Players: [{
+    Slot: {
+      type: Number
+    },
+    Id: {
+      type: ObjectId,
+      required: true
+    },
+    CharacterIds: [{
+      type: ObjectId
+    }]
+  }],
+  Team2Players: [{
+    Slot: {
+      type: Number
+    },
+    Id: {
+      type: ObjectId,
+      required: true
+    },
+    CharacterIds: [{
+      type: ObjectId
+    }]
+  }],
   SubmittedBy: {
     type: ObjectId
   },

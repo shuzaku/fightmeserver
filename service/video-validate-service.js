@@ -1,6 +1,10 @@
 var VideoValidate = require("../models/video-validate");
 var Video = require("../models/videos");
 var Match = require("../models/matches");
+var Game = require("../models/games");
+var Player = require("../models/players");
+var Character = require("../models/characters");
+var Account = require("../models/accounts");
 var ObjectId = require('mongodb').ObjectId;
 
 // Add new video for validation
@@ -37,14 +41,139 @@ function addVideoValidate(videoValidateData) {
 
 function getVideoValidate() {
     return new Promise((resolve, reject) => {
-        VideoValidate.find({}).then(function (video_validates) {
-            resolve({
-                success: true,
-                video_validates: video_validates
+        VideoValidate.find({})
+            .populate('GameId', 'Title LogoUrl CoverArt Abbreviation ReleaseDate')
+            .then(function (video_validates) {
+                // Manually populate player and character data for Team1Players and Team2Players
+                const populatePlayersAndCharacters = async () => {
+                    for (let video of video_validates) {
+                        // Populate Team1Players
+                        if (video.Team1Players && video.Team1Players.length > 0) {
+                            for (let player of video.Team1Players) {
+                                if (player.Id) {
+                                    try {
+                                        const playerData = await Player.findById(player.Id, 'Name ImageUrl Slug');
+                                        if (playerData) {
+                                            player.PlayerData = playerData;
+                                        }
+                                    } catch (error) {
+                                        console.log('Error populating Team1 player:', error);
+                                    }
+                                }
+                                
+                                // Populate character data
+                                if (player.CharacterIds && player.CharacterIds.length > 0) {
+                                    try {
+                                        // CharacterIds are ObjectIds, populate character data
+                                        const characterData = await Character.find({'_id': {$in: player.CharacterIds}}, 'Name ImageUrl AvatarUrl Slug');
+                                        if (characterData) {
+                                            player.CharacterData = characterData;
+                                        }
+                                    } catch (error) {
+                                        console.log('Error populating characters:', error);
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // Populate Team2Players
+                        if (video.Team2Players && video.Team2Players.length > 0) {
+                            for (let player of video.Team2Players) {
+                                if (player.Id) {
+                                    try {
+                                        const playerData = await Player.findById(player.Id, 'Name ImageUrl Slug');
+                                        if (playerData) {
+                                            player.PlayerData = playerData;
+                                        }
+                                    } catch (error) {
+                                        console.log('Error populating Team2 player:', error);
+                                    }
+                                }
+                                
+                                // Populate character data
+                                if (player.CharacterIds && player.CharacterIds.length > 0) {
+                                    try {
+                                        // CharacterIds are ObjectIds, populate character data
+                                        const characterData = await Character.find({'_id': {$in: player.CharacterIds}}, 'Name ImageUrl AvatarUrl Slug');
+                                        if (characterData) {
+                                            player.CharacterData = characterData;
+                                        }
+                                    } catch (error) {
+                                        console.log('Error populating characters:', error);
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // Populate user data for SubmittedBy and UpdatedBy
+                        if (video.SubmittedBy) {
+                            try {
+                                const submittedByUser = await Account.findById(video.SubmittedBy, 'DisplayName Email AccountType');
+                                if (submittedByUser) {
+                                    video.SubmittedByUser = submittedByUser;
+                                }
+                            } catch (error) {
+                                console.log('Error populating SubmittedBy user:', error);
+                            }
+                        }
+                        
+                        if (video.UpdatedBy) {
+                            try {
+                                const updatedByUser = await Account.findById(video.UpdatedBy, 'DisplayName Email AccountType');
+                                if (updatedByUser) {
+                                    video.UpdatedByUser = updatedByUser;
+                                }
+                            } catch (error) {
+                                console.log('Error populating UpdatedBy user:', error);
+                            }
+                        }
+                    }
+                    return video_validates;
+                };
+                
+                populatePlayersAndCharacters().then(() => {
+                    // Transform the response to rename GameId to game
+                    const transformedVideos = video_validates.map(video => {
+                        const transformedVideo = video.toObject();
+                        if (transformedVideo.GameId) {
+                            transformedVideo.Game = transformedVideo.GameId;
+                            delete transformedVideo.GameId;
+                        }
+                        
+                        // Add user data
+                        transformedVideo.SubmittedByUser = video.SubmittedByUser || null;
+                        transformedVideo.UpdatedByUser = video.UpdatedByUser || null;
+                        
+                        // Ensure PlayerData and CharacterData are included
+                        if (transformedVideo.Team1Players) {
+                            transformedVideo.Team1Players = transformedVideo.Team1Players.map((player, index) => ({
+                                ...player,
+                                PlayerData: video.Team1Players[index].PlayerData || null,
+                                CharacterData: video.Team1Players[index].CharacterData || null
+                            }));
+                        }
+                        
+                        if (transformedVideo.Team2Players) {
+                            transformedVideo.Team2Players = transformedVideo.Team2Players.map((player, index) => ({
+                                ...player,
+                                PlayerData: video.Team2Players[index].PlayerData || null,
+                                CharacterData: video.Team2Players[index].CharacterData || null
+                            }));
+                        }
+                        
+                        return transformedVideo;
+                    });
+                    
+                    resolve({
+                        success: true,
+                        video_validates: transformedVideos
+                    });
+                }).catch(error => {
+                    reject(error);
+                });
+            }).catch(function (error) {
+                reject(error);
             });
-        }).catch(function (error) {
-            reject(error);
-        });
     });
 }
 
@@ -60,7 +189,6 @@ function approveVideoValidate(videoValidateId, status) {
             // Create video record
             var newVideo = new Video({
                 Url: videoValidate.Url,
-                VideoUrl: videoValidate.VideoUrl,
                 GameId: videoValidate.GameId,
                 ContentType: videoValidate.ContentType,
                 ContentCreatorId: videoValidate.ContentCreatorId,
@@ -69,10 +197,7 @@ function approveVideoValidate(videoValidateId, status) {
                 EndTime: videoValidate.EndTime,
                 Tags: videoValidate.Tags,
                 SubmittedBy: videoValidate.SubmittedBy,
-                UpdatedBy: videoValidate.UpdatedBy,
-                // Map team players to individual players for video record
-                Player1Id: videoValidate.Team1Players && videoValidate.Team1Players.length > 0 ? videoValidate.Team1Players[0] : null,
-                Player2Id: videoValidate.Team2Players && videoValidate.Team2Players.length > 0 ? videoValidate.Team2Players[0] : null
+                UpdatedBy: videoValidate.UpdatedBy
             });
 
             // Create match record
@@ -102,16 +227,16 @@ function approveVideoValidate(videoValidateId, status) {
                         return;
                     }
 
-                    // Update video validation status
-                    VideoValidate.findByIdAndUpdate(videoValidateId, { $set: { status: status } }, { new: true }).then(function (updatedVideoValidate) {
+                    // Delete video validation record after successful creation
+                    VideoValidate.findByIdAndDelete(videoValidateId).then(function (deletedVideoValidate) {
                         resolve({
                             success: true,
                             message: 'Video approved and records created successfully!',
                             videoId: newVideo._id,
                             matchId: newMatch._id
                         });
-                    }).catch(function (updateError) {
-                        reject(updateError);
+                    }).catch(function (deleteError) {
+                        reject(deleteError);
                     });
                 });
             });
@@ -121,8 +246,33 @@ function approveVideoValidate(videoValidateId, status) {
     });
 }
 
+function rejectVideoValidate(videoValidateId) {
+    return new Promise((resolve, reject) => {
+        VideoValidate.findByIdAndDelete(videoValidateId)
+            .then(function (deletedVideoValidate) {
+                if (!deletedVideoValidate) {
+                    reject({
+                        success: false,
+                        message: 'Video validation record not found'
+                    });
+                    return;
+                }
+                
+                resolve({
+                    success: true,
+                    message: 'Video validation record rejected and deleted successfully!',
+                    deletedId: deletedVideoValidate._id
+                });
+            })
+            .catch(function (error) {
+                reject(error);
+            });
+    });
+}
+
 module.exports = {
     addVideoValidate,
     getVideoValidate,
-    approveVideoValidate
+    approveVideoValidate,
+    rejectVideoValidate
 };
