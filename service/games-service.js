@@ -80,7 +80,16 @@ function queryGame(queryParams) {
 
         for (var i = 0; i < names.length; i++) {
             var query = {};
-            query[names[i]] = values[i];
+            var value = values[i];
+            
+            // Handle boolean values
+            if (value === 'true') {
+                value = true;
+            } else if (value === 'false') {
+                value = false;
+            }
+            
+            query[names[i]] = value;
             queries.push(query);
         }
 
