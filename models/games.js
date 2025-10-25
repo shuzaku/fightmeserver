@@ -18,6 +18,9 @@ var GameSchema = new Schema({
   ReleaseDate:{
     type: Date
   },
+  IsFeatured: {
+    type: Boolean,
+  },
 }, {
   timestamps: true, 
 });
