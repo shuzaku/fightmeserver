@@ -94,21 +94,21 @@ function queryGame(queryParams) {
         }
 
         if (queries.length > 1) {
-            Game.find({$or: queries}, 'Title Logo CoverArt', function (error, games) {
+            Game.find({$or: queries}, 'Title Logo CoverArt ReleaseDate', function (error, games) {
                 if (error) {
                     reject(error);
                 } else {
                     resolve({games: games});
                 }
-            }).sort({_id: -1});
+            }).sort({ReleaseDate: 1});
         } else {
-            Game.find(queries[0], 'Title Logo CoverArt', function (error, games) {
+            Game.find(queries[0], 'Title Logo CoverArt ReleaseDate', function (error, games) {
                 if (error) {
                     reject(error);
                 } else {
                     resolve({games: games});
                 }
-            }).sort({_id: -1});
+            }).sort({ReleaseDate: 1});
         }
     });
 }
