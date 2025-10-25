@@ -61,7 +61,30 @@ var VideoValidateSchema = new Schema({
   },
   EndTime: {
     type: String
-  }
+  },
+  Combos: [{
+    CharacterId: [{
+      type: ObjectId
+    }],
+    Inputs: {
+      type: String
+    },
+    Damage: {
+      type: String
+    },
+    Hits: {
+      type: String
+    },
+    StartTime: {
+      type: String
+    },
+    EndTime: {
+      type: String
+    },
+    Note: {
+      type: String
+    }
+  }]
 }, {
   timestamps: true, 
 });
