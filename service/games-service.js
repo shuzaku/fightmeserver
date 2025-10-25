@@ -94,7 +94,7 @@ function queryGame(queryParams) {
         }
 
         if (queries.length > 1) {
-            Game.find({$or: queries}, 'Title Logo', function (error, games) {
+            Game.find({$or: queries}, 'Title Logo CoverArt', function (error, games) {
                 if (error) {
                     reject(error);
                 } else {
@@ -102,7 +102,7 @@ function queryGame(queryParams) {
                 }
             }).sort({_id: -1});
         } else {
-            Game.find(queries[0], 'Title Logo', function (error, games) {
+            Game.find(queries[0], 'Title Logo CoverArt', function (error, games) {
                 if (error) {
                     reject(error);
                 } else {
