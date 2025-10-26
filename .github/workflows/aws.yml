@@ -31,7 +31,7 @@ jobs:
           aws-region: us-east-2 # Your AWS region
 
       - name: Deploy to Elastic Beanstalk
-        uses: aws-actions/elasticbeanstalk-deploy@v1
+        uses: einaregilsson/beanstalk-deploy@v21
         with:
           application_name: Node - FightersEdge
           environment_name: Node-FightersEdge-env
