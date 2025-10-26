@@ -60,8 +60,12 @@ jobs:
           version_label: ${{ github.sha }}
           region: us-east-2
           deployment_package: deploy.zip
+          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         env:
           # Explicitly supply credentials to this action (some third-party actions read env only)
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           # AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }} # uncomment if needed
