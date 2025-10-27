@@ -26,9 +26,13 @@ db.once("open", function () {
   console.log("Connection Succeeded");
 });
 
-// app.listen(process.env.PORT || 8081);
+// Use routes BEFORE starting server
+app.use('/', routes);
 
-app.listen(process.env.PORT || 80);   
+// Start server
+app.listen(process.env.PORT || 80, () => {
+  console.log(`Server is running on port ${process.env.PORT || 80}`);
+});
 
 const rule = new schedule.RecurrenceRule();
 
@@ -36,6 +40,3 @@ const rule = new schedule.RecurrenceRule();
 //   console.log('job running now....');
 //   ratingUpdateScrapperController.scrapeContent();
 // });
-
-// Use routes
-app.use('/', routes);
