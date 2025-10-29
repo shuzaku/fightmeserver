@@ -541,15 +541,15 @@ function getSlugMatchupVideos(req, res) {
   var character2 = req.query.character2;
   queries.push({
       $and: [
-        {"Team1PlayerCharacters": { '$elemMatch': { 'Slug':  character1 } }},
-        {"Team2PlayerCharacters": { '$elemMatch': { 'Slug':  character2 } }}
+        {"Team1PlayerCharacters": { '$elemMatch': { 'Slug': { $regex: new RegExp('^' + character1.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i') } }}},
+        {"Team2PlayerCharacters": { '$elemMatch': { 'Slug': { $regex: new RegExp('^' + character2.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i') } }}}
       ]
   })
 
   queries.push({
       $and: [
-        {"Team1PlayerCharacters": { '$elemMatch': { 'Slug':  character2 } }},
-        {"Team2PlayerCharacters": { '$elemMatch': { 'Slug':  character1 } }}
+        {"Team1PlayerCharacters": { '$elemMatch': { 'Slug': { $regex: new RegExp('^' + character2.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i') } }}},
+        {"Team2PlayerCharacters": { '$elemMatch': { 'Slug': { $regex: new RegExp('^' + character1.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i') } }}}
       ]
   })
 
