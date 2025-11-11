@@ -3,6 +3,22 @@ var Video = require("../models/videos");
 var { parseLimit, parseSkip, parseSort, parseSortWithDirection } = require("../utils/query-utils");
 var ObjectId = require('mongodb').ObjectId;
 
+// Helper function to safely convert to ObjectId
+function safeObjectId(value) {
+    if (!value || value === 'null' || value === 'undefined' || value === '') {
+        return null;
+    }
+    try {
+        // Check if it's a valid 24-character hex string
+        if (typeof value === 'string' && /^[0-9a-fA-F]{24}$/.test(value)) {
+            return ObjectId(value);
+        }
+        return null;
+    } catch (error) {
+        return null;
+    }
+}
+
 // Add new Video
 function addVideo(req, res) {
     const isBulk = req.query.bulk;
@@ -92,7 +108,7 @@ function queryVideo(req, res) {
   var limit = parseLimit(req, 5, 20);
   var sortObj = parseSortWithDirection(req, '_id', -1);
   var filter = req.query.filter;
-  var tagFilter = req.query.tag ? ObjectId(req.query.tag): null;
+  var tagFilter = req.query.tag ? safeObjectId(req.query.tag): null;
   var aggregate = [
     {
       '$lookup': {
@@ -234,9 +250,11 @@ function queryVideo(req, res) {
 
       switch (names[i]){
         case 'PlayerId':
+          var playerId = safeObjectId(values[i]);
+          if (!playerId) break;
           var playerQuery= [
-            {"Team1Players": { '$elemMatch': { '_id':  ObjectId(values[i]) } }},
-            {"Team2Players": { '$elemMatch': { '_id':  ObjectId(values[i]) } }}
+            {"Team1Players": { '$elemMatch': { '_id':  playerId } }},
+            {"Team2Players": { '$elemMatch': { '_id':  playerId } }}
           ];  
           queries.push({$or: playerQuery});
         break
@@ -251,32 +269,40 @@ function queryVideo(req, res) {
         
         case 'PlayerMatchupCharacterId':
           queries = [];
-          var playerId = values[names.indexOf('PlayerId')];
-          var characterId = values[i];
+          var playerIdValue = values[names.indexOf('PlayerId')];
+          var characterIdValue = values[i];
+          var playerId = safeObjectId(playerIdValue);
+          var characterId = safeObjectId(characterIdValue);
+          if (!playerId || !characterId) break;
           var matchupQuery = [
-            {'$and': [{"Team1Players": { '$elemMatch': { '_id':  ObjectId(playerId) } }} , {"Team2PlayerCharacters": { '$elemMatch': { '_id':  ObjectId(characterId) } }}]},
-            {'$and': [{"Team2Players": { '$elemMatch': { '_id':  ObjectId(playerId) } }} , {"Team1PlayerCharacters": { '$elemMatch': { '_id':  ObjectId(characterId) } }}]},
+            {'$and': [{"Team1Players": { '$elemMatch': { '_id':  playerId } }} , {"Team2PlayerCharacters": { '$elemMatch': { '_id':  characterId } }}]},
+            {'$and': [{"Team2Players": { '$elemMatch': { '_id':  playerId } }} , {"Team1PlayerCharacters": { '$elemMatch': { '_id':  characterId } }}]},
           ]
           queries.push({$or: matchupQuery});
           break
 
           case 'CharacterMatchupCharacterId':
             queries = [];
-            var characterId = values[names.indexOf('CharacterId')];
-            var matchupCharacterId = values[i];
+            var characterIdValue = values[names.indexOf('CharacterId')];
+            var matchupCharacterIdValue = values[i];
+            var characterId = safeObjectId(characterIdValue);
+            var matchupCharacterId = safeObjectId(matchupCharacterIdValue);
+            if (!characterId || !matchupCharacterId) break;
             var matchupQuery = [
-              {'$and': [{"Team1PlayerCharacters": { '$elemMatch': { '_id':  ObjectId(characterId) } }} , {"Team2PlayerCharacters": { '$elemMatch': { '_id':  ObjectId(matchupCharacterId) } }}]},
-              {'$and': [{"Team2PlayerCharacters": { '$elemMatch': { '_id':  ObjectId(characterId) } }} , {"Team1PlayerCharacters": { '$elemMatch': { '_id':  ObjectId(matchupCharacterId) } }}]},
+              {'$and': [{"Team1PlayerCharacters": { '$elemMatch': { '_id':  characterId } }} , {"Team2PlayerCharacters": { '$elemMatch': { '_id':  matchupCharacterId } }}]},
+              {'$and': [{"Team2PlayerCharacters": { '$elemMatch': { '_id':  characterId } }} , {"Team1PlayerCharacters": { '$elemMatch': { '_id':  matchupCharacterId } }}]},
             ]
             queries.push({$or: matchupQuery});
             break
 
         case 'CharacterId':
+          var characterId = safeObjectId(values[i]);
+          if (!characterId) break;
           var characterQuery= [
-            {"Team1PlayerCharacters": { '$elemMatch': { '_id':  ObjectId(values[i]) } }},
-            {"Team2PlayerCharacters": { '$elemMatch': { '_id':  ObjectId(values[i]) } }},
-            {'MontageCharacters': { '$elemMatch': { '_id':  ObjectId(values[i]) } }},
-            {'Combo.CharacterId': {'$eq': ObjectId(values[i])}},
+            {"Team1PlayerCharacters": { '$elemMatch': { '_id':  characterId } }},
+            {"Team2PlayerCharacters": { '$elemMatch': { '_id':  characterId } }},
+            {'MontageCharacters': { '$elemMatch': { '_id':  characterId } }},
+            {'Combo.CharacterId': {'$eq': characterId}},
           ];
           queries.push({$or: characterQuery});
           break
@@ -292,12 +318,16 @@ function queryVideo(req, res) {
             break
 
         case 'VideoId':
-            queries.push({'_id': {'$eq': ObjectId(values[i])}});
+            var videoId = safeObjectId(values[i]);
+            if (!videoId) break;
+            queries.push({'_id': {'$eq': videoId}});
           break
 
         default: 
           if(names[i].includes('Id')){
-            query[names[i]] =  {'$eq': ObjectId(values[i])};
+            var idValue = safeObjectId(values[i]);
+            if (!idValue) break;
+            query[names[i]] =  {'$eq': idValue};
             queries.push(query);
           } else {
             query[names[0]] =  {'$eq': values[0]};
@@ -332,7 +362,7 @@ function queryVideo(req, res) {
     }
   }
   if(tagFilter){
-    aggregate.push({$match: {"Combo.Tags": { '$elemMatch': { '_id':  ObjectId(tagFilter) } }}});
+    aggregate.push({$match: {"Combo.Tags": { '$elemMatch': { '_id':  tagFilter } }}});
   }
   
   aggregate.push({$sort: sortObj})
@@ -440,10 +470,12 @@ function queryVideoByCharacter(req, res) {
     for(var i = 0; i < names.length; i++){
       switch (names[i]){
         case 'CharacterId':
+          var characterId = safeObjectId(values[i]);
+          if (!characterId) break;
           var characterQuery= [
-            {"Team1PlayerCharacters": { '$elemMatch': { '_id':  ObjectId(values[i]) } }},
-            {"Team2PlayerCharacters": { '$elemMatch': { '_id':  ObjectId(values[i]) } }},
-            {'Combo.CharacterId': {'$eq': ObjectId(values[i])}},
+            {"Team1PlayerCharacters": { '$elemMatch': { '_id':  characterId } }},
+            {"Team2PlayerCharacters": { '$elemMatch': { '_id':  characterId } }},
+            {'Combo.CharacterId': {'$eq': characterId}},
           ];
           queries.push({$or: characterQuery});
           break
@@ -481,7 +513,7 @@ function queryVideoByPlayer(req, res) {
   var limit = parseLimit(req, 5, 20);
   var sortObj = parseSortWithDirection(req, '_id', -1);
   var filter = req.query.filter;
-  var tagFilter = req.query.tag ? ObjectId(req.query.tag): null;
+  var tagFilter = req.query.tag ? safeObjectId(req.query.tag): null;
   var aggregate = [{
       '$lookup': {
         'from': 'matches', 
@@ -521,9 +553,11 @@ function queryVideoByPlayer(req, res) {
 
       switch (names[i]){
         case 'PlayerId':
+          var playerId = safeObjectId(values[i]);
+          if (!playerId) break;
           var playerQuery= [
-            {"Team1Players": { '$elemMatch': { '_id':  ObjectId(values[i]) } }},
-            {"Team2Players": { '$elemMatch': { '_id':  ObjectId(values[i]) } }}
+            {"Team1Players": { '$elemMatch': { '_id':  playerId } }},
+            {"Team2Players": { '$elemMatch': { '_id':  playerId } }}
           ];  
           queries.push({$or: playerQuery});
         break
@@ -597,7 +631,9 @@ function queryVideoByGame(req, res) {
       switch (names[i]){
         default: 
           if(names[i].includes('Id')){
-            query[names[i]] =  {'$eq': ObjectId(values[i])};
+            var idValue = safeObjectId(values[i]);
+            if (!idValue) break;
+            query[names[i]] =  {'$eq': idValue};
             queries.push(query);
           } else {
             query[names[0]] =  {'$eq': values[0]};
@@ -739,7 +775,12 @@ function getVideo(req, res) {
     }
   ];
   var videoId = req.params.id;
-  aggregate.unshift({$match: {'_id': {'$eq': ObjectId(videoId)}}});
+  var validVideoId = safeObjectId(videoId);
+  if (!validVideoId) {
+    res.status(400).send({ error: 'Invalid video ID format' });
+    return;
+  }
+  aggregate.unshift({$match: {'_id': {'$eq': validVideoId}}});
   Video.aggregate(aggregate, function (error, video) {
     if (error) { console.error(error); }
     res.send({
@@ -756,10 +797,22 @@ function patchVideo(req, res) {
     if (error) { console.error(error); }
 
     video.ContentCreatorId = req.body.ContentCreatorId;
-    video.GameId = ObjectId(req.body.GameId);
+    var gameId = safeObjectId(req.body.GameId);
+    if (!gameId) {
+      res.status(400).send({ error: 'Invalid GameId format' });
+      return;
+    }
+    video.GameId = gameId;
+    // Validate all combo IDs before processing
+    for (var j = 0; j < req.body.Combos.length; j++) {
+      if (!safeObjectId(req.body.Combos[j].Id)) {
+        res.status(400).send({ error: 'Invalid Combo Id format at index ' + j });
+        return;
+      }
+    }
     video.Combos = req.body.Combos.map(combo => {
       return {
-        Id: ObjectId(combo.Id),
+        Id: safeObjectId(combo.Id),
         StartTime: combo.StartTime,
         EndTime: combo.EndTime
       }
@@ -1040,8 +1093,12 @@ function getMatchupVideos(req, res) {
       }
     }
   ];
-  var character1 = ObjectId(req.query.character1);
-  var character2 = ObjectId(req.query.character2);
+  var character1 = safeObjectId(req.query.character1);
+  var character2 = safeObjectId(req.query.character2);
+  if (!character1 || !character2) {
+    res.status(400).send({ error: 'Invalid character ID format' });
+    return;
+  }
   queries.push({
       $and: [
         {"Team1PlayerCharacters": { '$elemMatch': { '_id':  character1 } }},
