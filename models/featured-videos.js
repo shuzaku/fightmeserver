@@ -9,11 +9,12 @@ var FeatureVideosSchema = new Schema({
   CreatorId: {
     type: ObjectId,
   },
-  VideoUrl: {
-    type: String
-  },
   GameIds: {
-    type: Array
+    type: [ObjectId],
+  },
+  Type: {
+    type: String,
+    enum: ['Game', 'General'],
   }
 }, {
   timestamps: true, 

@@ -162,11 +162,11 @@ function getVideoValidate() {
                                     console.log('Error populating Team1 player:', error);
                                 }
                             }
-                            
+
                             // Populate character data
                             if (player.CharacterIds && player.CharacterIds.length > 0) {
                                 try {
-                                    const characterData = await Character.find({'_id': {$in: player.CharacterIds}}, 'Name ImageUrl AvatarUrl Slug');
+                                    const characterData = await Character.find({ '_id': { $in: player.CharacterIds } }, 'Name ImageUrl AvatarUrl Slug');
                                     if (characterData) {
                                         player.CharacterData = characterData;
                                     }
@@ -176,7 +176,7 @@ function getVideoValidate() {
                             }
                         }
                     }
-                    
+
                     // Populate Team2Players
                     if (video.Team2Players && video.Team2Players.length > 0) {
                         for (let player of video.Team2Players) {
@@ -190,11 +190,11 @@ function getVideoValidate() {
                                     console.log('Error populating Team2 player:', error);
                                 }
                             }
-                            
+
                             // Populate character data
                             if (player.CharacterIds && player.CharacterIds.length > 0) {
                                 try {
-                                    const characterData = await Character.find({'_id': {$in: player.CharacterIds}}, 'Name ImageUrl AvatarUrl Slug');
+                                    const characterData = await Character.find({ '_id': { $in: player.CharacterIds } }, 'Name ImageUrl AvatarUrl Slug');
                                     if (characterData) {
                                         player.CharacterData = characterData;
                                     }
@@ -204,7 +204,7 @@ function getVideoValidate() {
                             }
                         }
                     }
-                    
+
                     // Populate user data for SubmittedBy and UpdatedBy
                     if (video.SubmittedBy) {
                         try {
@@ -216,7 +216,7 @@ function getVideoValidate() {
                             console.log('Error populating SubmittedBy user:', error);
                         }
                     }
-                    
+
                     if (video.UpdatedBy) {
                         try {
                             const updatedByUser = await Account.findById(video.UpdatedBy, 'DisplayName Email AccountType');
@@ -230,7 +230,7 @@ function getVideoValidate() {
                 }
                 return video_validates;
             };
-            
+
             populatePlayersAndCharacters().then(() => {
                 // Transform the response to keep the populated Game object
                 const transformedVideos = video_validates.map(video => {
@@ -239,11 +239,11 @@ function getVideoValidate() {
                     if (transformedVideo.GameId) {
                         delete transformedVideo.GameId;
                     }
-                    
+
                     // Add user data
                     transformedVideo.SubmittedByUser = video.SubmittedByUser || null;
                     transformedVideo.UpdatedByUser = video.UpdatedByUser || null;
-                    
+
                     // Ensure PlayerData and CharacterData are included
                     if (transformedVideo.Team1Players) {
                         transformedVideo.Team1Players = transformedVideo.Team1Players.map((player, index) => ({
@@ -252,7 +252,7 @@ function getVideoValidate() {
                             CharacterData: video.Team1Players[index].CharacterData || null
                         }));
                     }
-                    
+
                     if (transformedVideo.Team2Players) {
                         transformedVideo.Team2Players = transformedVideo.Team2Players.map((player, index) => ({
                             ...player,
@@ -260,10 +260,10 @@ function getVideoValidate() {
                             CharacterData: video.Team2Players[index].CharacterData || null
                         }));
                     }
-                    
+
                     return transformedVideo;
                 });
-                
+
                 resolve({
                     success: true,
                     video_validates: transformedVideos
@@ -297,9 +297,7 @@ function approveVideoValidate(videoValidateId, status) {
                 EndTime: videoValidate.EndTime,
                 Tags: videoValidate.Tags,
                 SubmittedBy: videoValidate.SubmittedBy,
-                UpdatedBy: videoValidate.UpdatedBy,
-                // For combo videos, include combo data
-                Combos: videoValidate.ContentType === 'Combo' ? videoValidate.Combos : undefined
+                UpdatedBy: videoValidate.UpdatedBy
             });
 
             // Only create match record for Match content type
@@ -372,7 +370,7 @@ function approveVideoValidate(videoValidateId, status) {
                                         ComboId: newCombo._id,
                                         StartTime: comboData.StartTime || videoValidate.StartTime,
                                         EndTime: comboData.EndTime || videoValidate.EndTime,
-                                        Url: videoValidate.Url,
+                                        VideoId: newVideo._id, // Use VideoId instead of Url
                                         Tags: videoValidate.Tags || [],
                                         SubmittedBy: videoValidate.SubmittedBy,
                                         UpdatedBy: videoValidate.UpdatedBy
@@ -439,7 +437,7 @@ function rejectVideoValidate(videoValidateId) {
                     });
                     return;
                 }
-                
+
                 resolve({
                     success: true,
                     message: 'Video validation record rejected and deleted successfully!',

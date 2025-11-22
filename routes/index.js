@@ -1,4 +1,5 @@
 const express = require('express');
+console.log("DEBUG: Loading routes/index.js");
 const router = express.Router();
 
 // Import route modules
@@ -29,6 +30,7 @@ const articleRoutes = require('./articles');
 const updateRoutes = require('./updates');
 const featuredPlayerRoutes = require('./featured-players');
 const featuredVideoRoutes = require('./featured-videos');
+const tierListRoutes = require('./tier-lists');
 
 // Use route modules
 router.use('/', characterRoutes);
@@ -58,5 +60,6 @@ router.use('/', articleRoutes);
 router.use('/', updateRoutes);
 router.use('/', featuredPlayerRoutes);
 router.use('/', featuredVideoRoutes);
+router.use('/', tierListRoutes);
 
 module.exports = router;

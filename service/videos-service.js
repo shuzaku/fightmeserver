@@ -23,12 +23,12 @@ function addVideo(videoData, isBulk = false) {
     return new Promise((resolve, reject) => {
         if (!isBulk) {
             // First check if URL already exists
-            Video.findOne({ Url: videoData.Url }, function(error, existingVideo) {
+            Video.findOne({ Url: videoData.Url }, function (error, existingVideo) {
                 if (error) {
                     reject(error);
                     return;
                 }
-                
+
                 if (existingVideo) {
                     reject({
                         success: false,
@@ -37,7 +37,7 @@ function addVideo(videoData, isBulk = false) {
                     });
                     return;
                 }
-                
+
                 // URL is unique, proceed with creating new video
                 var new_video = new Video({
                     Url: videoData.Url,
@@ -68,12 +68,12 @@ function addVideo(videoData, isBulk = false) {
         } else {
             // For bulk operations, check each URL individually
             const urlsToCheck = videoData.map(video => video.Url);
-            Video.find({ Url: { $in: urlsToCheck } }, function(error, existingVideos) {
+            Video.find({ Url: { $in: urlsToCheck } }, function (error, existingVideos) {
                 if (error) {
                     reject(error);
                     return;
                 }
-                
+
                 if (existingVideos.length > 0) {
                     const existingUrls = existingVideos.map(video => video.Url);
                     reject({
@@ -84,9 +84,9 @@ function addVideo(videoData, isBulk = false) {
                     });
                     return;
                 }
-                
+
                 // All URLs are unique, proceed with bulk insert
-                Video.insertMany(videoData, function(error, videos) {
+                Video.insertMany(videoData, function (error, videos) {
                     if (error) {
                         reject(error);
                     } else {
@@ -109,7 +109,7 @@ function fetchVideos(queryParams) {
         var limit = parseLimit(queryParams, 5, 20);
         var aggregate = [
             {
-                '$sort': {'_id': -1}
+                '$sort': { '_id': -1 }
             }, {
                 '$lookup': {
                     'from': 'matches',
@@ -149,8 +149,8 @@ function fetchVideos(queryParams) {
             },
         ];
 
-        aggregate.push({$skip: skip});
-        aggregate.push({$limit: limit});
+        aggregate.push({ $skip: skip });
+        aggregate.push({ $limit: limit });
 
         Video.aggregate(aggregate, function (error, videos) {
             if (error) {
@@ -316,18 +316,18 @@ function queryVideo(queryParams) {
                         var playerId = safeObjectId(values[i]);
                         if (!playerId) break;
                         var playerQuery = [
-                            {"Team1Players": {'$elemMatch': {'_id': playerId}}},
-                            {"Team2Players": {'$elemMatch': {'_id': playerId}}}
+                            { "Team1Players": { '$elemMatch': { '_id': playerId } } },
+                            { "Team2Players": { '$elemMatch': { '_id': playerId } } }
                         ];
-                        queries.push({$or: playerQuery});
+                        queries.push({ $or: playerQuery });
                         break
 
                     case 'PlayerSlug':
                         var playerQuery = [
-                            {"Team1Players": {'$elemMatch': {'Slug': values[i]}}},
-                            {"Team2Players": {'$elemMatch': {'Slug': values[i]}}}
+                            { "Team1Players": { '$elemMatch': { 'Slug': values[i] } } },
+                            { "Team2Players": { '$elemMatch': { 'Slug': values[i] } } }
                         ];
-                        queries.push({$or: playerQuery});
+                        queries.push({ $or: playerQuery });
                         break
 
                     case 'PlayerMatchupCharacterId':
@@ -338,10 +338,10 @@ function queryVideo(queryParams) {
                         var characterId = safeObjectId(characterIdValue);
                         if (!playerId || !characterId) break;
                         var matchupQuery = [
-                            {'$and': [{"Team1Players": {'$elemMatch': {'_id': playerId}}}, {"Team2PlayerCharacters": {'$elemMatch': {'_id': characterId}}}]},
-                            {'$and': [{"Team2Players": {'$elemMatch': {'_id': playerId}}}, {"Team1PlayerCharacters": {'$elemMatch': {'_id': characterId}}}]},
+                            { '$and': [{ "Team1Players": { '$elemMatch': { '_id': playerId } } }, { "Team2PlayerCharacters": { '$elemMatch': { '_id': characterId } } }] },
+                            { '$and': [{ "Team2Players": { '$elemMatch': { '_id': playerId } } }, { "Team1PlayerCharacters": { '$elemMatch': { '_id': characterId } } }] },
                         ]
-                        queries.push({$or: matchupQuery});
+                        queries.push({ $or: matchupQuery });
                         break
 
                     case 'CharacterMatchupCharacterId':
@@ -352,76 +352,76 @@ function queryVideo(queryParams) {
                         var matchupCharacterId = safeObjectId(matchupCharacterIdValue);
                         if (!characterId || !matchupCharacterId) break;
                         var matchupQuery = [
-                            {'$and': [{"Team1PlayerCharacters": {'$elemMatch': {'_id': characterId}}}, {"Team2PlayerCharacters": {'$elemMatch': {'_id': matchupCharacterId}}}]},
-                            {'$and': [{"Team2PlayerCharacters": {'$elemMatch': {'_id': characterId}}}, {"Team1PlayerCharacters": {'$elemMatch': {'_id': matchupCharacterId}}}]},
+                            { '$and': [{ "Team1PlayerCharacters": { '$elemMatch': { '_id': characterId } } }, { "Team2PlayerCharacters": { '$elemMatch': { '_id': matchupCharacterId } } }] },
+                            { '$and': [{ "Team2PlayerCharacters": { '$elemMatch': { '_id': characterId } } }, { "Team1PlayerCharacters": { '$elemMatch': { '_id': matchupCharacterId } } }] },
                         ]
-                        queries.push({$or: matchupQuery});
+                        queries.push({ $or: matchupQuery });
                         break
 
                     case 'CharacterId':
                         var characterId = safeObjectId(values[i]);
                         if (!characterId) break;
                         var characterQuery = [
-                            {"Team1PlayerCharacters": {'$elemMatch': {'_id': characterId}}},
-                            {"Team2PlayerCharacters": {'$elemMatch': {'_id': characterId}}},
-                            {'MontageCharacters': {'$elemMatch': {'_id': characterId}}},
-                            {'Combo.CharacterId': {'$eq': characterId}},
+                            { "Team1PlayerCharacters": { '$elemMatch': { '_id': characterId } } },
+                            { "Team2PlayerCharacters": { '$elemMatch': { '_id': characterId } } },
+                            { 'MontageCharacters': { '$elemMatch': { '_id': characterId } } },
+                            { 'Combo.CharacterId': { '$eq': characterId } },
                         ];
-                        queries.push({$or: characterQuery});
+                        queries.push({ $or: characterQuery });
                         break
 
                     case 'CharacterSlug':
                         var characterQuery = [
-                            {"Team1PlayerCharacters": {'$elemMatch': {'Slug': values[i]}}},
-                            {"Team2PlayerCharacters": {'$elemMatch': {'Slug': values[i]}}},
-                            {'MontageCharacters': {'$elemMatch': {'Slug': values[i]}}},
+                            { "Team1PlayerCharacters": { '$elemMatch': { 'Slug': values[i] } } },
+                            { "Team2PlayerCharacters": { '$elemMatch': { 'Slug': values[i] } } },
+                            { 'MontageCharacters': { '$elemMatch': { 'Slug': values[i] } } },
                         ];
-                        queries.push({$or: characterQuery});
+                        queries.push({ $or: characterQuery });
                         break
 
                     case 'VideoId':
                         var videoId = safeObjectId(values[i]);
                         if (!videoId) break;
-                        queries.push({'_id': {'$eq': videoId}});
+                        queries.push({ '_id': { '$eq': videoId } });
                         break
 
                     default:
                         if (names[i].includes('Id')) {
                             var idValue = safeObjectId(values[i]);
                             if (!idValue) break;
-                            query[names[i]] = {'$eq': idValue};
+                            query[names[i]] = { '$eq': idValue };
                             queries.push(query);
                         } else {
-                            query[names[0]] = {'$eq': values[0]};
+                            query[names[0]] = { '$eq': values[0] };
                             queries.push(query);
                         }
                 }
             }
             if (names.some(n => n === "VideoId")) {
-                aggregate.push({$match: {$or: queries}});
+                aggregate.push({ $match: { $or: queries } });
             }
         }
 
         if (queries.length > 0) {
-            aggregate.push({$match: {$and: queries}});
+            aggregate.push({ $match: { $and: queries } });
         }
 
         if (filter) {
             if (filter === 'Combo') {
-                aggregate.push({$match: {ContentType: 'Combo'}})
+                aggregate.push({ $match: { ContentType: 'Combo' } })
             } else if (filter === 'Match') {
-                aggregate.push({$match: {ContentType: 'Match'}})
+                aggregate.push({ $match: { ContentType: 'Match' } })
             } else if (filter === 'Montage') {
-                aggregate.push({$match: {ContentType: 'Montage'}})
+                aggregate.push({ $match: { ContentType: 'Montage' } })
             }
         }
         if (tagFilter) {
-            aggregate.push({$match: {"Combo.Tags": {'$elemMatch': {'_id': tagFilter}}}});
+            aggregate.push({ $match: { "Combo.Tags": { '$elemMatch': { '_id': tagFilter } } } });
         }
 
-        aggregate.push({$sort: sortObj})
-        aggregate.push({$skip: skip});
-        aggregate.push({$limit: limit});
+        aggregate.push({ $sort: sortObj })
+        aggregate.push({ $skip: skip });
+        aggregate.push({ $limit: limit });
 
         Video.aggregate(aggregate, function (error, videos) {
             if (error) {
@@ -438,7 +438,7 @@ function getVideo(videoId) {
     return new Promise((resolve, reject) => {
         var aggregate = [
             {
-                '$sort': {'_id': -1}
+                '$sort': { '_id': -1 }
             },
             {
                 '$lookup': {
@@ -552,7 +552,7 @@ function getVideo(videoId) {
             reject(new Error('Invalid video ID format'));
             return;
         }
-        aggregate.unshift({$match: {'_id': {'$eq': validVideoId}}});
+        aggregate.unshift({ $match: { '_id': { '$eq': validVideoId } } });
         Video.aggregate(aggregate, function (error, video) {
             if (error) {
                 reject(error);
