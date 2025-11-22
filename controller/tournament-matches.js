@@ -1,189 +1,88 @@
 var TournamentMatches = require("../models/tournament-matches");
 var ObjectId = require('mongodb').ObjectId;
+var matchesController = require('../controller/matches');
 
-// Query Tournament Matches
+/**
+ * GET /tournament-matches/:id?skip=0&queryName=PlayerId&queryValue=...
+ * GET /tournament-matches?skip=0&queryName=PlayerId&queryValue=...
+ * 
+ * Returns tournament matches. 
+ * If :id is present, filters by TournamentId.
+ * Supports optional query filters (PlayerId, GameId, etc).
+ */
 function queryTournamentMatchesByTournamentId(req, res) {
-  var skip =  parseInt(req.query.skip) || 0;
+  var skip = parseInt(req.query.skip) || 0;
 
-  if(req.query.queryName && req.query.queryValue) {
+  // Base aggregation with lookups to enrich the match documents
+  var aggregate = [
+    { $lookup: { from: 'players', localField: 'Team1Players.Id', foreignField: '_id', as: 'Team1Player' } },
+    { $lookup: { from: 'players', localField: 'Team2Players.Id', foreignField: '_id', as: 'Team2Player' } },
+    { $lookup: { from: 'characters', localField: 'Team1Players.CharacterIds', foreignField: '_id', as: 'Team1PlayerCharacters' } },
+    { $lookup: { from: 'characters', localField: 'Team2Players.CharacterIds', foreignField: '_id', as: 'Team2PlayerCharacters' } },
+    { $lookup: { from: 'tournaments', localField: 'TournamentId', foreignField: '_id', as: 'Tournament' } },
+    { $lookup: { from: 'games', localField: 'GameId', foreignField: '_id', as: 'Game' } }
+  ];
 
-    var tournamentId =  ObjectId(req.params.id);
-    this.queryMatches(req, res, tournamentId);
-  } 
-  else {
-    var tournamentId =  ObjectId(req.params.id);
-
-    var aggregate = [
-      {
-        '$lookup': {
-          'from': 'players', 
-          'localField': 'Team1Players.Id', 
-          'foreignField': '_id', 
-          'as': 'Team1Player'
-        }
-      }, {
-        '$lookup': {
-          'from': 'players', 
-          'localField': 'Team2Players.Id', 
-          'foreignField': '_id', 
-          'as': 'Team2Player'
-        }
-      }, {
-        '$lookup': {
-          'from': 'characters', 
-          'localField': 'Team1Players.CharacterIds', 
-          'foreignField': '_id', 
-          'as': 'Team1PlayerCharacters'
-        }
-      }, {
-        '$lookup': {
-          'from': 'characters', 
-          'localField': 'Team2Players.CharacterIds', 
-          'foreignField': '_id', 
-          'as': 'Team2PlayerCharacters'
-        }
-      }, {
-        '$lookup': {
-          'from': 'tournaments', 
-          'localField': 'TournamentId', 
-          'foreignField': '_id', 
-          'as': 'Tournament'
-        }
-      }, {
-        '$lookup': {
-          'from': 'games', 
-          'localField': 'GameId', 
-          'foreignField': '_id', 
-          'as': 'Game'
-        }
-      },
-    ]
-
-    aggregate.push({$skip: skip});
-    aggregate.push({$limit: 5});  
-
-    aggregate.unshift({$match: { TournamentId: tournamentId }});
-
-    TournamentMatches.aggregate(aggregate, function (error, matches) {
-      if (error) { console.error(error); }
-      res.send({
-        matches: matches
-      })
-    })
-  }
-};
-
-function queryMatches(req, res, tournamentId =  null) {
-  var skip =  parseInt(req.query.skip) || 0;
-  var names = req.query.queryName.split(",");
-  var values = req.query.queryValue.split(",");
-  var queries = [];
-  if(tournamentId) {
-    queries.push({'TournamentId': ObjectId(tournamentId)})
-  }
-  
-  if (names.length > 0){
-      for(var i = 0; i < names.length; i++){
-        var query = {};
-        if (names[i] === 'GameId') {
-          queries.push({'GameId':ObjectId(values[i])});
-        }
-        else if (names[i] === 'Id') {
-          queries.push({'_id':ObjectId(values[i])});
-        }
-        else if (names[i] === 'CharacterId') {
-          var characterQuery= [
-            {"Team1PlayerCharacters": { '$elemMatch': { '_id':  ObjectId(values[i]) } }},
-            {"Team2PlayerCharacters": { '$elemMatch': { '_id':  ObjectId(values[i]) } }},
-          ];
-          queries.push({$or: characterQuery});
-        }
-        else if (names[i] === 'PlayerId') {
-          var characterQuery= [
-            {"Team1Player": { '$elemMatch': { '_id':  ObjectId(values[i]) } }},
-            {"Team2Player": { '$elemMatch': { '_id':  ObjectId(values[i]) } }},
-          ];
-          queries.push({$or: characterQuery});
-        }
-        else {
-          var newQuery = {}
-          newQuery[names[i]] = {'$eq': values[i]}
-          queries.push(newQuery);
-        }
-      }
-  } 
-  else {
-    for(var i = 0; i < names.length; i++){
-      queries[names[i]] = values[i];
+  // Filter by the specific tournament ONLY if the ID is provided in the URL parameters
+  if (req.params.id) {
+    try {
+      var tournamentId = ObjectId(req.params.id);
+      aggregate.unshift({ $match: { TournamentId: tournamentId } });
+    } catch (e) {
+      console.error("Invalid Tournament ID:", req.params.id);
+      return res.status(400).json({ error: "Invalid Tournament ID" });
     }
   }
 
-  console.log(queries)
-
-  var aggregate = [
-    {
-      '$lookup': {
-        'from': 'players', 
-        'localField': 'Team1Players.Id', 
-        'foreignField': '_id', 
-        'as': 'Team1Player'
+  // Optional extra filters (e.g., PlayerId, GameId, Id, or any other field)
+  if (req.query.queryName && req.query.queryValue) {
+    var names = req.query.queryName.split(',');
+    var values = req.query.queryValue.split(',');
+    var extra = [];
+    for (var i = 0; i < names.length; i++) {
+      var name = names[i];
+      var val = values[i];
+      if (name === 'PlayerId') {
+        var pid = ObjectId(val);
+        // Match either side's player Id inside the array of players
+        extra.push({
+          $or: [
+            { Team1Players: { $elemMatch: { Id: pid } } },
+            { Team2Players: { $elemMatch: { Id: pid } } }
+          ]
+        });
+      } else if (name === 'GameId') {
+        extra.push({ GameId: ObjectId(val) });
+      } else if (name === 'Id') {
+        extra.push({ _id: ObjectId(val) });
+      } else {
+        var obj = {};
+        obj[name] = val;
+        extra.push(obj);
       }
-    }, {
-      '$lookup': {
-        'from': 'players', 
-        'localField': 'Team2Players.Id', 
-        'foreignField': '_id', 
-        'as': 'Team2Player'
-      }
-    }, {
-      '$lookup': {
-        'from': 'characters', 
-        'localField': 'Team1Players.CharacterIds', 
-        'foreignField': '_id', 
-        'as': 'Team1PlayerCharacters'
-      }
-    }, {
-      '$lookup': {
-        'from': 'characters', 
-        'localField': 'Team2Players.CharacterIds', 
-        'foreignField': '_id', 
-        'as': 'Team2PlayerCharacters'
-      }
-    }, {
-      '$lookup': {
-        'from': 'games', 
-        'localField': 'GameId', 
-        'foreignField': '_id', 
-        'as': 'Game'
-      }
-    },{
-      '$lookup': {
-        'from': 'tournaments', 
-        'localField': 'TournamentId', 
-        'foreignField': '_id', 
-        'as': 'Tournament'
-      }
-    },{
-      '$unwind': {
-        'path': '$Character', 
-        'preserveNullAndEmptyArrays': true
-      }
-    },
-  ];
-  
-  if(queries.length > 0) {
-    aggregate.push({$match: {$and: queries}});
+    }
+    if (extra.length) {
+      // Apply filters at the start of the pipeline for performance and to use raw fields
+      aggregate.unshift({ $match: { $and: extra } });
+    }
   }
 
-  aggregate.push({$skip: skip});
-  aggregate.push({$limit: 5});  
+  // Pagination
+  aggregate.push({ $skip: skip });
+  aggregate.push({ $limit: 5 });
+
 
   TournamentMatches.aggregate(aggregate, function (error, matches) {
-    if (error) { console.error(error); }
-    res.send({
-      matches: matches
-    })
-  })
+    if (error) {
+      console.error("Aggregation Error:", error);
+      return res.status(500).json({ error: error.message || 'Aggregation error' });
+    }
+    console.log("Found matches:", matches.length);
+    res.json({ matches: matches });
+  });
 }
 
-module.exports = {queryTournamentMatchesByTournamentId, queryMatches}
+module.exports = {
+  queryTournamentMatchesByTournamentId,
+  queryMatches: matchesController.queryMatches
+};
