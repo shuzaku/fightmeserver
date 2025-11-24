@@ -101,4 +101,20 @@ function deleteGame(req, res) {
         });
 }
 
-module.exports = { addGame, getGames, getGame, queryGame, updateGame, deleteGame}
+// Get game statistics
+function getGameStats(req, res) {
+    gameService.getGameStats(req.params.id)
+        .then(result => {
+            res.send(result);
+        })
+        .catch(error => {
+            console.error(error);
+            res.status(500).send({
+                success: false,
+                message: 'Error fetching game stats',
+                error: error.message
+            });
+        });
+}
+
+module.exports = { addGame, getGames, getGame, queryGame, updateGame, deleteGame, getGameStats }
