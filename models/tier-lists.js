@@ -17,6 +17,10 @@ var TierListSchema = new Schema({
         required: '{PATH} is required!',
         ref: 'Accounts'
     },
+    Source: {
+        type: String,
+        required: false
+    },
     Tiers: [{
         Name: String,
         Color: String,
