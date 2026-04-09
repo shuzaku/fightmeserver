@@ -23,8 +23,10 @@ function getAnalysisByMatchId(req, res) {
       }
     }
 
+    const projection = 'MatchType MatchId match_lookup_found analyzed_at videoUrl video_path detector detector_detail summary video_info player_stats frame_detections Detections';
+
     if(queries.length > 1) {
-      Analyses.find({ $or: queries }, 'MatchType MatchId Detections', function (error, analyses) {
+      Analyses.find({ $or: queries }, projection, function (error, analyses) {
         if (error) { console.error(error); }
         res.send({
           analyses: analyses
@@ -32,7 +34,7 @@ function getAnalysisByMatchId(req, res) {
       })
     }
     else {
-      Analyses.find(queries[0], 'MatchType MatchId Detections', function (error, analyses) {
+      Analyses.find(queries[0], projection, function (error, analyses) {
         if (error) { console.error(error); }
 
         res.send({
