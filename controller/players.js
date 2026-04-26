@@ -2,6 +2,7 @@ var Player = require("../models/players");
 var ObjectId = require('mongodb').ObjectId;
 var MatchService = require("../service/matches-service");
 var Match = require("../models/matches");
+var playerAccountLink = require("../service/player-account-link-service");
 
 
 // Add new player
@@ -44,30 +45,58 @@ function getPlayers(req, res) {
 // Fetch single player
 function getPlayer(req, res) {
   var db = req.db;
-  Player.findById(req.params.id, 'Name PlayerImg Slug MatchupAppearance Twitter Stream Youtube', function (error, player) {
-    if (error) { console.error(error); }
-    res.send(player)
-  })
+  Player.findById(
+    req.params.id,
+    'Name PlayerImg Slug MatchupAppearance Twitter Stream Youtube AccountId',
+    function (error, player) {
+      if (error) { console.error(error); }
+      res.send(player);
+    }
+  );
 }
 
 // Update a player
 function updatePlayer(req, res) {
   var db = req.db;
-  Player.findById(req.params.id, 'Name PlayerImg', function (error, player) {
-    if (error) { console.error(error); }
-
-    player.Name = req.body.Name;
-    player.PlayerImg = req.body.PlayerImg;
-
-    player.save(function (error) {
-      if (error) {
-        console.log(error)
+  Player.findById(req.params.id, function (error, player) {
+    if (error) {
+      console.error(error);
+    }
+    if (!player) {
+      return res.status(404).send({ message: 'Player not found' });
+    }
+    if (req.body.Name !== undefined) {
+      player.Name = req.body.Name;
+    }
+    if (req.body.PlayerImg !== undefined) {
+      player.PlayerImg = req.body.PlayerImg;
+    }
+    if (Object.prototype.hasOwnProperty.call(req.body, 'AccountId')) {
+      return player.save(function (e2) {
+        if (e2) {
+          return res.status(500).send({ message: e2.message || 'Save failed' });
+        }
+        return playerAccountLink.setLinkByPlayerId(
+          String(req.params.id),
+          req.body.AccountId,
+          function (e3) {
+            if (e3) {
+              return res.status(400).send({ message: e3.message || 'Link failed' });
+            }
+            return res.send({ success: true });
+          }
+        );
+      });
+    }
+    return player.save(function (error2) {
+      if (error2) {
+        return res.status(500).send({ message: error2.message || 'Save failed' });
       }
-      res.send({
+      return res.send({
         success: true
-      })
-    })
-  })
+      });
+    });
+  });
 }
 
 // Delete a player

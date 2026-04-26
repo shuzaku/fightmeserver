@@ -16,6 +16,7 @@ let montageController = require("../controller/montages");
 let moveController = require("../controller/moves");
 let noteController = require("../controller/notes");
 let characterMatchupController = require("../controller/character-matchups");
+let playerLinkRequestController = require("../controller/player-link-requests");
 
 let ratingUpdateScrapperController = require("../controller/scrapper");
 
@@ -103,6 +104,20 @@ app.put('/players/:id', (req, res) => playerController.updatePlayer(req,res));
 app.delete('/players/:id', (req, res) => playerController.deletePlayer(req,res));
 app.get('/playerSlug/:slug', (req, res) => playerController.getPlayerBySlug(req,res));
 app.get('/mergePlayers/:player1Id/:player2Id', (req, res) => playerController.mergePlayers(req,res));
+// Player link requests (user requests + admin approval)
+app.post('/player-link-requests', (req, res) => playerLinkRequestController.createRequest(req, res));
+app.get('/player-link-requests', (req, res) => {
+  if (String(req.query.status) === 'pending') {
+    return playerLinkRequestController.listPending(req, res);
+  }
+  if (req.query.accountId && req.query.playerId) {
+    return playerLinkRequestController.getByAccountAndPlayer(req, res);
+  }
+  return res.status(400).json({ message: 'Use ?status=pending for admin, or ?accountId=&playerId= for a single request' });
+});
+app.put('/player-link-requests/:id/approve', (req, res) => playerLinkRequestController.approveRequest(req, res));
+app.put('/player-link-requests/:id/reject', (req, res) => playerLinkRequestController.rejectRequest(req, res));
+app.delete('/player-link-requests/:id', (req, res) => playerLinkRequestController.cancelRequest(req, res));
 //Tags
 app.post('/tags', (req, res) => tagController.addTag(req,res));
 app.get('/tags', (req, res) => tagController.getTags(req,res));
