@@ -9,9 +9,10 @@ function addMatches(req, res) {
       var VideoUrl = req.body.VideoUrl;
       var GameId = ObjectId(req.body.GameId);
       var GameVersion = req.body.GameVersion
-      var WinningPlayersId = req.body.WinningPlayersId ? req.body.WinningPlayersId.map(id => {return ObjectId(id)}) : null;
-      var LosingPlayersId = req.body.LosingPlayersId ? req.body.LosingPlayersId.map(id => {return ObjectId(id)}) : null;
+      var WinningPlayersId = req.body.WinningPlayersId ? req.body.WinningPlayersId : null;
+      var LosingPlayersId = req.body.LosingPlayersId ? req.body.LosingPlayersId : null;
       var TournamentId = ObjectId(req.body.TournamentId);
+      var TournamentMatchType = ObjectId(req.body.TournamentMatchType)
       var StartTime = req.body.StartTime;
       var EndTime = req.body.EndTime;
       var new_match = new Match({
@@ -36,7 +37,8 @@ function addMatches(req, res) {
         WinningPlayersId: WinningPlayersId,
         LosingPlayersId: LosingPlayersId,
         StartTime: StartTime,
-        EndTime: EndTime
+        EndTime: EndTime,
+        TournamentMatchType:TournamentMatchType
       });
     
       new_match.save(function (error,match) {
@@ -77,6 +79,7 @@ function addMatches(req, res) {
           SubmittedBy: match.SubmittedBy,
           UpdatedBy: match.UpdatedBy,
           TournamentId: ObjectId(match.TournamentId),
+          TournamentMatchType: match.TournamentMatchType
         }
       })
 
@@ -105,7 +108,7 @@ function getMatches(req, res) {
 
 // Update a matches
 function patchMatch(req, res) {
-  Match.findById(ObjectId(req.params.id), 'Team1Players Team2Players VideoUrl GameId GameVersion WinnerIds LoserIds', function (error, match) {
+  Match.findById(ObjectId(req.params.id), 'Team1Players Team2Players VideoUrl GameId GameVersion WinnerIds LoserIds ', function (error, match) {
     if (error) { console.error(error); }
 
     var Team1Players = req.body.Team1Players;
@@ -444,7 +447,7 @@ function queryByGame(req, res) {
   aggregate.push({$sort: {'_id': -1}})
   aggregate.push({$skip: skip});
   aggregate.push({$limit: 5});  
-  console.log(aggregate)
+  
   Match.aggregate(aggregate, function (error, matches) {
     if (error) { console.error(error); }
     res.send({
@@ -538,15 +541,15 @@ function getSlugMatchupVideos(req, res) {
   var character2 = req.query.character2;
   queries.push({
       $and: [
-        {"Team1PlayerCharacters": { '$elemMatch': { 'Slug':  character1 } }},
-        {"Team2PlayerCharacters": { '$elemMatch': { 'Slug':  character2 } }}
+        {"Team1PlayerCharacters": { '$elemMatch': { 'Slug': { $regex: new RegExp('^' + character1.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i') } }}},
+        {"Team2PlayerCharacters": { '$elemMatch': { 'Slug': { $regex: new RegExp('^' + character2.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i') } }}}
       ]
   })
 
   queries.push({
       $and: [
-        {"Team1PlayerCharacters": { '$elemMatch': { 'Slug':  character2 } }},
-        {"Team2PlayerCharacters": { '$elemMatch': { 'Slug':  character1 } }}
+        {"Team1PlayerCharacters": { '$elemMatch': { 'Slug': { $regex: new RegExp('^' + character2.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i') } }}},
+        {"Team2PlayerCharacters": { '$elemMatch': { 'Slug': { $regex: new RegExp('^' + character1.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i') } }}}
       ]
   })
 

@@ -1,86 +1,125 @@
-var Tournament = require("../models/tournaments");
+var tournamentService = require("../service/tournaments-service");
 
 // Add new tournament
 function addTournament(req, res) {
-  var db = req.db;
-  var Name = req.body.Name;
-  var GameIds = req.body.GameIds;
-  var LogoUrl = req.body.LogoUrl;
-  var Date = req.body.Date;
+    tournamentService.addTournament(req.body)
+        .then(result => {
+            res.send(result);
+        })
+        .catch(error => {
+            console.log(error);
+            res.status(500).send({
+                success: false,
+                message: 'Error saving tournament',
+                error: error.message
+            });
+        });
+}
 
-  var new_tournament = new Tournament({
-    Name: Name,
-    GameIds: GameIds,
-    LogoUrl: LogoUrl,
-    Date: Date
-  })
+// Fetch all tournaments
+function getTournaments(req, res) {
+    tournamentService.getTournaments()
+        .then(result => {
+            res.send(result);
+        })
+        .catch(error => {
+            console.error(error);
+            res.status(500).send({
+                success: false,
+                message: 'Error fetching tournaments',
+                error: error.message
+            });
+        });
+}
 
-
-  new_tournament.save(function (error, tournament) {
-    if (error) {
-      console.log(error)
-    }
-    res.send({
-      success: true,
-      message: 'Post saved successfully!',
-      tournamentId: tournament.id
-    })
-  })
+// Fetch completed tournaments
+function getCompletedTournaments(req, res) {
+    tournamentService.getCompletedTournaments()
+        .then(result => {
+            res.send(result);
+        })
+        .catch(error => {
+            console.error(error);
+            res.status(500).send({
+                success: false,
+                message: 'Error fetching completed tournaments',
+                error: error.message
+            });
+        });
 }
 
 // Fetch all tournament
-function getTournaments(req, res) {
-  Tournament.find({}, 'Name GameIds LogoUrl Date', function (error, tournaments) {
+function getTournamentSeries(req, res) {
+  TournamentSeries.find({}, 'Name Games Image EventDate TournamentSeries Location BracketUrl IsFinished', function (error, series) {
     if (error) { console.error(error); }
     res.send({
-      tournaments: tournaments
+      series: series
     })
   }).sort({ _id: -1 })
 }
 
 // Fetch single tournament
 function getTournament(req, res) {
-  var db = req.db;
-  Tournament.findById(req.params.id, 'Name GameIds LogoUrl Date', function (error, tournament) {
-    if (error) { console.error(error); }
-    res.send(tournament)
-  })
+    tournamentService.getTournament(req.params.id)
+        .then(result => {
+            res.send(result);
+        })
+        .catch(error => {
+            console.error(error);
+            res.status(500).send({
+                success: false,
+                message: 'Error fetching tournament',
+                error: error.message
+            });
+        });
 }
 
 // Update a tournament
 function updateTournament(req, res) {
-  var db = req.db;
-  Tournament.findById(req.params.id, 'Name GameIds LogoUrl Date', function (error, tournament) {
-    if (error) { console.error(error); }
-
-    tournament.Name = req.body.Name;
-    tournament.GameIds = req.body.GameIds;
-    tournament.LogoUrl = req.body.LogoUrl;
-    tournament.Date = req.body.Date;
-
-    tournament.save(function (error) {
-      if (error) {
-        console.log(error)
-      }
-      res.send({
-        success: true
-      })
-    })
-  })
+    tournamentService.updateTournament(req.params.id, req.body)
+        .then(result => {
+            res.send(result);
+        })
+        .catch(error => {
+            console.log(error);
+            res.status(500).send({
+                success: false,
+                message: 'Error updating tournament',
+                error: error.message
+            });
+        });
 }
 
 // Delete a tournament
 function deleteTournament(req, res) {
-  var db = req.db;
-  Tournament.remove({
-    _id: req.params.id
-  }, function (err, tournament) {
-    if (err)
-      res.send(err)
-    res.send({
-      success: true
-    })
-  })
+    tournamentService.deleteTournament(req.params.id)
+        .then(result => {
+            res.send(result);
+        })
+        .catch(error => {
+            console.log(error);
+            res.status(500).send({
+                success: false,
+                message: 'Error deleting tournament',
+                error: error.message
+            });
+        });
 }
 
-module.exports = { addTournament, getTournaments, getTournament, updateTournament, deleteTournament}
+// Query Tournament
+function queryTournament(req, res) {
+    tournamentService.queryTournament(req.query)
+        .then(result => {
+            res.send(result);
+        })
+        .catch(error => {
+            console.error(error);
+            res.status(500).send({
+                success: false,
+                message: 'Error querying tournaments',
+                error: error.message
+            });
+        });
+};
+
+module.exports = { addTournament, getTournaments, getTournament, updateTournament, deleteTournament, getTournamentSeries,getCompletedTournaments, queryTournament}
