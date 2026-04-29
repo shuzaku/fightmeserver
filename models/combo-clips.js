@@ -12,7 +12,14 @@ var ComboClipSchema = new Schema({
   EndTime: {
     type: String,
   },
+  VideoId: {
+    type: ObjectId,
+    ref: 'Videos'
+  },
   Url: {
+    type: String,
+  },
+  VideoType: {
     type: String,
   },
   Tags: {
@@ -25,9 +32,9 @@ var ComboClipSchema = new Schema({
     type: ObjectId
   }
 }, {
-  timestamps: true, 
+  timestamps: true,
 });
 
 var ComboClip = mongoose.model("Combo-Clips", ComboClipSchema);
 
-module.exports = ComboClip; 
+module.exports = ComboClip;

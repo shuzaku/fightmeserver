@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 
 var Account = require("../models/accounts");
 var ObjectId = require('mongodb').ObjectId;
@@ -228,4 +229,76 @@ function patchAccount(req, res) {
   }
   return saveAccountWithBody(req, res);
 }
+=======
+
+var accountService = require("../service/accounts-service");
+
+// Add new Account
+function addAccount(req, res) {
+    accountService.addAccount(req.body)
+        .then(result => {
+            res.send(result);
+        })
+        .catch(error => {
+            console.log(error);
+            res.status(500).send({
+                success: false,
+                message: 'Error saving account',
+                error: error.message
+            });
+        });
+};
+
+async function sendAdminNotification(account){
+  let transporter = nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 587,
+    secure: false, // true for 465, false for other ports
+    auth: {
+      user: process.env.SMTP_USERNAME, // generated ethereal user
+      pass: process.env.SMTP_PASSWORD, // generated ethereal password
+    },
+  });
+
+  let info = await transporter.sendMail({
+    from: '"Fighters Edge Accounts', // sender address
+    to: "mtchau@fighters-edge.com", // list of receivers
+    subject: `${account.DisplayName} : New account signup`, // Subject line
+    text: `${account.DisplayName} signed up with email ${account.Email}`, // plain text body
+    html: `${account.DisplayName} signed up with email ${account.Email}`, // html body
+  });
+}
+
+// Fetch single account
+function getAccount(req, res) {
+    accountService.getAccount(req.params.id)
+        .then(result => {
+            res.send(result);
+        })
+        .catch(error => {
+            console.error(error);
+            res.status(500).send({
+                success: false,
+                message: 'Error fetching account',
+                error: error.message
+            });
+        });
+}
+
+
+function patchAccount(req, res) {
+    accountService.patchAccount(req.params.id, req.body)
+        .then(result => {
+            res.send(result);
+        })
+        .catch(error => {
+            console.log(error);
+            res.status(500).send({
+                success: false,
+                message: 'Error updating account',
+                error: error.message
+            });
+        });
+}
+>>>>>>> 77dfb8a4b5c7e383181cf6d0a1722e732150aba0
 module.exports = { addAccount, getAccount, patchAccount, sendAdminNotification }

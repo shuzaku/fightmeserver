@@ -64,7 +64,14 @@ var aggregate = [
     '$unionWith': {
       'coll': 'creators'
     }
-  }
+  }, {
+    '$lookup': {
+      'from': "games",
+      'localField': "GameId",
+      'foreignField': "_id",
+      'as': "Game"
+    }
+  },
 ];
 
 queries.push({'Name': {'$regex' : Value_match} });

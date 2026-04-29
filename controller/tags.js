@@ -1,33 +1,35 @@
-var Tag = require("../models/tags");
+var tagService = require("../service/tags-service");
 
-// Fetch all Tag
+// Fetch all Tags
 function getTags(req, res) {
-  Tag.find({}, 'TagName', function (error, tags) {
-    if (error) { console.error(error); }
-    res.send({
-      tags: tags
-    })
-  }).sort({ _id: -1 })
+    tagService.getTags()
+        .then(result => {
+            res.send(result);
+        })
+        .catch(error => {
+            console.error(error);
+            res.status(500).send({
+                success: false,
+                message: 'Error fetching tags',
+                error: error.message
+            });
+        });
 }
 
 // Add new Tag
 function addTag(req, res) {
-  var db = req.db;
-  var TagName = req.body.TagName;
-
-  var new_tag = new Tag({
-    TagName: TagName
-  })
-
-  new_tag.save(function (error) {
-    if (error) {
-      console.log(error)
-    }
-    res.send({
-      success: true,
-      message: 'Tag saved successfully!'
-    })
-  })
+    tagService.addTag(req.body)
+        .then(result => {
+            res.send(result);
+        })
+        .catch(error => {
+            console.log(error);
+            res.status(500).send({
+                success: false,
+                message: 'Error saving tag',
+                error: error.message
+            });
+        });
 }
 
 module.exports = { getTags, addTag}
