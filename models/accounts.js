@@ -56,7 +56,15 @@ var AccountSchema = new Schema({
   },
   FollowedGames: {
     type: Array
-  }
+  },
+  /** @deprecated use LinkedPlayerIds; kept for legacy records */
+  LinkedPlayerId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Players',
+    default: null
+  },
+  /** Player profiles owned / linked to this user */
+  LinkedPlayerIds: [ { type: Schema.Types.ObjectId, ref: 'Players' } ]
 }, {
   timestamps: true, 
 });

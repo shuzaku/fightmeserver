@@ -11,6 +11,12 @@ var PlayerSchema = new Schema({
   },
   Slug: {
     type: String
+  },
+  /** Linked site user account (Mongo _id) — at most one player per account, one account per player */
+  AccountId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Accounts',
+    default: null
   }
 }, {
   timestamps: true, 

@@ -76,7 +76,7 @@ function getCharacters(row){
 
 const fetchCharacters = new Promise((resolve, reject) => {
     axios
-        .get('https://fightme-server.herokuapp.com/characters')
+        .get('https://fightmeserver.fly.dev/characters')
         .then((response) => {
             dbCharacters = response.data.characters.map((character => {
                 return {

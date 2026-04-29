@@ -1,3 +1,17 @@
+<<<<<<< HEAD
+FROM node:18-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install --production
+
+COPY . .
+
+EXPOSE 80
+
+CMD ["node", "src/app.js"]
+=======
 # syntax = docker/dockerfile:1
 
 # Adjust NODE_VERSION as desired
@@ -37,3 +51,4 @@ COPY --from=build /app /app
 # Start the server by default, this can be overwritten at runtime
 EXPOSE 3000
 CMD [ "npm", "run", "start" ]
+>>>>>>> 77dfb8a4b5c7e383181cf6d0a1722e732150aba0
