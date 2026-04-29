@@ -8,7 +8,6 @@ var CharacterSchema = new Schema({
     required: "{PATH} is required!",
   },
   GameId: {
-<<<<<<< HEAD
     type: Schema.Types.ObjectId,
     ref: "Games",
     required: "{PATH} is required!",
@@ -50,11 +49,8 @@ var CharacterSchema = new Schema({
   },
   Wiki: {
     type: String,
-=======
-    type: ObjectId,
->>>>>>> 77dfb8a4b5c7e383181cf6d0a1722e732150aba0
-    required: '{PATH} is required!'
-  }
+    trim: true,
+  },
 }, {
   timestamps: true,
 });
