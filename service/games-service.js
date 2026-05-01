@@ -1,6 +1,20 @@
 var Game = require("../models/games");
 var ObjectId = require('mongodb').ObjectId;
 
+function safeObjectId(value) {
+    if (!value || value === 'null' || value === 'undefined' || value === '') {
+        return null;
+    }
+    try {
+        if (typeof value === 'string' && /^[0-9a-fA-F]{24}$/.test(value)) {
+            return ObjectId(value);
+        }
+        return null;
+    } catch (e) {
+        return null;
+    }
+}
+
 // Add new game
 function addGame(gameData) {
     return new Promise((resolve, reject) => {
@@ -157,19 +171,26 @@ function getGameStats(gameId) {
         var Video = require("../models/videos");
         var TournamentMatch = require("../models/tournament-matches");
         var Tournament = require("../models/tournaments");
-        var ObjectId = require('mongodb').ObjectId;
 
-        var gameIdObj = ObjectId(gameId);
+        var gameIdObj = safeObjectId(gameId);
+        if (!gameIdObj) {
+            resolve({
+                characters: 0,
+                matches: 0,
+                tournaments: 0,
+                combos: 0,
+            });
+            return;
+        }
 
         // Run all count queries in parallel
         Promise.all([
             // Count characters
             Character.countDocuments({ GameId: gameIdObj }),
-            // Count online matches (videos with ContentType 'Match' and VideoType 'Online Match')
-            Video.countDocuments({ 
-                GameId: gameIdObj, 
+            // Match videos for this game (VideoType has varied historically; all Match docs count here)
+            Video.countDocuments({
+                GameId: gameIdObj,
                 ContentType: 'Match',
-                VideoType: 'Online Match'
             }),
             // Count tournament matches
             TournamentMatch.countDocuments({ GameId: gameIdObj }),

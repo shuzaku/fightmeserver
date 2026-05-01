@@ -106,46 +106,42 @@ function getMatches(req, res) {
   }).sort({ _id: -1 })
 }
 
-// Update a matches
+// Update a match
 function patchMatch(req, res) {
-  Match.findById(ObjectId(req.params.id), 'Team1Players Team2Players VideoUrl GameId GameVersion WinnerIds LoserIds ', function (error, match) {
-    if (error) { console.error(error); }
+  Match.findById(ObjectId(req.params.id), 'Team1Players Team2Players VideoUrl GameId GameVersion WinnerIds LoserIds', function (error, match) {
+    if (error) { console.error(error); return res.status(500).send({ error }); }
+    if (!match) { return res.status(404).send({ error: 'Match not found' }); }
 
     var Team1Players = req.body.Team1Players;
-    var Team2Players = req.body.Team2Players
+    var Team2Players = req.body.Team2Players;
     var VideoUrl = req.body.VideoUrl;
     var GameId = ObjectId(req.body.GameId);
-    var GameVersion = ObjectId(req.body.GameVersion);
-    var WinnerIds = req.body.WinnerIds;
-    var LoserIds = req.body.LoserIds;
 
-      match.Team1Players = Team1Players.map(player => {
-        return {
-          Slot: 1,
-          Id: ObjectId(player.Id),
-          CharacterIds: player.CharacterIds.map(id => {return ObjectId(id)})
-        }
-      });
-      match.Team1Players = Team2Players.map(player => {
-        return {
-          Slot: 2,
-          Id: ObjectId(player.Id),
-          CharacterIds: player.CharacterIds.map(id => {return ObjectId(id)})
-        }
-      });
-      VideoUrl = VideoUrl;
-      GameId = GameId;
-      GameVersion = GameVersion;
+    match.Team1Players = Team1Players.map(player => {
+      return {
+        Slot: 1,
+        Id: ObjectId(player.Id),
+        CharacterIds: player.CharacterIds.map(id => { return ObjectId(id) })
+      }
+    });
+    match.Team2Players = Team2Players.map(player => {
+      return {
+        Slot: 2,
+        Id: ObjectId(player.Id),
+        CharacterIds: player.CharacterIds.map(id => { return ObjectId(id) })
+      }
+    });
+    match.VideoUrl = VideoUrl;
+    match.GameId = GameId;
 
     match.save(function (error) {
       if (error) {
-        console.log(error)
+        console.log(error);
+        return res.status(500).send({ error });
       }
-      res.send({
-        success: true
-      })
-    })
-  })
+      res.send({ success: true });
+    });
+  });
 }
 
 // Fetch single match

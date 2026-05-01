@@ -971,13 +971,23 @@ function getComboVideo(req, res) {
 }
 
 function getMatchVideo(req, res) {
-  var matchUrl =  req.params.url;
+  var matchUrl = req.params.url || '';
+  try {
+    matchUrl = decodeURIComponent(matchUrl);
+  } catch (e) {
+    /* ignore */
+  }
+
+  // Match documents where Url equals the param, or contains it (e.g. bare YouTube id vs full watch URL)
+  var urlConditions = [{ Url: matchUrl }];
+  if (matchUrl && typeof matchUrl === 'string' && !/^https?:\/\//i.test(matchUrl.trim())) {
+    var escaped = matchUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    urlConditions.push({ Url: new RegExp(escaped, 'i') });
+  }
 
   var aggregate = [
     {
-      '$match': {
-          'Url': matchUrl
-      }
+      '$match': { $or: urlConditions },
     },
     {
       '$lookup': {
@@ -986,10 +996,13 @@ function getMatchVideo(req, res) {
         'foreignField': '_id', 
         'as': 'Game'
       }
-    }, 
+    },
     {
-      '$unwind': '$Game'
-    }, 
+      '$unwind': {
+        path: '$Game',
+        preserveNullAndEmptyArrays: true,
+      },
+    },
     {
       '$lookup': {
         'from': 'creators', 
@@ -1004,6 +1017,8 @@ function getMatchVideo(req, res) {
         'preserveNullAndEmptyArrays': true
       }
     },
+    { $sort: { _id: -1 } },
+    { $limit: 1 },
   ];
 
   Video.aggregate(aggregate, function (error, videos) {
@@ -1130,4 +1145,216 @@ function getMatchupVideos(req, res) {
 
 
 
-module.exports = {  addVideo, queryVideo, queryVideoByCharacter, queryVideoByPlayer, queryVideoByGame, getVideo, patchVideo, deleteVideo, getVideos, getComboVideo, getMatchVideo, getMatchupVideos, fetchVideos}
+// Fetch a video by its associated match ID
+function getVideoByMatchId(req, res) {
+  var Match = require('../models/matches');
+  var matchId = req.params.matchId;
+  var validMatchId = safeObjectId(matchId);
+  if (!validMatchId) {
+    return res.status(400).send({ error: 'Invalid match ID format' });
+  }
+
+  // Start from the match so we don't scan every video; join videos with flexible Url / VideoUrl matching
+  var aggregate = [
+    { $match: { _id: validMatchId } },
+    {
+      $lookup: {
+        from: 'videos',
+        let: { vu: '$VideoUrl' },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $or: [
+                  { $eq: ['$Url', '$$vu'] },
+                  {
+                    $and: [
+                      { $gt: [{ $strLenCP: { $ifNull: ['$$vu', ''] } }, 0] },
+                      { $gt: [{ $strLenCP: { $ifNull: ['$Url', ''] } }, 0] },
+                      {
+                        $or: [
+                          {
+                            $gte: [
+                              {
+                                $indexOfBytes: [
+                                  { $ifNull: ['$Url', ''] },
+                                  { $ifNull: ['$$vu', ''] },
+                                ],
+                              },
+                              0,
+                            ],
+                          },
+                          {
+                            $gte: [
+                              {
+                                $indexOfBytes: [
+                                  { $ifNull: ['$$vu', ''] },
+                                  { $ifNull: ['$Url', ''] },
+                                ],
+                              },
+                              0,
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            },
+          },
+          { $sort: { _id: -1 } },
+          { $limit: 1 },
+        ],
+        as: 'Vid',
+      },
+    },
+    {
+      $unwind: {
+        path: '$Vid',
+        preserveNullAndEmptyArrays: false,
+      },
+    },
+    {
+      $replaceRoot: {
+        newRoot: {
+          $mergeObjects: [
+            '$Vid',
+            {
+              Match: {
+                _id: '$_id',
+                Team1Players: '$Team1Players',
+                Team2Players: '$Team2Players',
+                VideoUrl: '$VideoUrl',
+                GameId: '$GameId',
+                StartTime: '$StartTime',
+                EndTime: '$EndTime',
+              },
+            },
+          ],
+        },
+      },
+    },
+    {
+      $lookup: {
+        from: 'games',
+        localField: 'GameId',
+        foreignField: '_id',
+        as: 'Game',
+      },
+    },
+    {
+      $unwind: {
+        path: '$Game',
+        preserveNullAndEmptyArrays: true,
+      },
+    },
+    {
+      $lookup: {
+        from: 'creators',
+        localField: 'ContentCreatorId',
+        foreignField: '_id',
+        as: 'ContentCreator',
+      },
+    },
+    {
+      $lookup: {
+        from: 'players',
+        localField: 'Match.Team1Players.Id',
+        foreignField: '_id',
+        as: 'Match.Team1Player',
+      },
+    },
+    {
+      $lookup: {
+        from: 'players',
+        localField: 'Match.Team2Players.Id',
+        foreignField: '_id',
+        as: 'Match.Team2Player',
+      },
+    },
+    {
+      $lookup: {
+        from: 'characters',
+        localField: 'Match.Team1Players.CharacterIds',
+        foreignField: '_id',
+        as: 'Match.Team1PlayerCharacters',
+      },
+    },
+    {
+      $lookup: {
+        from: 'characters',
+        localField: 'Match.Team2Players.CharacterIds',
+        foreignField: '_id',
+        as: 'Match.Team2PlayerCharacters',
+      },
+    },
+    {
+      $unwind: {
+        path: '$ContentCreator',
+        preserveNullAndEmptyArrays: true,
+      },
+    },
+    {
+      $unwind: {
+        path: '$Combos',
+        preserveNullAndEmptyArrays: true,
+      },
+    },
+    {
+      $lookup: {
+        from: 'combos',
+        localField: 'Combos.Id',
+        foreignField: '_id',
+        as: 'Combo',
+      },
+    },
+    {
+      $unwind: {
+        path: '$Combo',
+        preserveNullAndEmptyArrays: true,
+      },
+    },
+    {
+      $lookup: {
+        from: 'characters',
+        localField: 'Combo.CharacterId',
+        foreignField: '_id',
+        as: 'Combo.Character',
+      },
+    },
+    {
+      $unwind: {
+        path: '$Combo.Character',
+        preserveNullAndEmptyArrays: true,
+      },
+    },
+    {
+      $lookup: {
+        from: 'tags',
+        localField: 'Combo.Tags',
+        foreignField: '_id',
+        as: 'Combo.ComboTags',
+      },
+    },
+    {
+      $addFields: {
+        'Combo.StartTime': '$Combos.StartTime',
+        'Combo.EndTime': '$Combos.Endtime',
+        ComboCharacterId: '$Combo.CharacterId',
+        ComboId: '$Combo._id',
+        Id: '$_id',
+      },
+    },
+  ];
+
+  Match.aggregate(aggregate, function (error, video) {
+    if (error) {
+      console.error(error);
+      return res.status(500).send({ error });
+    }
+    res.send({ video: video });
+  });
+}
+
+module.exports = {  addVideo, queryVideo, queryVideoByCharacter, queryVideoByPlayer, queryVideoByGame, getVideo, getVideoByMatchId, patchVideo, deleteVideo, getVideos, getComboVideo, getMatchVideo, getMatchupVideos, fetchVideos}

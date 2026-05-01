@@ -15,5 +15,6 @@ router.delete('/videos/:id', videoController.deleteVideo);
 router.post('/getVideos', videoController.getVideos);
 router.get('/comboVideo/:url', videoController.getComboVideo);
 router.get('/matchVideo/:url', videoController.getMatchVideo);
+router.get('/video-by-match/:matchId', videoController.getVideoByMatchId);
 
 module.exports = router;
