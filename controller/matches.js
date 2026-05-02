@@ -18,14 +18,14 @@ function addMatches(req, res) {
       var new_match = new Match({
         Team1Players: Team1Players.map(player => {
           return {
-            Slot: 1,
+            Slot: player.Slot,
             Id: ObjectId(player.Id),
             CharacterIds: player.CharacterIds.map(character => { return ObjectId(character.id)})
           }
         }),
         Team2Players: Team2Players.map(player => {
           return {
-            Slot: 2,
+            Slot: player.Slot,
             Id: ObjectId(player.Id),
             CharacterIds: player.CharacterIds.map(character => {return ObjectId(character.id)})
           }
@@ -108,6 +108,10 @@ function getMatches(req, res) {
 
 // Update a match
 function patchMatch(req, res) {
+  console.log('=== PATCH MATCH REQUEST ===');
+  console.log('Match ID:', req.params.id);
+  console.log('Request Body:', JSON.stringify(req.body, null, 2));
+  
   Match.findById(ObjectId(req.params.id), 'Team1Players Team2Players VideoUrl GameId GameVersion WinnerIds LoserIds', function (error, match) {
     if (error) { console.error(error); return res.status(500).send({ error }); }
     if (!match) { return res.status(404).send({ error: 'Match not found' }); }
@@ -117,28 +121,47 @@ function patchMatch(req, res) {
     var VideoUrl = req.body.VideoUrl;
     var GameId = ObjectId(req.body.GameId);
 
-    match.Team1Players = Team1Players.map(player => {
+    console.log('Team1Players from request:', JSON.stringify(Team1Players, null, 2));
+    console.log('Team2Players from request:', JSON.stringify(Team2Players, null, 2));
+
+    // Map the new players
+    const newTeam1Players = Team1Players.map(player => {
       return {
-        Slot: 1,
+        Slot: player.Slot,
         Id: ObjectId(player.Id),
         CharacterIds: player.CharacterIds.map(id => { return ObjectId(id) })
       }
     });
-    match.Team2Players = Team2Players.map(player => {
+    const newTeam2Players = Team2Players.map(player => {
       return {
-        Slot: 2,
+        Slot: player.Slot,
         Id: ObjectId(player.Id),
         CharacterIds: player.CharacterIds.map(id => { return ObjectId(id) })
       }
     });
+
+    // Clear existing arrays and set new values
+    match.Team1Players = [];
+    match.Team2Players = [];
+    match.Team1Players = newTeam1Players;
+    match.Team2Players = newTeam2Players;
+    
+    // Explicitly mark arrays as modified (important for Mongoose)
+    match.markModified('Team1Players');
+    match.markModified('Team2Players');
+    
     match.VideoUrl = VideoUrl;
     match.GameId = GameId;
 
+    console.log('Mapped Team1Players:', JSON.stringify(match.Team1Players, null, 2));
+    console.log('Mapped Team2Players:', JSON.stringify(match.Team2Players, null, 2));
+
     match.save(function (error) {
       if (error) {
-        console.log(error);
+        console.log('Save error:', error);
         return res.status(500).send({ error });
       }
+      console.log('Match saved successfully');
       res.send({ success: true });
     });
   });
