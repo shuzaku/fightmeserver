@@ -1,14 +1,16 @@
 var mongoose = require("mongoose");
 var Schema = mongoose.Schema;
+const ObjectId = Schema.Types.ObjectId;
 
 var TournamentsSchema = new Schema({
   Name: {
     type: String,
     required: '{PATH} is required!'
   },
-  Games: {
-    type: Array,
-  },
+  Games: [{
+    type: ObjectId,
+    ref: 'Games'
+  }],
   LogoUrl: {
     type: String
   },
@@ -19,9 +21,12 @@ var TournamentsSchema = new Schema({
     type: String
   },
   Series: {
-    type: String
+    type: ObjectId
   },
   Image: {
+    type: String
+  },
+  LogoUrl: {
     type: String
   },
   Tier: {
@@ -34,13 +39,13 @@ var TournamentsSchema = new Schema({
   BracketUrl: {
     type: String
   },
-  BracketFilter: {
-    type: Array
-  },
+  BracketFilters: [{
+    type: String
+  }],
 }, {
   timestamps: true, 
 });
 
 var Tournaments = mongoose.model("Tournaments", TournamentsSchema);
 
-module.exports = Tournaments; 
+module.exports = Tournaments;

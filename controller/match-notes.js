@@ -3,16 +3,38 @@ var ObjectId = require('mongodb').ObjectId;
 
 // Add new match note
 function addMatchNote(req, res) {
-  var MatchId = ObjectId(req.body.MatchId);
+  var MatchId = null;
+  if (req.body.MatchId) {
+    try {
+      MatchId = ObjectId(req.body.MatchId);
+    } catch (e) {
+      return res.status(400).send({
+        success: false,
+        message: 'Invalid MatchId',
+        error: e.message
+      });
+    }
+  }
   var AuthorId = ObjectId(req.body.AuthorId);
   var Content = req.body.Content;
   var Heading = req.body.Heading || null;
   var Timestamp = req.body.Timestamp ? Number(req.body.Timestamp) : null;
   var GameId = req.body.GameId ? ObjectId(req.body.GameId) : null;
   var Tags = req.body.Tags || [];
+  var VideoUrl = req.body.VideoUrl != null && String(req.body.VideoUrl).trim() !== ''
+    ? String(req.body.VideoUrl).trim()
+    : null;
+
+  if (!MatchId && !VideoUrl) {
+    return res.status(400).send({
+      success: false,
+      message: 'MatchId or VideoUrl is required'
+    });
+  }
 
   var newMatchNote = new MatchNote({
     MatchId: MatchId,
+    VideoUrl: VideoUrl,
     AuthorId: AuthorId,
     Content: Content,
     Heading: Heading,
@@ -41,7 +63,15 @@ function addMatchNote(req, res) {
 // Query Match Notes
 function queryMatchNotes(req, res) {
   var names = req.query.queryName ? req.query.queryName.split(",") : [];
-  var values = req.query.queryValue ? req.query.queryValue.split(",") : [];
+  var values = req.query.queryValue
+    ? req.query.queryValue.split(",").map(function (v) {
+        try {
+          return decodeURIComponent(v);
+        } catch (e) {
+          return v;
+        }
+      })
+    : [];
   var queries = [];
   var aggregate = [];
 
@@ -66,7 +96,7 @@ function queryMatchNotes(req, res) {
     MatchNote.find(finalQuery)
       .populate('AuthorId', 'DisplayName')
       .populate('GameId', 'Title')
-      .select('MatchId AuthorId Content Heading Timestamp Likes LikedBy IsPinned IsEdited IsDeleted DeletedAt ReportCount ReportedBy ParentNoteId ReplyCount Tags GameId CreatedAt UpdatedAt')
+      .select('MatchId VideoUrl AuthorId Content Heading Timestamp Likes LikedBy IsPinned IsEdited IsDeleted DeletedAt ReportCount ReportedBy ParentNoteId ReplyCount Tags GameId CreatedAt UpdatedAt')
       .sort({ IsPinned: -1, Timestamp: 1, CreatedAt: -1 })
       .exec(function (error, matchNotes) {
         if (error) {
@@ -85,7 +115,7 @@ function queryMatchNotes(req, res) {
     MatchNote.find({ IsDeleted: false })
       .populate('AuthorId', 'DisplayName')
       .populate('GameId', 'Title')
-      .select('MatchId AuthorId Content Heading Timestamp Likes LikedBy IsPinned IsEdited IsDeleted DeletedAt ReportCount ReportedBy ParentNoteId ReplyCount Tags GameId CreatedAt UpdatedAt')
+      .select('MatchId VideoUrl AuthorId Content Heading Timestamp Likes LikedBy IsPinned IsEdited IsDeleted DeletedAt ReportCount ReportedBy ParentNoteId ReplyCount Tags GameId CreatedAt UpdatedAt')
       .sort({ IsPinned: -1, Timestamp: 1, CreatedAt: -1 })
       .exec(function (error, matchNotes) {
         if (error) {
@@ -108,7 +138,7 @@ function getMatchNotes(req, res) {
   MatchNote.find({ IsDeleted: false })
     .populate('AuthorId', 'DisplayName')
     .populate('GameId', 'Title')
-    .select('MatchId AuthorId Content Heading Timestamp Likes LikedBy IsPinned IsEdited IsDeleted DeletedAt ReportCount ReportedBy ParentNoteId ReplyCount Tags GameId CreatedAt UpdatedAt')
+    .select('MatchId VideoUrl AuthorId Content Heading Timestamp Likes LikedBy IsPinned IsEdited IsDeleted DeletedAt ReportCount ReportedBy ParentNoteId ReplyCount Tags GameId CreatedAt UpdatedAt')
     .sort({ IsPinned: -1, Timestamp: 1, CreatedAt: -1 })
     .exec(function (error, matchNotes) {
       if (error) {
@@ -130,7 +160,7 @@ function getMatchNote(req, res) {
   MatchNote.findById(req.params.id)
     .populate('AuthorId', 'DisplayName')
     .populate('GameId', 'Title')
-    .select('MatchId AuthorId Content Heading Timestamp Likes LikedBy IsPinned IsEdited IsDeleted DeletedAt ReportCount ReportedBy ParentNoteId ReplyCount Tags GameId CreatedAt UpdatedAt')
+    .select('MatchId VideoUrl AuthorId Content Heading Timestamp Likes LikedBy IsPinned IsEdited IsDeleted DeletedAt ReportCount ReportedBy ParentNoteId ReplyCount Tags GameId CreatedAt UpdatedAt')
     .exec(function (error, matchNote) {
       if (error) {
         console.error(error);

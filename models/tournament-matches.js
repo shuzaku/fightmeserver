@@ -29,6 +29,9 @@ var TournamentMatchesSchema = new Schema({
   },
   ClipEnd: {
     type: String
+  },
+  VideoPlatform: {
+    type: String
   }
 }, {
   timestamps: true, 

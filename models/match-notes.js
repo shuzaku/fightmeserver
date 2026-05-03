@@ -5,8 +5,12 @@ const ObjectId = Schema.Types.ObjectId;
 var MatchNoteSchema = new Schema({
   MatchId: {
     type: ObjectId,
-    required: '{PATH} is required!',
+    required: false,
     ref: 'Matches'
+  },
+  VideoUrl: {
+    type: String,
+    default: null
   },
   AuthorId: {
     type: ObjectId,
@@ -91,8 +95,10 @@ var MatchNoteSchema = new Schema({
 MatchNoteSchema.index({ MatchId: 1, CreatedAt: -1 });
 MatchNoteSchema.index({ MatchId: 1, Timestamp: 1 });
 MatchNoteSchema.index({ MatchId: 1, IsPinned: -1, CreatedAt: -1 });
-MatchNoteSchema.index({ MatchId: 1, IsDeleted: 1 });
-MatchNoteSchema.index({ AuthorId: 1 });
+MatchNoteSchema.index({ VideoUrl: 1, CreatedAt: -1 });
+MatchNoteSchema.index({ VideoUrl: 1, Timestamp: 1 });
+MatchNoteSchema.index({ VideoUrl: 1, IsPinned: -1, CreatedAt: -1 });
+MatchNoteSchema.index({ VideoUrl: 1, IsDeleted: 1 });
 
 var MatchNotes = mongoose.model("Match-Notes", MatchNoteSchema);
 

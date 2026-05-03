@@ -8,10 +8,12 @@ function addTournament(req, res) {
         })
         .catch(error => {
             console.log(error);
-            res.status(500).send({
+            var msg = error.message || 'Error saving tournament';
+            var status = /Invalid ObjectId|Invalid|M missing|required/i.test(msg) ? 400 : 500;
+            res.status(status).send({
                 success: false,
                 message: 'Error saving tournament',
-                error: error.message
+                error: msg
             });
         });
 }

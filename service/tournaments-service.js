@@ -1,38 +1,94 @@
 var Tournament = require("../models/tournaments");
 var ObjectId = require('mongodb').ObjectId;
 
+function toObjectId(val, fieldLabel) {
+    if (val == null || val === '') return undefined;
+    if (typeof val === 'object' && val.$oid) {
+        val = val.$oid;
+    }
+    var s = typeof val === 'string' ? val.trim() : String(val);
+    if (!ObjectId.isValid(s)) {
+        throw new Error('Invalid ObjectId' + (fieldLabel ? ' for ' + fieldLabel : '') + ': ' + s);
+    }
+    return new ObjectId(s);
+}
+
+function normalizeGames(games) {
+    if (!games || !Array.isArray(games)) return [];
+    return games.map(function (g, i) {
+        if (g == null) return null;
+        if (typeof g === 'object' && g.$oid) {
+            return toObjectId(g.$oid, 'Games[' + i + ']');
+        }
+        if (typeof g === 'object' && g._id) {
+            return toObjectId(g._id, 'Games[' + i + ']');
+        }
+        return toObjectId(g, 'Games[' + i + ']');
+    }).filter(Boolean);
+}
+
+function normalizeBracketFilters(raw) {
+    if (!raw) return [];
+    if (!Array.isArray(raw)) return [];
+    return raw
+        .map(function (s) {
+            return s == null ? '' : String(s).trim();
+        })
+        .filter(Boolean);
+}
+
 // Add new tournament
 function addTournament(tournamentData) {
-    return new Promise((resolve, reject) => {
-        var new_tournament = new Tournament({
-            Name: tournamentData.Name,
-            Games: tournamentData.Games,
-            Image: tournamentData.Image,
-            EventDate: tournamentData.EventDate,
-            TournamentSeries: tournamentData.TournamentSeries,
-            Location: tournamentData.Location,
-            BracketUrl: tournamentData.BracketUrl,
-            BracketFilters: tournamentData.BracketFilters
-        });
+    return new Promise(function (resolve, reject) {
+        try {
+            var seriesRaw = tournamentData.Series != null ? tournamentData.Series : tournamentData.TournamentSeries;
+            var doc = {
+                Name: tournamentData.Name,
+                Games: normalizeGames(tournamentData.Games),
+                Image: tournamentData.Image != null ? tournamentData.Image : tournamentData.LogoUrl,
+                EventDate: tournamentData.EventDate ? new Date(tournamentData.EventDate) : undefined,
+                Location: tournamentData.Location,
+                BracketUrl: tournamentData.BracketUrl,
+                BracketFilters: normalizeBracketFilters(tournamentData.BracketFilters),
+                Tier: tournamentData.Tier != null && tournamentData.Tier !== '' ? Number(tournamentData.Tier) : undefined,
+                IsFinished: tournamentData.IsFinished === true || tournamentData.IsFinished === 'true'
+            };
 
-        new_tournament.save(function (error, tournament) {
-            if (error) {
-                reject(error);
-            } else {
-                resolve({
-                    success: true,
-                    message: 'Post saved successfully!',
-                    tournamentId: tournament.id
-                });
+            if (tournamentData.LogoUrl && !doc.Image) {
+                doc.LogoUrl = tournamentData.LogoUrl;
             }
-        });
+
+            var sid = seriesRaw != null && seriesRaw !== '' ? toObjectId(seriesRaw, 'Series') : undefined;
+            if (sid) {
+                doc.Series = sid;
+            }
+
+            var new_tournament = new Tournament(doc);
+
+            new_tournament.save(function (error, tournament) {
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve({
+                        success: true,
+                        message: 'Post saved successfully!',
+                        tournamentId: tournament.id,
+                        tournament: tournament.toObject()
+                    });
+                }
+            });
+        } catch (e) {
+            reject(e);
+        }
     });
 }
+
+var TOURNAMENT_FIELDS = 'Name Games Image EventDate Series Location BracketUrl IsFinished BracketFilters Tier';
 
 // Fetch all tournaments
 function getTournaments() {
     return new Promise((resolve, reject) => {
-        Tournament.find({}, 'Name Games Image EventDate TournamentSeries Location BracketUrl IsFinished BracketFilters', function (error, tournaments) {
+        Tournament.find({}, TOURNAMENT_FIELDS, function (error, tournaments) {
             if (error) {
                 reject(error);
             } else {
@@ -45,8 +101,7 @@ function getTournaments() {
 // Fetch completed tournaments
 function getCompletedTournaments() {
     return new Promise((resolve, reject) => {
-        const today = new Date();
-        Tournament.find({IsFinished: true}, 'Name Games Image EventDate TournamentSeries Location BracketUrl IsFinished BracketFilters', function (error, tournaments) {
+        Tournament.find({IsFinished: true}, TOURNAMENT_FIELDS, function (error, tournaments) {
             if (error) {
                 reject(error);
             } else {
@@ -59,7 +114,7 @@ function getCompletedTournaments() {
 // Fetch single tournament
 function getTournament(tournamentId) {
     return new Promise((resolve, reject) => {
-        Tournament.findById(tournamentId, 'Name Games Image EventDate TournamentSeries Location BracketUrl IsFinished BracketFilters', function (error, tournament) {
+        Tournament.findById(tournamentId, TOURNAMENT_FIELDS, function (error, tournament) {
             if (error) {
                 reject(error);
             } else {
@@ -72,25 +127,64 @@ function getTournament(tournamentId) {
 // Update a tournament
 function updateTournament(tournamentId, tournamentData) {
     return new Promise((resolve, reject) => {
-        Tournament.findById(tournamentId, 'Name Games Image EventDate TournamentSeries Location BracketUrl IsFinished BracketFilters', function (error, tournament) {
+        Tournament.findById(tournamentId, TOURNAMENT_FIELDS + ' LogoUrl', function (error, tournament) {
             if (error) {
                 reject(error);
                 return;
             }
+            if (!tournament) {
+                reject(new Error('Tournament not found'));
+                return;
+            }
 
-            tournament.Name = tournamentData.Name;
-            tournament.Games = tournamentData.Games;
-            tournament.Image = tournamentData.Image;
-            tournament.EventDate = tournamentData.EventDate;
-            tournament.TournamentSeries = tournamentData.TournamentSeries;
-            tournament.Location = tournamentData.Location;
-            tournament.BracketUrl = tournamentData.BracketUrl;
+            function assignIfDefined(key, value) {
+                if (value !== undefined) {
+                    tournament[key] = value;
+                }
+            }
 
-            tournament.save(function (error) {
-                if (error) {
-                    reject(error);
+            assignIfDefined('Name', tournamentData.Name);
+            if (tournamentData.Games != null) {
+                try {
+                    tournament.Games = normalizeGames(tournamentData.Games);
+                } catch (e) {
+                    reject(e);
+                    return;
+                }
+            }
+            if (tournamentData.Image != null) tournament.Image = tournamentData.Image;
+            if (tournamentData.LogoUrl != null) tournament.LogoUrl = tournamentData.LogoUrl;
+            if (tournamentData.EventDate != null) tournament.EventDate = new Date(tournamentData.EventDate);
+            if (tournamentData.Location != null) tournament.Location = tournamentData.Location;
+            if (tournamentData.BracketUrl != null) tournament.BracketUrl = tournamentData.BracketUrl;
+            if (tournamentData.BracketFilters != null) {
+                tournament.BracketFilters = normalizeBracketFilters(tournamentData.BracketFilters);
+            }
+            if (tournamentData.Tier != null && tournamentData.Tier !== '') {
+                tournament.Tier = Number(tournamentData.Tier);
+            }
+            if (tournamentData.IsFinished !== undefined) {
+                tournament.IsFinished = tournamentData.IsFinished === true || tournamentData.IsFinished === 'true';
+            }
+
+            var seriesRaw = tournamentData.Series != null ? tournamentData.Series : tournamentData.TournamentSeries;
+            if (seriesRaw !== undefined && seriesRaw !== null && seriesRaw !== '') {
+                try {
+                    tournament.Series = toObjectId(seriesRaw, 'Series');
+                } catch (e) {
+                    reject(e);
+                    return;
+                }
+            }
+
+            tournament.save(function (err) {
+                if (err) {
+                    reject(err);
                 } else {
-                    resolve({success: true});
+                    resolve({
+                        success: true,
+                        tournament: tournament.toObject()
+                    });
                 }
             });
         });
@@ -129,7 +223,7 @@ function queryTournament(queryParams) {
         for (var i = 0; i < names.length; i++) {
             var query = {};
             if (names[i] === ('Id')) {
-                var query = {'_id': ObjectId(values[i])};
+                query = {'_id': ObjectId(values[i])};
                 queries.push(query);
             } else if (values[i].toLowerCase() === "true" || values[i].toLowerCase() === "false") {
                 query[names[i]] = values[i].toLowerCase() === "true" ? true : false;
@@ -140,22 +234,20 @@ function queryTournament(queryParams) {
             }
         }
 
+        function runFind(q) {
+            Tournament.find(q, TOURNAMENT_FIELDS, function (error, tournaments) {
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve({tournaments: tournaments});
+                }
+            }).sort(sortParameter);
+        }
+
         if (queries.length > 1) {
-            Tournament.find({$or: queries}, 'Name Games Image EventDate TournamentSeries Location BracketUrl IsFinished BracketFilters', function (error, tournaments) {
-                if (error) {
-                    reject(error);
-                } else {
-                    resolve({tournaments: tournaments});
-                }
-            }).sort(sortParameter);
+            runFind({$or: queries});
         } else {
-            Tournament.find(queries[0], 'Name Games Image EventDate TournamentSeries Location BracketUrl IsFinished BracketFilters', function (error, tournaments) {
-                if (error) {
-                    reject(error);
-                } else {
-                    resolve({tournaments: tournaments});
-                }
-            }).sort(sortParameter);
+            runFind(queries[0]);
         }
     });
 }
