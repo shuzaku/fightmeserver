@@ -12,6 +12,11 @@ var PlayerSchema = new Schema({
   Slug: {
     type: String
   },
+  MatchupAppearance: {
+    type: Number,
+    default: 0,
+    index: true,
+  },
   /** Linked site user account (Mongo _id) — at most one player per account, one account per player */
   AccountId: {
     type: Schema.Types.ObjectId,

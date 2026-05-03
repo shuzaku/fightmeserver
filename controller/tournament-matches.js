@@ -158,7 +158,8 @@ function queryTournamentMatchesByTournamentId(req, res) {
     }
   }
 
-  // Pagination
+  // Sort by most recent first, then paginate
+  aggregate.push({ $sort: { createdAt: -1 } });
   aggregate.push({ $skip: skip });
   aggregate.push({ $limit: 5 });
 

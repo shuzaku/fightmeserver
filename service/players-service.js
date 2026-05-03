@@ -54,7 +54,7 @@ function getPlayers(queryParams = {}) {
         const mockReq = { query: queryParams };
         var limit = parseLimit(mockReq, undefined, 100);
         var skip = parseSkip(mockReq);
-        var sortObj = parseSortWithDirection(mockReq, '_id', -1);
+        var sortObj = parseSortWithDirection(mockReq, 'MatchupAppearance', -1);
 
         var query = Player.find({}, 'Name PlayerImg Slug MatchupAppearance Twitter Stream Youtube').sort(sortObj).skip(skip);
         if (limit !== undefined) {
@@ -129,7 +129,7 @@ function queryPlayer(queryParams) {
         var queries = [];
         var limit = parseLimit(queryParams, undefined, 50);
         var skip = parseSkip(queryParams);
-        var sortObj = parseSortWithDirection(queryParams, 'Name', 1);
+        var sortObj = parseSortWithDirection(queryParams, 'MatchupAppearance', -1);
 
         for (var i = 0; i < names.length; i++) {
             var query = {};
