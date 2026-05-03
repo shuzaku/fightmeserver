@@ -32,12 +32,6 @@ var AccountSchema = new Schema({
   Uid: {
     type: String
   },
-  // Optional link to a Players document. Set by the user in their profile so
-  // external apps (e.g. AutoStream) know which fighter they are.
-  LinkedPlayerId: {
-    type: Schema.Types.ObjectId,
-    ref: 'Players',
-  },
   DeviceTokens: {
     type: [DeviceTokenSchema],
     default: [],
@@ -57,14 +51,18 @@ var AccountSchema = new Schema({
   FollowedGames: {
     type: Array
   },
-  /** @deprecated use LinkedPlayerIds; kept for legacy records */
+  // Primary linked player (legacy single-link). Premium users use LinkedPlayerIds.
   LinkedPlayerId: {
     type: Schema.Types.ObjectId,
     ref: 'Players',
     default: null
   },
-  /** Player profiles owned / linked to this user */
-  LinkedPlayerIds: [ { type: Schema.Types.ObjectId, ref: 'Players' } ]
+  // All player profiles linked to this account. Used by premium AutoStream
+  // accounts to build a multi-player playlist.
+  LinkedPlayerIds: {
+    type: [{ type: Schema.Types.ObjectId, ref: 'Players' }],
+    default: [],
+  }
 }, {
   timestamps: true, 
 });

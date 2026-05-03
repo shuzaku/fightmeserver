@@ -88,16 +88,14 @@ async function revokeDevice(firebaseUid, tokenId) {
 }
 
 // Called by the desktop app after it has a device token. Returns everything
-// the app needs to hydrate its UI: account info + linked Player (if any).
+// the app needs to hydrate its UI: account info + linked Player(s).
 async function getSession(account) {
-    // account is the Mongo doc attached by requireDeviceToken middleware.
-    // We populate LinkedPlayerId in a separate call to keep things explicit.
-    const populated = await Accounts.findById(account._id).populate(
-        'LinkedPlayerId',
-        'Name Slug ImageUrl'
-    );
+    // Populate both the legacy single link and the premium multi-player array.
+    const populated = await Accounts.findById(account._id)
+        .populate('LinkedPlayerId', 'Name Slug ImageUrl')
+        .populate('LinkedPlayerIds', 'Name Slug ImageUrl');
 
-    const linkedPlayer = populated && populated.LinkedPlayerId
+    const linkedPlayer = populated?.LinkedPlayerId
         ? {
             id: populated.LinkedPlayerId._id.toString(),
             name: populated.LinkedPlayerId.Name,
@@ -105,6 +103,15 @@ async function getSession(account) {
             imageUrl: populated.LinkedPlayerId.ImageUrl,
         }
         : null;
+
+    // Premium accounts get the full list of linked players (id + name) so
+    // AutoStream can build a multi-player playlist and display names in the UI.
+    const linkedPlayers = (populated?.LinkedPlayerIds || []).map((p) => ({
+        id: p._id.toString(),
+        name: p.Name,
+        slug: p.Slug || '',
+        imageUrl: p.ImageUrl || '',
+    }));
 
     return {
         account: {
@@ -114,6 +121,7 @@ async function getSession(account) {
             accountType: account.AccountType,
         },
         linkedPlayer,
+        linkedPlayers,
     };
 }
 
