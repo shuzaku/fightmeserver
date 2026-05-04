@@ -16,8 +16,14 @@ function getAnalysisByMatchId(req, res) {
       } else if (names[i] === 'MatchId') {
         var query = {'MatchId':   ObjectId(values[i])};
         queries.push(query);
-      }  
-      else {
+      } else if (names[i] === 'videoUrl') {
+        // Match against the full stored URL (contains) or the bare youtube_id field
+        var query = { $or: [
+          { videoUrl: { $regex: values[i], $options: 'i' } },
+          { 'video_info.youtube_id': values[i] }
+        ]};
+        queries.push(query);
+      } else {
         query[names[i]] = values[i];
         queries.push(query);
       }
