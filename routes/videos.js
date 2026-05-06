@@ -4,6 +4,7 @@ const videoController = require('../controller/videos');
 
 // Videos routes
 router.post('/video', videoController.addVideo);
+router.post('/video/:id/view', videoController.incrementViews);
 router.get('/videos', videoController.fetchVideos);
 router.get('/videoQuery', videoController.queryVideo);
 router.get('/video/:id', videoController.getVideo);

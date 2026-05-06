@@ -584,6 +584,51 @@ function getSlugMatchupVideos(req, res) {
     })
   })
 }
+// Lean feed query — returns only _id array, no joins.
+// Used by the /matches browse page. Cards self-fetch their own display data.
+function queryMatchesFeed(req, res) {
+  var skip  = parseInt(req.query.skip)  || 0;
+  var limit = parseInt(req.query.limit) || 5;
+  if (limit > 20) limit = 20;
+
+  var query = {};
+
+  if (req.query.gameId) {
+    try { query.GameId = ObjectId(req.query.gameId); } catch (e) {}
+  }
+
+  if (req.query.characterId) {
+    try {
+      var charId = ObjectId(req.query.characterId);
+      query.$or = [
+        { 'Team1Players.CharacterIds': charId },
+        { 'Team2Players.CharacterIds': charId },
+      ];
+    } catch (e) {}
+  } else if (req.query.playerId) {
+    try {
+      var playerId = ObjectId(req.query.playerId);
+      query.$or = [
+        { 'Team1Players.Id': playerId },
+        { 'Team2Players.Id': playerId },
+      ];
+    } catch (e) {}
+  }
+
+  Match.find(query, '_id')
+    .sort({ _id: -1 })
+    .skip(skip)
+    .limit(limit)
+    .lean()
+    .exec(function (error, matches) {
+      if (error) {
+        console.error(error);
+        return res.status(500).send({ matches: [] });
+      }
+      res.send({ matches: matches });
+    });
+}
+
 module.exports = { 
   addMatches, 
   getMatches, 
@@ -596,5 +641,6 @@ module.exports = {
   getMatchupVideos,
   getSlugMatchupVideos,
   queryByPlayer,
-  queryByGame
+  queryByGame,
+  queryMatchesFeed,
 }

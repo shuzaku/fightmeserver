@@ -61,6 +61,13 @@ var MatchessSchema = new Schema({
   timestamps: true, 
 });
 
+MatchessSchema.index({ _id: -1 });
+MatchessSchema.index({ GameId: 1, _id: -1 });
+MatchessSchema.index({ 'Team1Players.CharacterIds': 1, _id: -1 });
+MatchessSchema.index({ 'Team2Players.CharacterIds': 1, _id: -1 });
+MatchessSchema.index({ 'Team1Players.Id': 1, _id: -1 });
+MatchessSchema.index({ 'Team2Players.Id': 1, _id: -1 });
+
 var Matches = mongoose.model("Matches", MatchessSchema);
 
 module.exports = Matches; 

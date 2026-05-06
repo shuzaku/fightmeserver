@@ -25,6 +25,8 @@ var GameSchema = new Schema({
   timestamps: true, 
 });
 
+GameSchema.index({ IsFeatured: 1, ReleaseDate: 1 });
+
 var Games = mongoose.model("Games", GameSchema);
 
 module.exports = Games; 

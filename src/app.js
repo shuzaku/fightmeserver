@@ -1,7 +1,10 @@
 // Import routes
 const routes = require('../routes');
+const prerenderMiddleware = require('../middleware/prerender');
 
 const schedule = require('node-schedule');
+const path = require('path');
+const fs = require('fs');
 
 const express = require('express')
 const bodyParser = require('body-parser')
@@ -25,8 +28,30 @@ app.use(morgan('combined'))
 app.use(bodyParser.json())
 app.use(cors())
 
-// Use routes BEFORE connecting to DB and starting server
-app.use('/', routes);
+// ── Prerender middleware (must come before API routes and static serving) ──
+// Intercepts social media bot requests and serves OG-enriched HTML.
+app.use(prerenderMiddleware);
+
+// Use API routes — prefixed with /api/ to avoid colliding with Vue Router paths
+// e.g. GET /api/match/:id returns JSON; GET /match/:id falls through to the SPA
+app.use('/api', routes);
+
+// ── Serve Vue SPA static files (if dist/ exists) ──────────────────────────
+// Build the Vue app (`npm run build`) and copy the dist/ folder here so the
+// Node server can serve both the API and the frontend from the same origin.
+// When fighters-edge.com points to this server, bots get OG tags and humans
+// get the SPA as normal.
+const distPath = path.join(__dirname, '..', 'dist');
+if (fs.existsSync(distPath)) {
+  app.use(express.static(distPath));
+  // Fallback: send index.html for any unmatched route (Vue Router handles it)
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(distPath, 'index.html'));
+  });
+  console.log('[static] Serving Vue SPA from dist/');
+} else {
+  console.log('[static] No dist/ folder found — API-only mode');
+}
 
 // Connect to MongoDB
 const dbUsername = process.env.DB_USERNAME;

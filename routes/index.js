@@ -33,6 +33,7 @@ const featuredVideoRoutes = require('./featured-videos');
 const tierListRoutes = require('./tier-lists');
 const matchNoteRoutes = require('./match-notes');
 const deviceAuthRoutes = require('./device-auth');
+const ogRoutes = require('./og');
 
 // Use route modules
 router.use('/', characterRoutes);
@@ -65,5 +66,6 @@ router.use('/', featuredVideoRoutes);
 router.use('/', tierListRoutes);
 router.use('/', matchNoteRoutes);
 router.use('/', deviceAuthRoutes);
+router.use('/', ogRoutes);
 
 module.exports = router;

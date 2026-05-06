@@ -101,280 +101,170 @@ function fetchVideos(req, res) {
 }
 
 // Query Videos
+// Pipeline strategy: filter & paginate on native video fields FIRST, then enrich
+// with lookups on only the paginated documents. Cross-collection filters (CharacterId,
+// PlayerId) require lookups before filtering, but ContentType and GameId are native.
 function queryVideo(req, res) {
-  var queries = [];
-  var query = null;
   var skip = parseSkip(req);
   var limit = parseLimit(req, 5, 20);
   var sortObj = parseSortWithDirection(req, '_id', -1);
   var filter = req.query.filter;
-  var tagFilter = req.query.tag ? safeObjectId(req.query.tag): null;
-  var aggregate = [
-    {
-      '$lookup': {
-        'from': 'games', 
-        'localField': 'GameId', 
-        'foreignField': '_id', 
-        'as': 'Game'
-      }
-    }, {
-      '$unwind': '$Game'
-    }, {
-      '$lookup': {
-        'from': 'montages', 
-        'localField': 'Url', 
-        'foreignField': 'VideoUrl', 
-        'as': 'Montage'
-      }
-    }, {
-      '$unwind': {
-        'path': '$Montage', 
-        'preserveNullAndEmptyArrays': true
-      }
-    },{
-      '$lookup': {
-        'from': 'characters',
-        'localField': 'Montage.Characters',
-        'foreignField': '_id',
-        'as': 'MontageCharacters'
-      }
-    },{
-      '$lookup': {
-        'from': 'matches', 
-        'localField': 'Url', 
-        'foreignField': 'VideoUrl', 
-        'as': 'Match'
-      }
-    }, {
-      '$unwind': {
-        'path': '$Match', 
-        'preserveNullAndEmptyArrays': true
-      }
-    }, {
-      '$lookup': {
-        'from': 'players', 
-        'localField': 'Match.Team1Players.Id', 
-        'foreignField': '_id', 
-        'as': 'Team1Players'
-      }
-    }, {
-      '$lookup': {
-        'from': 'players', 
-        'localField': 'Match.Team2Players.Id', 
-        'foreignField': '_id', 
-        'as': 'Team2Players'
-      }
-    }, {
-      '$lookup': {
-        'from': 'characters', 
-        'localField': 'Match.Team1Players.CharacterIds', 
-        'foreignField': '_id', 
-        'as': 'Team1PlayerCharacters'
-      }
-    }, {
-      '$lookup': {
-        'from': 'characters', 
-        'localField': 'Match.Team2Players.CharacterIds', 
-        'foreignField': '_id', 
-        'as': 'Team2PlayerCharacters'
-      }
-    }, {
-      '$lookup': {
-        'from': 'combo-clips', 
-        'localField': 'Url', 
-        'foreignField': 'Url', 
-        'as': 'ComboClip'
-      }
-    }, {
-      '$unwind': {
-        'path': '$ComboClip', 
-        'preserveNullAndEmptyArrays': true
-      }
-    }, {
-      '$lookup': {
-        'from': 'creators', 
-        'localField': 'ContentCreatorId', 
-        'foreignField': '_id', 
-        'as': 'ContentCreator'
-      }
-    },{
-      '$unwind': {
-        'path': '$ContentCreator', 
-        'preserveNullAndEmptyArrays': true
-      }
-    }, {
-      '$lookup': {
-        'from': 'tags', 
-        'localField': 'Combo.Tags', 
-        'foreignField': '_id', 
-        'as': 'Combo.Tags'
-      }
-    },{
-      '$lookup': {
-        'from': 'combos', 
-        'localField': 'ComboClip.ComboId', 
-        'foreignField': '_id', 
-        'as': 'Combo'
-      }
-    },{
-      '$unwind': {
-        'path': '$Combo', 
-        'preserveNullAndEmptyArrays': true
-      }
-    },{
-      '$lookup': {
-        'from': 'characters', 
-        'localField': 'Combo.CharacterId', 
-        'foreignField': '_id', 
-        'as': 'Character'
-      }
-    },{
-      '$unwind': {
-        'path': '$Character', 
-        'preserveNullAndEmptyArrays': true
-      }
-    },{
-      '$addFields': {
-        'Id': '$_id'
-      }
-    }
-  ];
+  var tagFilter = req.query.tag ? safeObjectId(req.query.tag) : null;
 
-  if (req.query.queryName || req.query.queryValue){
-    var names = req.query.queryName.split(",");
-    var values = req.query.queryValue.split(",");
-    var query = {};
-    //parse query for player id
-    for(var i = 0; i < names.length; i++){
-      var query = {};
+  // Separate native (video-collection) filters from cross-collection filters
+  var nativeMatch = {};       // applied before any lookups
+  var crossCollectionFilters = []; // applied after lookups, before pagination
+  var needsVideoId = false;
 
-      switch (names[i]){
-        case 'PlayerId':
+  // --- Parse query params ---
+  if (req.query.queryName || req.query.queryValue) {
+    var names = req.query.queryName.split(',');
+    var values = req.query.queryValue.split(',');
+
+    for (var i = 0; i < names.length; i++) {
+      switch (names[i]) {
+        case 'PlayerId': {
           var playerId = safeObjectId(values[i]);
           if (!playerId) break;
-          var playerQuery= [
-            {"Team1Players": { '$elemMatch': { '_id':  playerId } }},
-            {"Team2Players": { '$elemMatch': { '_id':  playerId } }}
-          ];  
-          queries.push({$or: playerQuery});
-        break
-
-        case 'PlayerSlug':
-          var playerQuery= [
-            {"Team1Players": { '$elemMatch': { 'Slug': values[i] } }},
-            {"Team2Players": { '$elemMatch': { 'Slug': values[i] } }}
-          ];  
-          queries.push({$or: playerQuery});
-        break
-        
-        case 'PlayerMatchupCharacterId':
-          queries = [];
-          var playerIdValue = values[names.indexOf('PlayerId')];
-          var characterIdValue = values[i];
-          var playerId = safeObjectId(playerIdValue);
-          var characterId = safeObjectId(characterIdValue);
-          if (!playerId || !characterId) break;
-          var matchupQuery = [
-            {'$and': [{"Team1Players": { '$elemMatch': { '_id':  playerId } }} , {"Team2PlayerCharacters": { '$elemMatch': { '_id':  characterId } }}]},
-            {'$and': [{"Team2Players": { '$elemMatch': { '_id':  playerId } }} , {"Team1PlayerCharacters": { '$elemMatch': { '_id':  characterId } }}]},
-          ]
-          queries.push({$or: matchupQuery});
-          break
-
-          case 'CharacterMatchupCharacterId':
-            queries = [];
-            var characterIdValue = values[names.indexOf('CharacterId')];
-            var matchupCharacterIdValue = values[i];
-            var characterId = safeObjectId(characterIdValue);
-            var matchupCharacterId = safeObjectId(matchupCharacterIdValue);
-            if (!characterId || !matchupCharacterId) break;
-            var matchupQuery = [
-              {'$and': [{"Team1PlayerCharacters": { '$elemMatch': { '_id':  characterId } }} , {"Team2PlayerCharacters": { '$elemMatch': { '_id':  matchupCharacterId } }}]},
-              {'$and': [{"Team2PlayerCharacters": { '$elemMatch': { '_id':  characterId } }} , {"Team1PlayerCharacters": { '$elemMatch': { '_id':  matchupCharacterId } }}]},
-            ]
-            queries.push({$or: matchupQuery});
-            break
-
-        case 'CharacterId':
+          crossCollectionFilters.push({ $or: [
+            { 'Team1Players': { $elemMatch: { _id: playerId } } },
+            { 'Team2Players': { $elemMatch: { _id: playerId } } },
+          ]});
+          break;
+        }
+        case 'PlayerSlug': {
+          crossCollectionFilters.push({ $or: [
+            { 'Team1Players': { $elemMatch: { Slug: values[i] } } },
+            { 'Team2Players': { $elemMatch: { Slug: values[i] } } },
+          ]});
+          break;
+        }
+        case 'PlayerMatchupCharacterId': {
+          var pmPlayerId = safeObjectId(values[names.indexOf('PlayerId')]);
+          var pmCharId   = safeObjectId(values[i]);
+          if (!pmPlayerId || !pmCharId) break;
+          crossCollectionFilters.push({ $or: [
+            { $and: [{ Team1Players: { $elemMatch: { _id: pmPlayerId } } }, { Team2PlayerCharacters: { $elemMatch: { _id: pmCharId } } }] },
+            { $and: [{ Team2Players: { $elemMatch: { _id: pmPlayerId } } }, { Team1PlayerCharacters: { $elemMatch: { _id: pmCharId } } }] },
+          ]});
+          break;
+        }
+        case 'CharacterMatchupCharacterId': {
+          var cmCharId        = safeObjectId(values[names.indexOf('CharacterId')]);
+          var cmMatchupCharId = safeObjectId(values[i]);
+          if (!cmCharId || !cmMatchupCharId) break;
+          crossCollectionFilters.push({ $or: [
+            { $and: [{ Team1PlayerCharacters: { $elemMatch: { _id: cmCharId } } }, { Team2PlayerCharacters: { $elemMatch: { _id: cmMatchupCharId } } }] },
+            { $and: [{ Team2PlayerCharacters: { $elemMatch: { _id: cmCharId } } }, { Team1PlayerCharacters: { $elemMatch: { _id: cmMatchupCharId } } }] },
+          ]});
+          break;
+        }
+        case 'CharacterId': {
           var characterId = safeObjectId(values[i]);
           if (!characterId) break;
-          var characterQuery= [
-            {"Team1PlayerCharacters": { '$elemMatch': { '_id':  characterId } }},
-            {"Team2PlayerCharacters": { '$elemMatch': { '_id':  characterId } }},
-            {'MontageCharacters': { '$elemMatch': { '_id':  characterId } }},
-            {'Combo.CharacterId': {'$eq': characterId}},
-          ];
-          queries.push({$or: characterQuery});
-          break
-
-          case 'CharacterSlug':
-            var characterQuery= [
-              {"Team1PlayerCharacters": { '$elemMatch': { 'Slug': values[i] } }},
-              {"Team2PlayerCharacters": { '$elemMatch': { 'Slug': values[i] } }},
-              {'MontageCharacters': { '$elemMatch': { 'Slug': values[i] } }},
-              // {'Combo.CharacterId': {'$eq': ObjectId(values[i])}},
-            ];
-            queries.push({$or: characterQuery});
-            break
-
-        case 'VideoId':
-            var videoId = safeObjectId(values[i]);
-            if (!videoId) break;
-            queries.push({'_id': {'$eq': videoId}});
-          break
-
-        default: 
-          if(names[i].includes('Id')){
-            var idValue = safeObjectId(values[i]);
-            if (!idValue) break;
-            query[names[i]] =  {'$eq': idValue};
-            queries.push(query);
+          crossCollectionFilters.push({ $or: [
+            { Team1PlayerCharacters: { $elemMatch: { _id: characterId } } },
+            { Team2PlayerCharacters: { $elemMatch: { _id: characterId } } },
+            { MontageCharacters:     { $elemMatch: { _id: characterId } } },
+            { 'Combo.CharacterId': { $eq: characterId } },
+          ]});
+          break;
+        }
+        case 'CharacterSlug': {
+          crossCollectionFilters.push({ $or: [
+            { Team1PlayerCharacters: { $elemMatch: { Slug: values[i] } } },
+            { Team2PlayerCharacters: { $elemMatch: { Slug: values[i] } } },
+            { MontageCharacters:     { $elemMatch: { Slug: values[i] } } },
+          ]});
+          break;
+        }
+        case 'VideoId': {
+          var videoId = safeObjectId(values[i]);
+          if (!videoId) break;
+          nativeMatch['_id'] = { $eq: videoId };
+          needsVideoId = true;
+          break;
+        }
+        default: {
+          if (names[i].includes('Id')) {
+            var idVal = safeObjectId(values[i]);
+            if (!idVal) break;
+            nativeMatch[names[i]] = { $eq: idVal };
           } else {
-            query[names[0]] =  {'$eq': values[0]};
-            queries.push(query);
+            nativeMatch[names[i]] = { $eq: values[i] };
           }
+        }
       }
     }
-    if(names.some(n => n === "VideoId")){
-      aggregate.push({$match: {$or: queries}});
-    }
-  };
-
-  if(queries.length > 0) {
-    aggregate.push({$match: {$and: queries}});
   }
 
-  // if(sort === "Damage"){
-  //   aggregate.push({$sort: {'Combo.Damage': -1}})
-  // } else if(sort === "Hits") {
-  //   aggregate.push({$sort: {'Combo.Hits': -1}})
-  // } else {
-  //   aggregate.push({$sort: sortObj})
-  // }
-  
-  if(filter){
-    if (filter === 'Combo'){
-      aggregate.push({$match: {ContentType:'Combo'}})
-    } else if (filter === 'Match'){
-      aggregate.push({$match: {ContentType: 'Match'}})
-    } else if (filter === 'Montage'){
-      aggregate.push({$match: {ContentType: 'Montage'}})
-    }
+  // Apply ContentType filter natively (it lives on the video document)
+  if (filter === 'Match')   nativeMatch.ContentType = 'Match';
+  else if (filter === 'Combo')   nativeMatch.ContentType = 'Combo';
+  else if (filter === 'Montage') nativeMatch.ContentType = 'Montage';
+
+  var hasCrossCollection = crossCollectionFilters.length > 0 || tagFilter;
+
+  // --- Build the pipeline ---
+  var aggregate = [];
+
+  // PHASE 1 — native filters (uses indexes on ContentType, GameId, _id)
+  if (Object.keys(nativeMatch).length > 0) {
+    aggregate.push({ $match: nativeMatch });
   }
-  if(tagFilter){
-    aggregate.push({$match: {"Combo.Tags": { '$elemMatch': { '_id':  tagFilter } }}});
+
+  // PHASE 2 — paginate EARLY when we have no cross-collection conditions
+  // This means lookups below only run on the ~5 result documents, not the whole collection
+  if (!hasCrossCollection) {
+    aggregate.push({ $sort: sortObj });
+    aggregate.push({ $skip: skip });
+    aggregate.push({ $limit: limit });
   }
-  
-  aggregate.push({$sort: sortObj})
-  aggregate.push({$skip: skip});
-  aggregate.push({$limit: limit});  
-  
+
+  // PHASE 3 — enrichment lookups (now on a small set when early-paginated)
+  aggregate.push(
+    { $lookup: { from: 'games',       localField: 'GameId', foreignField: '_id', as: 'Game' } },
+    { $unwind: '$Game' },
+    { $lookup: { from: 'montages',    localField: 'Url', foreignField: 'VideoUrl', as: 'Montage' } },
+    { $unwind: { path: '$Montage', preserveNullAndEmptyArrays: true } },
+    { $lookup: { from: 'characters',  localField: 'Montage.Characters', foreignField: '_id', as: 'MontageCharacters' } },
+    { $lookup: { from: 'matches',     localField: 'Url', foreignField: 'VideoUrl', as: 'Match' } },
+    { $unwind: { path: '$Match', preserveNullAndEmptyArrays: true } },
+    { $lookup: { from: 'players',     localField: 'Match.Team1Players.Id', foreignField: '_id', as: 'Team1Players' } },
+    { $lookup: { from: 'players',     localField: 'Match.Team2Players.Id', foreignField: '_id', as: 'Team2Players' } },
+    { $lookup: { from: 'characters',  localField: 'Match.Team1Players.CharacterIds', foreignField: '_id', as: 'Team1PlayerCharacters' } },
+    { $lookup: { from: 'characters',  localField: 'Match.Team2Players.CharacterIds', foreignField: '_id', as: 'Team2PlayerCharacters' } },
+    { $lookup: { from: 'combo-clips', localField: 'Url', foreignField: 'Url', as: 'ComboClip' } },
+    { $unwind: { path: '$ComboClip', preserveNullAndEmptyArrays: true } },
+    { $lookup: { from: 'creators',    localField: 'ContentCreatorId', foreignField: '_id', as: 'ContentCreator' } },
+    { $unwind: { path: '$ContentCreator', preserveNullAndEmptyArrays: true } },
+    { $lookup: { from: 'combos',      localField: 'ComboClip.ComboId', foreignField: '_id', as: 'Combo' } },
+    { $unwind: { path: '$Combo', preserveNullAndEmptyArrays: true } },
+    { $lookup: { from: 'tags',        localField: 'Combo.Tags', foreignField: '_id', as: 'Combo.Tags' } },
+    { $lookup: { from: 'characters',  localField: 'Combo.CharacterId', foreignField: '_id', as: 'Character' } },
+    { $unwind: { path: '$Character', preserveNullAndEmptyArrays: true } },
+    { $addFields: { Id: '$_id' } }
+  );
+
+  // PHASE 4 — cross-collection filters + tag filter (applied after lookups)
+  if (crossCollectionFilters.length > 0) {
+    aggregate.push({ $match: { $and: crossCollectionFilters } });
+  }
+  if (tagFilter) {
+    aggregate.push({ $match: { 'Combo.Tags': { $elemMatch: { _id: tagFilter } } } });
+  }
+
+  // PHASE 5 — late pagination for cross-collection queries
+  if (hasCrossCollection) {
+    aggregate.push({ $sort: sortObj });
+    aggregate.push({ $skip: skip });
+    aggregate.push({ $limit: limit });
+  }
+
   Video.aggregate(aggregate, function (error, videos) {
     if (error) { console.error(error); }
-    res.send({
-      videos: videos
-    })
-  })
+    res.send({ videos: videos });
+  });
 }
 
 // Query by character
@@ -1357,4 +1247,28 @@ function getVideoByMatchId(req, res) {
   });
 }
 
-module.exports = {  addVideo, queryVideo, queryVideoByCharacter, queryVideoByPlayer, queryVideoByGame, getVideo, getVideoByMatchId, patchVideo, deleteVideo, getVideos, getComboVideo, getMatchVideo, getMatchupVideos, fetchVideos}
+// Increment view count for a video
+function incrementViews(req, res) {
+  var videoId = safeObjectId(req.params.id);
+  if (!videoId) {
+    return res.status(400).send({ success: false, message: 'Invalid video ID' });
+  }
+
+  Video.findByIdAndUpdate(
+    videoId,
+    { $inc: { Views: 1 } },
+    { new: true, select: 'Views' },
+    function (error, video) {
+      if (error) {
+        console.error(error);
+        return res.status(500).send({ success: false, message: 'Error updating views' });
+      }
+      if (!video) {
+        return res.status(404).send({ success: false, message: 'Video not found' });
+      }
+      res.send({ success: true, views: video.Views });
+    }
+  );
+}
+
+module.exports = { addVideo, queryVideo, queryVideoByCharacter, queryVideoByPlayer, queryVideoByGame, getVideo, getVideoByMatchId, patchVideo, deleteVideo, getVideos, getComboVideo, getMatchVideo, getMatchupVideos, fetchVideos, incrementViews }

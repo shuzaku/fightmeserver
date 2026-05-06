@@ -108,7 +108,7 @@ function queryGame(queryParams) {
         }
 
         if (queries.length > 1) {
-            Game.find({$or: queries}, 'Title Logo CoverArt ReleaseDate', function (error, games) {
+            Game.find({$or: queries}, 'Title LogoUrl CoverArt ReleaseDate IsFeatured', function (error, games) {
                 if (error) {
                     reject(error);
                 } else {
@@ -116,7 +116,7 @@ function queryGame(queryParams) {
                 }
             }).sort({ReleaseDate: 1});
         } else {
-            Game.find(queries[0], 'Title Logo CoverArt ReleaseDate', function (error, games) {
+            Game.find(queries[0], 'Title LogoUrl CoverArt ReleaseDate IsFeatured', function (error, games) {
                 if (error) {
                     reject(error);
                 } else {
