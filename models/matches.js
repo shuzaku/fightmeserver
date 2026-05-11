@@ -56,12 +56,18 @@ var MatchessSchema = new Schema({
   },
   EndTime: {
     type: String
+  },
+  // Groups consecutive matches recorded as a single "set" (e.g. best-of-3 / FT2)
+  // by the FightersEdge AutoStream desktop app. Optional; legacy matches have no SetId.
+  SetId: {
+    type: ObjectId
   }
 }, {
   timestamps: true, 
 });
 
 MatchessSchema.index({ _id: -1 });
+MatchessSchema.index({ SetId: 1, _id: 1 });
 MatchessSchema.index({ GameId: 1, _id: -1 });
 MatchessSchema.index({ 'Team1Players.CharacterIds': 1, _id: -1 });
 MatchessSchema.index({ 'Team2Players.CharacterIds': 1, _id: -1 });

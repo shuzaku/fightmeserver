@@ -26,7 +26,30 @@ process.on('unhandledRejection', (reason, promise) => {
 const app = express()
 app.use(morgan('combined'))
 app.use(bodyParser.json())
-app.use(cors())
+
+// Explicit CORS config — required when requests carry Authorization headers (Firebase tokens).
+// "Access-Control-Allow-Origin: *" cannot be used alongside credentialed requests.
+const ALLOWED_ORIGINS = [
+  'https://fighters-edge.com',
+  'https://www.fighters-edge.com',
+  'http://localhost:8080',
+  'http://localhost:3000',
+];
+
+app.use(cors({
+  origin(origin, callback) {
+    // Allow requests with no origin (curl, Postman, same-origin server calls)
+    if (!origin || ALLOWED_ORIGINS.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`CORS: origin ${origin} not allowed`));
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  credentials: true,
+  maxAge: 86400, // preflight cache: 24 h
+}));
 
 // ── Prerender middleware (must come before API routes and static serving) ──
 // Intercepts social media bot requests and serves OG-enriched HTML.
