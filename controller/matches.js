@@ -381,7 +381,8 @@ function queryByCharacter(req, res) {
 function queryByPlayer(req, res) {
   var queries = [];
   var skip =  parseInt(req.query.skip);
-  var aggregate = [     {
+  var aggregate = [
+  {
     '$lookup': {
       'from': 'players', 
       'localField': 'Team1Players.Id', 
@@ -394,6 +395,20 @@ function queryByPlayer(req, res) {
       'localField': 'Team2Players.Id', 
       'foreignField': '_id', 
       'as': 'Team2Player'
+    }
+  }, {
+    '$lookup': {
+      'from': 'characters',
+      'localField': 'Team1Players.CharacterIds',
+      'foreignField': '_id',
+      'as': 'Team1PlayerCharacters'
+    }
+  }, {
+    '$lookup': {
+      'from': 'characters',
+      'localField': 'Team2Players.CharacterIds',
+      'foreignField': '_id',
+      'as': 'Team2PlayerCharacters'
     }
   }, {
     '$unwind': {
@@ -425,6 +440,23 @@ function queryByPlayer(req, res) {
             {"Team2Player": { '$elemMatch': { 'Slug': values[i] } }}
           ];  
           queries.push({$or: playerQuery});
+        break
+
+        case 'GameId':
+          try {
+            queries.push({ 'GameId': ObjectId(values[i]) });
+          } catch(e) { console.error('Invalid GameId:', values[i]); }
+        break
+
+        case 'CharacterId':
+          try {
+            var charId = ObjectId(values[i]);
+            var charQuery = [
+              { "Team1PlayerCharacters": { '$elemMatch': { '_id': charId } } },
+              { "Team2PlayerCharacters": { '$elemMatch': { '_id': charId } } }
+            ];
+            queries.push({$or: charQuery});
+          } catch(e) { console.error('Invalid CharacterId:', values[i]); }
         break
       }
     }

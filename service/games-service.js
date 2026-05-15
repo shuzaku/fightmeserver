@@ -75,7 +75,7 @@ function getGames() {
 // Fetch single game
 function getGame(gameId) {
     return new Promise((resolve, reject) => {
-        Game.findById(gameId, 'Title LogoUrl FeaturedCharacter NewCharacter Banner', function (error, game) {
+        Game.findById(gameId, 'Title LogoUrl FeaturedCharacter NewCharacter Banner Abbreviation', function (error, game) {
             if (error) {
                 reject(error);
             } else {
@@ -108,7 +108,7 @@ function queryGame(queryParams) {
         }
 
         if (queries.length > 1) {
-            Game.find({$or: queries}, 'Title LogoUrl CoverArt ReleaseDate IsFeatured', function (error, games) {
+            Game.find({$or: queries}, 'Title LogoUrl CoverArt ReleaseDate IsFeatured Abbreviation', function (error, games) {
                 if (error) {
                     reject(error);
                 } else {
@@ -116,7 +116,7 @@ function queryGame(queryParams) {
                 }
             }).sort({ReleaseDate: 1});
         } else {
-            Game.find(queries[0], 'Title LogoUrl CoverArt ReleaseDate IsFeatured', function (error, games) {
+            Game.find(queries[0], 'Title LogoUrl CoverArt ReleaseDate IsFeatured Abbreviation', function (error, games) {
                 if (error) {
                     reject(error);
                 } else {

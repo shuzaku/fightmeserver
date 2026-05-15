@@ -144,6 +144,16 @@ function queryTournamentMatchesByTournamentId(req, res) {
         });
       } else if (name === 'GameId') {
         extra.push({ GameId: ObjectId(val) });
+      } else if (name === 'CharacterId') {
+        try {
+          var cid = ObjectId(val);
+          extra.push({
+            $or: [
+              { 'Team1Players': { $elemMatch: { CharacterIds: cid } } },
+              { 'Team2Players': { $elemMatch: { CharacterIds: cid } } }
+            ]
+          });
+        } catch(e) { console.error('Invalid CharacterId in tournament filter:', val); }
       } else if (name === 'Id') {
         extra.push({ _id: ObjectId(val) });
       } else {

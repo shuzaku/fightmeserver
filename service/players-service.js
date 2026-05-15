@@ -1,4 +1,6 @@
 var Player = require("../models/players");
+var Game = require("../models/games");
+var Character = require("../models/characters");
 var ObjectId = require('mongodb').ObjectId;
 var MatchService = require("./matches-service");
 var Match = require("../models/matches");
@@ -70,17 +72,151 @@ function getPlayers(queryParams = {}) {
     });
 }
 
-// Fetch single player
-function getPlayer(playerId) {
-    return new Promise((resolve, reject) => {
-        Player.findById(playerId, 'Name PlayerImg Slug MatchupAppearance Twitter Stream Youtube', function (error, player) {
-            if (error) {
-                reject(error);
-            } else {
-                resolve(player);
+/** Derives games and characters played by a player from their match history.
+ *  Returns [{ game: { _id, Title, LogoUrl, Abbreviation }, characters: [{ _id, Name, AvatarUrl, ImageUrl, Slug }] }]
+ */
+async function deriveGamesPlayedFromMatches(playerObjectId) {
+
+    // Aggregate: find all matches for this player, group by game, collect unique character IDs
+    var pipeline = [
+        {
+            $match: {
+                $or: [
+                    { 'Team1Players': { $elemMatch: { Id: playerObjectId } } },
+                    { 'Team2Players': { $elemMatch: { Id: playerObjectId } } }
+                ]
             }
+        },
+        { $sort: { _id: -1 } },
+        { $limit: 300 },
+        // Determine which team the player is on and get their character IDs
+        {
+            $project: {
+                GameId: 1,
+                playerCharIds: {
+                    $let: {
+                        vars: {
+                            team1entry: {
+                                $arrayElemAt: [
+                                    { $filter: { input: '$Team1Players', as: 'p', cond: { $eq: ['$$p.Id', playerObjectId] } } },
+                                    0
+                                ]
+                            },
+                            team2entry: {
+                                $arrayElemAt: [
+                                    { $filter: { input: '$Team2Players', as: 'p', cond: { $eq: ['$$p.Id', playerObjectId] } } },
+                                    0
+                                ]
+                            }
+                        },
+                        in: {
+                            $ifNull: [
+                                '$$team1entry.CharacterIds',
+                                { $ifNull: ['$$team2entry.CharacterIds', []] }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        { $unwind: { path: '$playerCharIds', preserveNullAndEmptyArrays: true } },
+        // Group by game, collecting unique character IDs
+        {
+            $group: {
+                _id: '$GameId',
+                charIds: { $addToSet: '$playerCharIds' }
+            }
+        },
+        // Remove any null entries from charIds (from matches with no characters)
+        {
+            $project: {
+                charIds: {
+                    $filter: { input: '$charIds', as: 'c', cond: { $ne: ['$$c', null] } }
+                }
+            }
+        },
+        // Populate game documents
+        {
+            $lookup: {
+                from: 'games',
+                localField: '_id',
+                foreignField: '_id',
+                as: 'gameDoc'
+            }
+        },
+        { $unwind: { path: '$gameDoc', preserveNullAndEmptyArrays: true } },
+        // Populate character documents
+        {
+            $lookup: {
+                from: 'characters',
+                localField: 'charIds',
+                foreignField: '_id',
+                as: 'characterDocs'
+            }
+        }
+    ];
+
+    var results = await Match.aggregate(pipeline);
+
+    return results
+        .filter(function(r) { return r.gameDoc; })
+        .map(function(r) {
+            return {
+                game: r.gameDoc,
+                characters: r.characterDocs || []
+            };
         });
-    });
+}
+
+/** Mutates a plain player object to replace GamesPlayed ObjectId refs with full documents. */
+async function populateGamesPlayed(player) {
+    if (!player || !player.GamesPlayed || player.GamesPlayed.length === 0) return;
+    var gameIds = player.GamesPlayed.map(gp => gp.Game).filter(Boolean);
+    var charIds = player.GamesPlayed.reduce((acc, gp) => acc.concat(gp.Characters || []), []).filter(Boolean);
+
+    var [games, characters] = await Promise.all([
+        Game.find({ _id: { $in: gameIds } }, 'Title LogoUrl Abbreviation').lean(),
+        Character.find({ _id: { $in: charIds } }, 'Name AvatarUrl ImageUrl Slug').lean(),
+    ]);
+
+    var gamesMap = {};
+    games.forEach(function(g) { gamesMap[String(g._id)] = g; });
+    var charsMap = {};
+    characters.forEach(function(c) { charsMap[String(c._id)] = c; });
+
+    player.GamesPlayed = player.GamesPlayed
+        .map(function(gp) {
+            var game = gamesMap[String(gp.Game)] || null;
+            if (!game) return null;
+            return {
+                Game: game,
+                Characters: (gp.Characters || []).map(function(cid) { return charsMap[String(cid)] || null; }).filter(Boolean),
+            };
+        })
+        .filter(Boolean);
+}
+
+// Fetch single player (with GamesPlayed derived from match history)
+async function getPlayer(playerId) {
+    const player = await Player.findById(
+        playerId,
+        'Name ImageUrl Slug MatchupAppearance Twitter Stream Youtube AccountId GamesPlayed'
+    ).lean();
+    if (!player) return null;
+
+    // If the player has manually-curated GamesPlayed, populate and use those
+    if (player.GamesPlayed && player.GamesPlayed.length > 0) {
+        await populateGamesPlayed(player);
+    } else {
+        // Otherwise derive from match history
+        try {
+            player.GamesPlayed = await deriveGamesPlayedFromMatches(player._id);
+        } catch (e) {
+            console.error('deriveGamesPlayedFromMatches error:', e);
+            player.GamesPlayed = [];
+        }
+    }
+    return player;
 }
 
 // Update a player
@@ -172,14 +308,36 @@ function queryPlayer(queryParams) {
 
 function getPlayerBySlug(slug) {
     return new Promise((resolve, reject) => {
-        var aggregate = [];
-        aggregate.push({$match: {"Slug": slug}});
+        if (!slug) { return resolve({ players: [] }); }
 
-        Player.aggregate(aggregate, function (error, players) {
+        function escapeRegex(s) {
+            return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+
+        // Accept slug as-is (case-insensitive) OR match by name derived from slug
+        var namePattern = escapeRegex(slug.replace(/-/g, ' '));
+        var orConditions = [
+            { Slug: { $regex: new RegExp('^' + escapeRegex(slug) + '$', 'i') } },
+            { Name: { $regex: new RegExp('^' + namePattern + '$', 'i') } },
+        ];
+
+        Player.aggregate([{ $match: { $or: orConditions } }], async function (error, players) {
             if (error) {
                 reject(error);
             } else {
-                resolve({players: players});
+                try {
+                    for (var i = 0; i < players.length; i++) {
+                        var p = players[i];
+                        if (p.GamesPlayed && p.GamesPlayed.length > 0) {
+                            await populateGamesPlayed(p);
+                        } else {
+                            p.GamesPlayed = await deriveGamesPlayedFromMatches(p._id);
+                        }
+                    }
+                    resolve({ players: players });
+                } catch (e) {
+                    reject(e);
+                }
             }
         });
     });

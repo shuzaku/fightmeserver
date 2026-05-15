@@ -140,20 +140,44 @@ function getCharacter(characterId) {
     });
 }
 
-// Fetch single character by slug
+// Fetch single character by slug or name
 function getCharacterBySlug(slug) {
     return new Promise((resolve, reject) => {
-        var aggregate = [{
+        var lookupStage = {
             '$lookup': {
                 'from': 'players',
                 'localField': 'FeaturedPlayers',
                 'foreignField': '_id',
                 'as': 'Players'
             }
-        }];
-        aggregate.push({$match: {"Slug": slug}});
+        };
 
-        Character.aggregate(aggregate, function (error, characters) {
+        function escapeRegex(s) {
+            return s.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+        }
+
+        // Convert hyphens to spaces for name matching (e.g. "mai-shiranui" → "mai shiranui")
+        var namePattern = escapeRegex(slug.replace(/-/g, ' '));
+
+        var orConditions = [
+            { Slug: { $regex: new RegExp('^' + escapeRegex(slug) + '$', 'i') } },
+            { Name: { $regex: new RegExp('^' + namePattern + '$', 'i') } }
+        ];
+
+        // If slug looks like a compound key (GAME_CHARACTER, e.g. SF6_JAMIE),
+        // also try matching just the part after the first underscore.
+        // Handles SF6_JAMIE → "Jamie", GGST_SOL_BADGUY → "Sol Badguy", etc.
+        var underscoreIdx = slug.indexOf('_');
+        if (underscoreIdx !== -1) {
+            var afterPrefix = slug.slice(underscoreIdx + 1).replace(/_/g, ' ');
+            orConditions.push({
+                Name: { $regex: new RegExp('^' + escapeRegex(afterPrefix) + '$', 'i') }
+            });
+        }
+
+        var matchStage = { $match: { $or: orConditions } };
+
+        Character.aggregate([lookupStage, matchStage], function (error, characters) {
             if (error) {
                 reject(error);
             } else {
