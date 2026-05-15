@@ -16,5 +16,6 @@ router.get('/characterMatchup', matchController.getMatchupVideos);
 router.get('/characterSlugMatchup', matchController.getSlugMatchupVideos);
 router.get('/matchesGame/', matchController.queryByGame);
 router.get('/matchesFeed', matchController.queryMatchesFeed);
+router.get('/matchesTeam', matchController.queryByTeam);
 
 module.exports = router;

@@ -629,6 +629,64 @@ function queryMatchesFeed(req, res) {
     });
 }
 
+// Filter matches where two characters are on the SAME team (both in Team1 OR both in Team2)
+function queryByTeam(req, res) {
+  const skip   = parseInt(req.query.skip)  || 0;
+  const limit  = parseInt(req.query.limit) || 10;
+  const gameId = req.query.gameId;
+  const char1  = req.query.char1;
+  const char2  = req.query.char2;
+
+  if (!gameId) {
+    return res.status(400).send({ error: 'gameId is required' });
+  }
+
+  const pipeline = [];
+
+  // Filter by game first (uses GameId index)
+  try {
+    pipeline.push({ $match: { GameId: ObjectId(gameId) } });
+  } catch (e) {
+    return res.status(400).send({ error: 'Invalid gameId' });
+  }
+
+  // Team filter: both characters must appear in Team1 OR both in Team2
+  if (char1 && char2) {
+    let c1, c2;
+    try { c1 = ObjectId(char1); c2 = ObjectId(char2); }
+    catch (e) { return res.status(400).send({ error: 'Invalid character ids' }); }
+
+    pipeline.push({
+      $match: {
+        $or: [
+          { $and: [{ 'Team1Players.CharacterIds': c1 }, { 'Team1Players.CharacterIds': c2 }] },
+          { $and: [{ 'Team2Players.CharacterIds': c1 }, { 'Team2Players.CharacterIds': c2 }] },
+        ]
+      }
+    });
+  } else if (char1) {
+    let c1;
+    try { c1 = ObjectId(char1); } catch (e) { return res.status(400).send({ error: 'Invalid char1' }); }
+    pipeline.push({
+      $match: {
+        $or: [
+          { 'Team1Players.CharacterIds': c1 },
+          { 'Team2Players.CharacterIds': c1 },
+        ]
+      }
+    });
+  }
+
+  pipeline.push({ $sort: { _id: -1 } });
+  pipeline.push({ $skip: skip });
+  pipeline.push({ $limit: Math.min(limit, 20) });
+
+  Match.aggregate(pipeline, function (error, matches) {
+    if (error) { console.error(error); return res.status(500).send({ error }); }
+    res.send({ matches });
+  });
+}
+
 module.exports = { 
   addMatches, 
   getMatches, 
@@ -643,4 +701,5 @@ module.exports = {
   queryByPlayer,
   queryByGame,
   queryMatchesFeed,
+  queryByTeam,
 }

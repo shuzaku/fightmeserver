@@ -3,11 +3,18 @@ var Schema = mongoose.Schema;
 const ObjectId = Schema.Types.ObjectId;
 
 var FeatureMatchesSchema = new Schema({
+  MatchId: {
+    type: ObjectId,
+    index: true,
+  },
   VideoUrl: {
     type: String
   },
   GameIds: {
-    type: Array
+    type: [ObjectId]
+  },
+  CreatorId: {
+    type: ObjectId
   }
 }, {
   timestamps: true, 
