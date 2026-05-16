@@ -123,7 +123,7 @@ function getCharacter(characterId) {
         var aggregate = [{
             '$lookup': {
                 'from': 'players',
-                'localField': 'FeaturedPlayers',
+                'localField': 'Players',
                 'foreignField': '_id',
                 'as': 'Players'
             }
@@ -146,7 +146,7 @@ function getCharacterBySlug(slug) {
         var lookupStage = {
             '$lookup': {
                 'from': 'players',
-                'localField': 'FeaturedPlayers',
+                'localField': 'Players',
                 'foreignField': '_id',
                 'as': 'Players'
             }

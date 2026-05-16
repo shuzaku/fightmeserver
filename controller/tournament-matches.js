@@ -130,30 +130,21 @@ function queryTournamentMatchesByTournamentId(req, res) {
     var names = req.query.queryName.split(',');
     var values = req.query.queryValue.split(',');
     var extra = [];
+
+    var parsedPlayerId = null;
+    var parsedCharId = null;
+
     for (var i = 0; i < names.length; i++) {
       var name = names[i];
       var val = values[i];
       if (name === 'PlayerId') {
-        var pid = ObjectId(val);
-        // Match either side's player Id inside the array of players
-        extra.push({
-          $or: [
-            { Team1Players: { $elemMatch: { Id: pid } } },
-            { Team2Players: { $elemMatch: { Id: pid } } }
-          ]
-        });
+        try { parsedPlayerId = ObjectId(val); }
+        catch(e) { console.error('Invalid PlayerId in tournament filter:', val); }
       } else if (name === 'GameId') {
         extra.push({ GameId: ObjectId(val) });
       } else if (name === 'CharacterId') {
-        try {
-          var cid = ObjectId(val);
-          extra.push({
-            $or: [
-              { 'Team1Players': { $elemMatch: { CharacterIds: cid } } },
-              { 'Team2Players': { $elemMatch: { CharacterIds: cid } } }
-            ]
-          });
-        } catch(e) { console.error('Invalid CharacterId in tournament filter:', val); }
+        try { parsedCharId = ObjectId(val); }
+        catch(e) { console.error('Invalid CharacterId in tournament filter:', val); }
       } else if (name === 'Id') {
         extra.push({ _id: ObjectId(val) });
       } else {
@@ -162,6 +153,35 @@ function queryTournamentMatchesByTournamentId(req, res) {
         extra.push(obj);
       }
     }
+
+    // Combine player + character into a single $elemMatch so the character must
+    // belong to the specific player, not their opponent
+    if (parsedPlayerId) {
+      if (parsedCharId) {
+        extra.push({
+          $or: [
+            { Team1Players: { $elemMatch: { Id: parsedPlayerId, CharacterIds: parsedCharId } } },
+            { Team2Players: { $elemMatch: { Id: parsedPlayerId, CharacterIds: parsedCharId } } }
+          ]
+        });
+      } else {
+        extra.push({
+          $or: [
+            { Team1Players: { $elemMatch: { Id: parsedPlayerId } } },
+            { Team2Players: { $elemMatch: { Id: parsedPlayerId } } }
+          ]
+        });
+      }
+    } else if (parsedCharId) {
+      // Character filter with no player context — match either side
+      extra.push({
+        $or: [
+          { 'Team1Players': { $elemMatch: { CharacterIds: parsedCharId } } },
+          { 'Team2Players': { $elemMatch: { CharacterIds: parsedCharId } } }
+        ]
+      });
+    }
+
     if (extra.length) {
       // Apply filters at the start of the pipeline for performance and to use raw fields
       aggregate.unshift({ $match: { $and: extra } });

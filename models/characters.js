@@ -51,6 +51,10 @@ var CharacterSchema = new Schema({
     type: String,
     trim: true,
   },
+  Players: [{
+    type: Schema.Types.ObjectId,
+    ref: 'Players',
+  }],
 }, {
   timestamps: true,
 });

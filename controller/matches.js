@@ -420,45 +420,107 @@ function queryByPlayer(req, res) {
   if (req.query.queryName || req.query.queryValue){
     var names = req.query.queryName.split(",");
     var values = req.query.queryValue.split(",");
-    var query = {};
-    //parse query for player id
-    for(var i = 0; i < names.length; i++){
-      var query = {};
 
+    var parsedPlayerId = null;
+    var parsedPlayerSlug = null;
+    var parsedCharId = null;
+
+    for(var i = 0; i < names.length; i++){
       switch (names[i]){
         case 'PlayerId':
-          var playerQuery= [
-            {"Team1Players": { '$elemMatch': { 'Id':  ObjectId(values[i]) } }},
-            {"Team2Players": { '$elemMatch': { 'Id':  ObjectId(values[i]) } }}
-          ];  
-          queries.push({$or: playerQuery});
-        break
+          try { parsedPlayerId = ObjectId(values[i]); }
+          catch(e) { console.error('Invalid PlayerId:', values[i]); }
+          break;
 
         case 'PlayerSlug':
-          var playerQuery= [
-            {"Team1Player": { '$elemMatch': { 'Slug': values[i] } }},
-            {"Team2Player": { '$elemMatch': { 'Slug': values[i] } }}
-          ];  
-          queries.push({$or: playerQuery});
-        break
+          parsedPlayerSlug = values[i];
+          break;
 
         case 'GameId':
-          try {
-            queries.push({ 'GameId': ObjectId(values[i]) });
-          } catch(e) { console.error('Invalid GameId:', values[i]); }
-        break
+          try { queries.push({ 'GameId': ObjectId(values[i]) }); }
+          catch(e) { console.error('Invalid GameId:', values[i]); }
+          break;
 
         case 'CharacterId':
-          try {
-            var charId = ObjectId(values[i]);
-            var charQuery = [
-              { "Team1PlayerCharacters": { '$elemMatch': { '_id': charId } } },
-              { "Team2PlayerCharacters": { '$elemMatch': { '_id': charId } } }
-            ];
-            queries.push({$or: charQuery});
-          } catch(e) { console.error('Invalid CharacterId:', values[i]); }
-        break
+          try { parsedCharId = ObjectId(values[i]); }
+          catch(e) { console.error('Invalid CharacterId:', values[i]); }
+          break;
       }
+    }
+
+    // Build the player filter, combining with character if present so we only
+    // match matches where the specific player was playing the selected character
+    if (parsedPlayerId) {
+      if (parsedCharId) {
+        queries.push({ $or: [
+          { "Team1Players": { $elemMatch: { Id: parsedPlayerId, CharacterIds: parsedCharId } } },
+          { "Team2Players": { $elemMatch: { Id: parsedPlayerId, CharacterIds: parsedCharId } } }
+        ]});
+      } else {
+        queries.push({ $or: [
+          { "Team1Players": { $elemMatch: { Id: parsedPlayerId } } },
+          { "Team2Players": { $elemMatch: { Id: parsedPlayerId } } }
+        ]});
+      }
+    } else if (parsedPlayerSlug) {
+      if (parsedCharId) {
+        // Correlate slug (from lookup) with CharacterIds (from raw embedded doc)
+        var _charId = parsedCharId;
+        var _slug = parsedPlayerSlug;
+        queries.push({
+          $expr: {
+            $or: [
+              {
+                $gt: [{
+                  $size: {
+                    $filter: {
+                      input: "$Team1Players", as: "tp",
+                      cond: {
+                        $and: [
+                          { $in: [_charId, { $ifNull: ["$$tp.CharacterIds", []] }] },
+                          { $gt: [{ $size: { $filter: {
+                            input: "$Team1Player", as: "p",
+                            cond: { $and: [{ $eq: ["$$p._id", "$$tp.Id"] }, { $eq: ["$$p.Slug", _slug] }] }
+                          }}}, 0] }
+                        ]
+                      }
+                    }
+                  }
+                }, 0]
+              },
+              {
+                $gt: [{
+                  $size: {
+                    $filter: {
+                      input: "$Team2Players", as: "tp",
+                      cond: {
+                        $and: [
+                          { $in: [_charId, { $ifNull: ["$$tp.CharacterIds", []] }] },
+                          { $gt: [{ $size: { $filter: {
+                            input: "$Team2Player", as: "p",
+                            cond: { $and: [{ $eq: ["$$p._id", "$$tp.Id"] }, { $eq: ["$$p.Slug", _slug] }] }
+                          }}}, 0] }
+                        ]
+                      }
+                    }
+                  }
+                }, 0]
+              }
+            ]
+          }
+        });
+      } else {
+        queries.push({ $or: [
+          { "Team1Player": { $elemMatch: { Slug: parsedPlayerSlug } } },
+          { "Team2Player": { $elemMatch: { Slug: parsedPlayerSlug } } }
+        ]});
+      }
+    } else if (parsedCharId) {
+      // Character filter with no player context — match either side
+      queries.push({ $or: [
+        { "Team1PlayerCharacters": { $elemMatch: { '_id': parsedCharId } } },
+        { "Team2PlayerCharacters": { $elemMatch: { '_id': parsedCharId } } }
+      ]});
     }
   };
 

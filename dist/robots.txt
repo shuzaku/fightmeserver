@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+
+# Block admin and internal tools
+Disallow: /admin/
+Disallow: /channel-scrapper
+Disallow: /youtube-generator
+Disallow: /tournament-matches-import
+Disallow: /merge-players
+Disallow: /link-user-to-player
+Disallow: /device-auth
+Disallow: /reset-password
+Disallow: /test
+
+Sitemap: https://www.fighters-edge.com/sitemap.xml
