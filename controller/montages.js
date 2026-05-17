@@ -82,4 +82,33 @@ function getMontage(req, res) {
   })
 }
 
-module.exports = { addMontage, getMontage }
+// Query paginated list of montages
+function queryMontages(req, res) {
+  var skip = parseInt(req.query.skip) || 0;
+  var playerId = req.query.playerId || null;
+
+  var aggregate = [
+    { $lookup: { from: 'players', localField: 'Players', foreignField: '_id', as: 'Player' } },
+    { $lookup: { from: 'characters', localField: 'Characters', foreignField: '_id', as: 'Characters' } },
+    { $lookup: { from: 'games', localField: 'GameId', foreignField: '_id', as: 'Game' } },
+  ];
+
+  if (playerId) {
+    try {
+      aggregate.unshift({ $match: { Players: ObjectId(playerId) } });
+    } catch (e) {
+      return res.status(400).json({ error: 'Invalid playerId' });
+    }
+  }
+
+  aggregate.push({ $sort: { _id: -1 } });
+  aggregate.push({ $skip: skip });
+  aggregate.push({ $limit: 10 });
+
+  Montage.aggregate(aggregate, function (error, montages) {
+    if (error) { console.error(error); return res.status(500).json({ error: error.message }); }
+    res.json({ montages: montages });
+  });
+}
+
+module.exports = { addMontage, getMontage, queryMontages }

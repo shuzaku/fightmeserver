@@ -190,21 +190,26 @@ function getCharacterBySlug(slug) {
 // Update a character
 function updateCharacter(characterId, characterData) {
     return new Promise((resolve, reject) => {
-        Character.findById(characterId, 'Name GameId ImageUrl AvatarUrl FeaturedPlayers', function (error, character) {
-            if (error) {
-                reject(error);
-                return;
-            }
-            
-            character.Name = characterData.Name;
-            character.GameId = characterData.GameId;
-            character.ImageUrl = characterData.ImageUrl;
+        Character.findById(characterId, function (error, character) {
+            if (error) { reject(error); return; }
+            if (!character) { reject(new Error('Character not found')); return; }
+
+            if (characterData.Name        !== undefined) character.Name        = characterData.Name;
+            if (characterData.GameId      !== undefined) character.GameId      = characterData.GameId;
+            if (characterData.ImageUrl    !== undefined) character.ImageUrl    = characterData.ImageUrl;
+            if (characterData.AvatarUrl   !== undefined) character.AvatarUrl   = characterData.AvatarUrl;
+            if (characterData.Slug        !== undefined) character.Slug        = characterData.Slug;
+            if (characterData.Archetype   !== undefined) character.Archetype   = characterData.Archetype;
+            if (characterData.Gameplan    !== undefined) character.Gameplan    = characterData.Gameplan;
+            if (characterData.Strengths   !== undefined) character.Strengths   = characterData.Strengths;
+            if (characterData.Weakness    !== undefined) character.Weakness    = characterData.Weakness;
+            if (characterData.OverviewUrl !== undefined) character.OverviewUrl = characterData.OverviewUrl;
+            if (characterData.Wiki        !== undefined) character.Wiki        = characterData.Wiki;
+            if (characterData.releaseDate !== undefined) character.releaseDate = characterData.releaseDate;
+
             character.save(function (error) {
-                if (error) {
-                    reject(error);
-                } else {
-                    resolve({ success: true });
-                }
+                if (error) { reject(error); }
+                else { resolve({ success: true }); }
             });
         });
     });

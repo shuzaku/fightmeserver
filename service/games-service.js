@@ -168,7 +168,8 @@ function deleteGame(gameId) {
 function getGameStats(gameId) {
     return new Promise((resolve, reject) => {
         var Character = require("../models/characters");
-        var Video = require("../models/videos");
+        var Match = require("../models/matches");
+        var ComboClip = require("../models/combo-clips");
         var TournamentMatch = require("../models/tournament-matches");
         var Tournament = require("../models/tournaments");
 
@@ -187,25 +188,23 @@ function getGameStats(gameId) {
         Promise.all([
             // Count characters
             Character.countDocuments({ GameId: gameIdObj }),
-            // Match videos for this game (VideoType has varied historically; all Match docs count here)
-            Video.countDocuments({
-                GameId: gameIdObj,
-                ContentType: 'Match',
-            }),
+            // Count online matches
+            Match.countDocuments({ GameId: gameIdObj }),
             // Count tournament matches
             TournamentMatch.countDocuments({ GameId: gameIdObj }),
             // Count tournaments (where Games array contains the gameId)
             Tournament.countDocuments({ Games: gameIdObj }),
-            // Count combos (videos with ContentType 'Combo')
-            Video.countDocuments({ 
-                GameId: gameIdObj, 
-                ContentType: 'Combo'
-            })
+            // Count combo clips via their character's GameId
+            ComboClip.aggregate([
+                { $lookup: { from: 'characters', localField: 'CharacterId', foreignField: '_id', as: 'character' } },
+                { $match: { 'character.GameId': gameIdObj } },
+                { $count: 'total' }
+            ]).then(result => (result[0] ? result[0].total : 0)),
         ])
         .then(([characters, onlineMatches, tournamentMatches, tournaments, combos]) => {
             resolve({
                 characters: characters,
-                matches: onlineMatches + tournamentMatches, // Combined match count
+                matches: onlineMatches + tournamentMatches,
                 tournaments: tournaments,
                 combos: combos
             });

@@ -1,6 +1,7 @@
 var TournamentMatches = require("../models/tournament-matches");
 var ObjectId = require('mongodb').ObjectId;
 var matchesController = require('../controller/matches');
+var Player = require('../models/players');
 
 function toObjectId(val, fieldName) {
   if (val == null || (typeof val === 'string' && !val.trim())) {
@@ -102,6 +103,13 @@ function bulkInsertTournamentMatches(req, res) {
  * Supports optional query filters (PlayerId, GameId, etc).
  */
 function queryTournamentMatchesByTournamentId(req, res) {
+  _queryTournamentMatchesByTournamentId(req, res).catch(function (e) {
+    console.error('queryTournamentMatchesByTournamentId unhandled error:', e);
+    res.status(500).json({ error: e.message || 'Unexpected error' });
+  });
+}
+
+async function _queryTournamentMatchesByTournamentId(req, res) {
   var skip = parseInt(req.query.skip) || 0;
 
   // Base aggregation with lookups to enrich the match documents
@@ -125,7 +133,7 @@ function queryTournamentMatchesByTournamentId(req, res) {
     }
   }
 
-  // Optional extra filters (e.g., PlayerId, GameId, Id, or any other field)
+  // Optional extra filters (e.g., PlayerId, PlayerSlug, GameId, CharacterId)
   if (req.query.queryName && req.query.queryValue) {
     var names = req.query.queryName.split(',');
     var values = req.query.queryValue.split(',');
@@ -138,15 +146,33 @@ function queryTournamentMatchesByTournamentId(req, res) {
       var name = names[i];
       var val = values[i];
       if (name === 'PlayerId') {
-        try { parsedPlayerId = ObjectId(val); }
+        try { parsedPlayerId = new ObjectId(val); }
         catch(e) { console.error('Invalid PlayerId in tournament filter:', val); }
+      } else if (name === 'PlayerSlug') {
+        // Resolve slug → ObjectId so the rest of the pipeline can filter by ID
+        try {
+          var slugRegex = new RegExp('^' + val.replace(/-/g, '[- ]') + '$', 'i');
+          var foundPlayer = await Player.findOne({
+            $or: [
+              { Slug: slugRegex },
+              { Name: new RegExp('^' + val.replace(/-/g, ' ') + '$', 'i') }
+            ]
+          }).select('_id').lean();
+          if (foundPlayer) {
+            parsedPlayerId = foundPlayer._id;
+          } else {
+            console.warn('PlayerSlug not resolved for tournament filter:', val);
+          }
+        } catch(e) {
+          console.error('Error resolving PlayerSlug in tournament filter:', e);
+        }
       } else if (name === 'GameId') {
-        extra.push({ GameId: ObjectId(val) });
+        extra.push({ GameId: new ObjectId(val) });
       } else if (name === 'CharacterId') {
-        try { parsedCharId = ObjectId(val); }
+        try { parsedCharId = new ObjectId(val); }
         catch(e) { console.error('Invalid CharacterId in tournament filter:', val); }
       } else if (name === 'Id') {
-        extra.push({ _id: ObjectId(val) });
+        extra.push({ _id: new ObjectId(val) });
       } else {
         var obj = {};
         obj[name] = val;
@@ -193,14 +219,9 @@ function queryTournamentMatchesByTournamentId(req, res) {
   aggregate.push({ $skip: skip });
   aggregate.push({ $limit: 5 });
 
-  TournamentMatches.aggregate(aggregate, function (error, matches) {
-    if (error) {
-      console.error('Aggregation Error:', error);
-      return res.status(500).json({ error: error.message || 'Aggregation error' });
-    }
-    console.log('Found matches:', matches.length);
-    res.json({ matches: matches });
-  });
+  var matches = await TournamentMatches.aggregate(aggregate);
+  console.log('Found matches:', matches.length);
+  res.json({ matches: matches });
 }
 
 /**

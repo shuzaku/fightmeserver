@@ -14,7 +14,6 @@
 // helpers as the existing site-facing endpoints to stay in lockstep with
 // schema changes.
 
-var videoService = require('../service/videos-service');
 var Match = require('../models/matches');
 var Accounts = require('../models/accounts');
 var ObjectId = require('mongodb').ObjectId;
@@ -33,22 +32,10 @@ function safeObjectId(value) {
     }
 }
 
-// Pick the best "owning player" for AutoStream-created content. We prefer
-// the account's LinkedPlayerId (set by the user on the device-auth page);
-// if they haven't linked one, fall back to the account's _id so the row
-// still has a stable owner.
-function resolveContentCreatorId(account) {
-    if (account && account.LinkedPlayerId) {
-        return account.LinkedPlayerId;
-    }
-    return account ? account._id : null;
-}
-
 // POST /autostream/video
 // Body: { Url, GameId, VideoType?, StartTime?, Tags? }
-//   - ContentType is forced to 'Match' (this endpoint is match-clip specific)
-//   - ContentCreatorId is forced to the authenticated account's linked player
-//   - Dedupe-by-Url is enforced by videos-service.addVideo (returns existingVideoId)
+// Previously created a Video document; now just validates and echoes the URL back
+// so the desktop client can continue to the match-create step unchanged.
 async function createVideo(req, res) {
     try {
         const Url = req.body && req.body.Url;
@@ -61,29 +48,11 @@ async function createVideo(req, res) {
             });
         }
 
-        const videoData = {
-            Url: Url,
-            ContentType: 'Match',
-            VideoType: req.body.VideoType || null,
-            StartTime: req.body.StartTime || null,
-            GameId: GameId,
-            Tags: Array.isArray(req.body.Tags) ? req.body.Tags : [],
-            ContentCreatorId: resolveContentCreatorId(req.account),
-        };
-
-        const result = await videoService.addVideo(videoData, false);
-        return res.send(result);
+        return res.send({
+            success: true,
+            url: Url,
+        });
     } catch (error) {
-        if (error && error.success === false && /already exists/i.test(error.message || '')) {
-            // Dedupe path — return 200 + existingVideoId so the desktop client can
-            // continue to the match-create step without re-uploading.
-            return res.status(200).send({
-                success: true,
-                deduped: true,
-                message: error.message,
-                existingVideoId: error.existingVideoId,
-            });
-        }
         console.error('[autostream] createVideo failed:', error);
         return res.status(500).send({
             success: false,

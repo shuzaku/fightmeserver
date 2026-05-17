@@ -3,18 +3,20 @@ var Schema = mongoose.Schema;
 const ObjectId = Schema.Types.ObjectId;
 
 var ComboClipSchema = new Schema({
-  ComboId: {
+  CharacterId: {
     type: ObjectId
   },
-  StartTime: {
-    type: String,
+  Inputs: {
+    type: Array
   },
-  EndTime: {
-    type: String,
+  Hits: {
+    type: Number
   },
-  VideoId: {
-    type: ObjectId,
-    ref: 'Videos'
+  Damage: {
+    type: Number
+  },
+  Tags: {
+    type: Array
   },
   Url: {
     type: String,
@@ -22,8 +24,11 @@ var ComboClipSchema = new Schema({
   VideoType: {
     type: String,
   },
-  Tags: {
-    type: Array
+  StartTime: {
+    type: String,
+  },
+  EndTime: {
+    type: String,
   },
   SubmittedBy: {
     type: ObjectId

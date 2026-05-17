@@ -1,11 +1,9 @@
 var VideoValidate = require("../models/video-validate");
-var Video = require("../models/videos");
 var Match = require("../models/matches");
 var Game = require("../models/games");
 var Player = require("../models/players");
 var Character = require("../models/characters");
 var Account = require("../models/accounts");
-var Combo = require("../models/combos");
 var ComboClip = require("../models/combo-clips");
 var ObjectId = require('mongodb').ObjectId;
 
@@ -279,150 +277,83 @@ function getVideoValidate() {
 
 function approveVideoValidate(videoValidateId, status) {
     return new Promise((resolve, reject) => {
-        // First, fetch the video validation record
         VideoValidate.findById(videoValidateId).then(function (videoValidate) {
             if (!videoValidate) {
                 reject(new Error('Video validation record not found'));
                 return;
             }
 
-            // Create video record
-            var newVideo = new Video({
-                Url: videoValidate.Url,
-                GameId: videoValidate.GameId,
-                ContentType: videoValidate.ContentType,
-                ContentCreatorId: videoValidate.ContentCreatorId,
-                VideoType: videoValidate.VideoType,
-                StartTime: videoValidate.StartTime,
-                EndTime: videoValidate.EndTime,
-                Tags: videoValidate.Tags,
-                SubmittedBy: videoValidate.SubmittedBy,
-                UpdatedBy: videoValidate.UpdatedBy
-            });
-
-            // Only create match record for Match content type
-            var newMatch = null;
-            if (videoValidate.ContentType === 'Match') {
-                newMatch = new Match({
-                    Team1Players: videoValidate.Team1Players,
-                    Team2Players: videoValidate.Team2Players,
-                    VideoUrl: videoValidate.VideoUrl,
-                    GameId: videoValidate.GameId,
-                    Tags: videoValidate.Tags,
-                    SubmittedBy: videoValidate.SubmittedBy,
-                    UpdatedBy: videoValidate.UpdatedBy,
-                    StartTime: videoValidate.StartTime,
-                    EndTime: videoValidate.EndTime
-                });
-            }
-
-            // Save video record
-            newVideo.save(function (videoError) {
-                if (videoError) {
-                    reject(videoError);
+            // For Combo content type, create a merged ComboClip and skip Video creation
+            if (videoValidate.ContentType === 'Combo') {
+                if (!videoValidate.Combos || videoValidate.Combos.length === 0) {
+                    VideoValidate.findByIdAndDelete(videoValidateId).then(function () {
+                        resolve({ success: true, message: 'Combo video approved (no combos to create).' });
+                    }).catch(reject);
                     return;
                 }
 
-                // Only save match record if it's a Match content type
-                if (newMatch) {
-                    newMatch.save(function (matchError) {
-                        if (matchError) {
-                            reject(matchError);
-                            return;
-                        }
+                const comboPromises = videoValidate.Combos.map(function (comboData) {
+                    return new Promise(function (resolveCombo, rejectCombo) {
+                        var newComboClip = new ComboClip({
+                            CharacterId: comboData.CharacterId && comboData.CharacterId.length > 0
+                                ? comboData.CharacterId[0]
+                                : null,
+                            Inputs: comboData.Inputs ? [comboData.Inputs] : [],
+                            Hits: comboData.Hits ? parseInt(comboData.Hits) : 0,
+                            Damage: comboData.Damage ? parseInt(comboData.Damage) : 0,
+                            Tags: videoValidate.Tags || [],
+                            Url: videoValidate.Url,
+                            VideoType: videoValidate.VideoType,
+                            StartTime: comboData.StartTime || videoValidate.StartTime,
+                            EndTime: comboData.EndTime || videoValidate.EndTime,
+                            SubmittedBy: videoValidate.SubmittedBy,
+                            UpdatedBy: videoValidate.UpdatedBy
+                        });
 
-                        // Delete video validation record after successful creation
-                        VideoValidate.findByIdAndDelete(videoValidateId).then(function (deletedVideoValidate) {
-                            resolve({
-                                success: true,
-                                message: 'Video approved and records created successfully!',
-                                videoId: newVideo._id,
-                                matchId: newMatch._id
-                            });
-                        }).catch(function (deleteError) {
-                            reject(deleteError);
+                        newComboClip.save(function (err) {
+                            if (err) { rejectCombo(err); }
+                            else { resolveCombo(newComboClip._id); }
                         });
                     });
-                } else {
-                    // For combo videos, create combo records and combo-clips records
-                    if (videoValidate.Combos && videoValidate.Combos.length > 0) {
-                        const comboPromises = videoValidate.Combos.map(comboData => {
-                            return new Promise((resolveCombo, rejectCombo) => {
-                                // Create a new combo record
-                                const newCombo = new Combo({
-                                    CharacterId: comboData.CharacterId && comboData.CharacterId.length > 0 ? comboData.CharacterId[0] : null,
-                                    Inputs: comboData.Inputs ? [comboData.Inputs] : [],
-                                    Hits: comboData.Hits ? parseInt(comboData.Hits) : 0,
-                                    Damage: comboData.Damage ? parseInt(comboData.Damage) : 0,
-                                    Tags: videoValidate.Tags || [],
-                                    SubmittedBy: videoValidate.SubmittedBy,
-                                    UpdatedBy: videoValidate.UpdatedBy
-                                });
+                });
 
-                                newCombo.save(function (comboError) {
-                                    if (comboError) {
-                                        rejectCombo(comboError);
-                                        return;
-                                    }
-
-                                    // Create combo-clip record linking the video to the combo
-                                    const newComboClip = new ComboClip({
-                                        ComboId: newCombo._id,
-                                        StartTime: comboData.StartTime || videoValidate.StartTime,
-                                        EndTime: comboData.EndTime || videoValidate.EndTime,
-                                        VideoId: newVideo._id, // Use VideoId instead of Url
-                                        Tags: videoValidate.Tags || [],
-                                        SubmittedBy: videoValidate.SubmittedBy,
-                                        UpdatedBy: videoValidate.UpdatedBy
-                                    });
-
-                                    newComboClip.save(function (comboClipError) {
-                                        if (comboClipError) {
-                                            rejectCombo(comboClipError);
-                                        } else {
-                                            resolveCombo({
-                                                comboId: newCombo._id,
-                                                comboClipId: newComboClip._id
-                                            });
-                                        }
-                                    });
-                                });
-                            });
+                Promise.all(comboPromises).then(function (comboClipIds) {
+                    VideoValidate.findByIdAndDelete(videoValidateId).then(function () {
+                        resolve({
+                            success: true,
+                            message: 'Combo video approved and combo-clip records created successfully!',
+                            comboClipIds: comboClipIds
                         });
+                    }).catch(reject);
+                }).catch(reject);
+                return;
+            }
 
-                        Promise.all(comboPromises).then(function (comboResults) {
-                            // Delete video validation record after successful creation
-                            VideoValidate.findByIdAndDelete(videoValidateId).then(function (deletedVideoValidate) {
-                                resolve({
-                                    success: true,
-                                    message: 'Combo video approved and combo records created successfully!',
-                                    videoId: newVideo._id,
-                                    comboIds: comboResults.map(r => r.comboId),
-                                    comboClipIds: comboResults.map(r => r.comboClipId)
-                                });
-                            }).catch(function (deleteError) {
-                                reject(deleteError);
-                            });
-                        }).catch(function (comboError) {
-                            reject(comboError);
-                        });
-                    } else {
-                        // No combos to create, just delete validation record
-                        VideoValidate.findByIdAndDelete(videoValidateId).then(function (deletedVideoValidate) {
-                            resolve({
-                                success: true,
-                                message: 'Combo video approved and record created successfully!',
-                                videoId: newVideo._id
-                            });
-                        }).catch(function (deleteError) {
-                            reject(deleteError);
-                        });
-                    }
-                }
+            // For Match content type: create a Match record directly (no Video wrapper needed)
+            var newMatch = new Match({
+                Team1Players: videoValidate.Team1Players,
+                Team2Players: videoValidate.Team2Players,
+                VideoUrl: videoValidate.VideoUrl,
+                GameId: videoValidate.GameId,
+                Tags: videoValidate.Tags,
+                SubmittedBy: videoValidate.SubmittedBy,
+                UpdatedBy: videoValidate.UpdatedBy,
+                StartTime: videoValidate.StartTime,
+                EndTime: videoValidate.EndTime
             });
-        }).catch(function (error) {
-            reject(error);
-        });
+
+            newMatch.save(function (matchError) {
+                if (matchError) { reject(matchError); return; }
+
+                VideoValidate.findByIdAndDelete(videoValidateId).then(function () {
+                    resolve({
+                        success: true,
+                        message: 'Video approved and records created successfully!',
+                        matchId: newMatch._id
+                    });
+                }).catch(reject);
+            });
+        }).catch(reject);
     });
 }
 

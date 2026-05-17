@@ -1,5 +1,22 @@
 var Match = require("../models/matches");
+var Character = require("../models/characters");
 var ObjectId = require('mongodb').ObjectId;
+
+function safeObjectId(value) {
+  try { return new ObjectId(String(value)); } catch (e) { return null; }
+}
+
+// Resolve a character param that may be a Mongo ObjectId string OR a slug.
+// Returns a Mongo ObjectId or null.
+async function resolveCharacterId(value) {
+  if (!value) return null;
+  const id = safeObjectId(value);
+  if (id) return id;
+  // Not an ObjectId — try slug lookup (case-insensitive)
+  const found = await Character.findOne({ Slug: new RegExp('^' + value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i') }).lean();
+  return found ? found._id : null;
+}
+
 
 // Add new matches(s)
 function addMatches(req, res) {
@@ -570,15 +587,21 @@ function queryByGame(req, res) {
 }
 
 // Query Videos
-function getMatchupVideos(req, res) {
+async function getMatchupVideos(req, res) {
   var queries = [];
 
-  var skip =  parseInt(req.query.skip);
+  var skip = parseInt(req.query.skip) || 0;
+
+  const character1 = await resolveCharacterId(req.query.character1);
+  const character2 = await resolveCharacterId(req.query.character2);
+
+  if (!character1 || !character2) {
+    return res.status(400).send({ error: 'Invalid or unresolvable character identifiers' });
+  }
+
   var aggregate = [
     {
-      '$sort': 
-        {'_id': -1}
-      
+      '$sort': {'_id': -1}
     },{
       '$lookup': {
         'from': 'characters', 
@@ -595,8 +618,6 @@ function getMatchupVideos(req, res) {
       }
     }
   ];
-  var character1 = ObjectId(req.query.character1);
-  var character2 = ObjectId(req.query.character2);
   queries.push({
       $and: [
         {"Team1PlayerCharacters": { '$elemMatch': { '_id':  character1 } }},
@@ -617,7 +638,7 @@ function getMatchupVideos(req, res) {
   aggregate.push({$limit: 5});  
   
   Match.aggregate(aggregate, function (error, matches) {
-    if (error) { console.error(error); }
+    if (error) { console.error(error); return res.status(500).send({ error: 'Query failed' }); }
     res.send({
       matches: matches
     })

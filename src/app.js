@@ -51,7 +51,78 @@ app.use(cors({
   maxAge: 86400, // preflight cache: 24 h
 }));
 
-// ── Prerender middleware (must come before API routes and static serving) ──
+// ── Content Security Policy ───────────────────────────────────────────────
+// Allows every external resource the SPA intentionally loads.
+// Kept as a single middleware so it is easy to audit and extend.
+const CSP_DIRECTIVES = [
+  // Scripts: app bundle + all third-party embeds / SDKs
+  [
+    "script-src",
+    "'self'",
+    "'unsafe-inline'",  // Vue runtime inline handlers & webpack chunks
+    "https://www.youtube.com",
+    "https://s.ytimg.com",
+    "https://pagead2.googlesyndication.com",
+    "https://tpc.googlesyndication.com",
+    "https://platform.twitter.com",
+    "https://player.twitch.tv",
+    "https://cdn.jsdelivr.net",
+    "https://cdnjs.cloudflare.com",
+  ],
+  // Styles: inline Vue scoped styles + CDN fonts/icons
+  [
+    "style-src",
+    "'self'",
+    "'unsafe-inline'",
+    "https://fonts.googleapis.com",
+    "https://cdn.jsdelivr.net",
+    "https://cdnjs.cloudflare.com",
+  ],
+  // Fonts
+  [
+    "font-src",
+    "'self'",
+    "data:",
+    "https://fonts.gstatic.com",
+    "https://cdn.jsdelivr.net",
+    "https://cdnjs.cloudflare.com",
+  ],
+  // Images: user avatars, game logos, og-images, data URIs, blobs
+  ["img-src", "'self'", "data:", "blob:", "https:"],
+  // Iframes: YouTube player, Twitch embed
+  [
+    "frame-src",
+    "https://www.youtube.com",
+    "https://www.twitch.tv",
+    "https://player.twitch.tv",
+    "https://syndication.twitter.com",
+    "https://tpc.googlesyndication.com",
+  ],
+  // Fetch / XHR: API calls back to own server
+  [
+    "connect-src",
+    "'self'",
+    "https://fighters-edge.com",
+    "https://www.fighters-edge.com",
+    "https://www.googleapis.com",
+    "https://securetoken.googleapis.com",  // Firebase Auth token refresh
+  ],
+  // Audio / video: uploaded clips served from own origin
+  ["media-src", "'self'", "blob:", "https:"],
+  // Workers / blobs used by some video libraries
+  ["worker-src", "'self'", "blob:"],
+  // Everything else defaults to self
+  ["default-src", "'self'"],
+];
+
+const cspValue = CSP_DIRECTIVES.map((parts) => parts.join(' ')).join('; ');
+
+app.use((_req, res, next) => {
+  res.setHeader('Content-Security-Policy', cspValue);
+  next();
+});
+
+
 // Intercepts social media bot requests and serves OG-enriched HTML.
 app.use(prerenderMiddleware);
 
