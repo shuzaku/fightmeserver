@@ -33,6 +33,7 @@ const matchNoteRoutes = require('./match-notes');
 const deviceAuthRoutes = require('./device-auth');
 const autostreamRoutes = require('./autostream');
 const ogRoutes = require('./og');
+const twitterVideoRoutes = require('./twitter-video');
 
 // Use route modules
 router.use('/', characterRoutes);
@@ -65,5 +66,6 @@ router.use('/', matchNoteRoutes);
 router.use('/', deviceAuthRoutes);
 router.use('/', autostreamRoutes);
 router.use('/', ogRoutes);
+router.use('/', twitterVideoRoutes);
 
 module.exports = router;

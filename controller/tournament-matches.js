@@ -2,6 +2,7 @@ var TournamentMatches = require("../models/tournament-matches");
 var ObjectId = require('mongodb').ObjectId;
 var matchesController = require('../controller/matches');
 var Player = require('../models/players');
+var Character = require('../models/characters');
 
 function toObjectId(val, fieldName) {
   if (val == null || (typeof val === 'string' && !val.trim())) {
@@ -170,7 +171,21 @@ async function _queryTournamentMatchesByTournamentId(req, res) {
         extra.push({ GameId: new ObjectId(val) });
       } else if (name === 'CharacterId') {
         try { parsedCharId = new ObjectId(val); }
-        catch(e) { console.error('Invalid CharacterId in tournament filter:', val); }
+        catch(e) {
+          // Not a valid ObjectId — try resolving as a character slug
+          try {
+            var foundChar = await Character.findOne({
+              Slug: new RegExp('^' + val.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i')
+            }).select('_id').lean();
+            if (foundChar) {
+              parsedCharId = foundChar._id;
+            } else {
+              console.warn('CharacterId slug not resolved for tournament filter:', val);
+            }
+          } catch(slugErr) {
+            console.error('Error resolving CharacterId slug in tournament filter:', slugErr);
+          }
+        }
       } else if (name === 'Id') {
         extra.push({ _id: new ObjectId(val) });
       } else {
