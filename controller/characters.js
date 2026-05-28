@@ -7,7 +7,15 @@ function addCharacter(req, res) {
         Name: req.body.Name,
         GameId: req.body.GameId,
         ImageUrl: req.body.ImageUrl,
-        AvatarUrl: req.body.AvatarUrl
+        AvatarUrl: req.body.AvatarUrl,
+        Slug: req.body.Slug,
+        Archetype: req.body.Archetype,
+        Gameplan: req.body.Gameplan,
+        Strengths: req.body.Strengths,
+        Weakness: req.body.Weakness,
+        OverviewUrl: req.body.OverviewUrl,
+        Wiki: req.body.Wiki,
+        releaseDate: req.body.releaseDate,
     };
 
     characterService.addCharacter(characterData, isBulk)

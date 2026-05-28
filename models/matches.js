@@ -61,6 +61,14 @@ var MatchessSchema = new Schema({
   // by the FightersEdge AutoStream desktop app. Optional; legacy matches have no SetId.
   SetId: {
     type: ObjectId
+  },
+  // How this match entered the database.
+  // 'user-submitted' matches are excluded from all public game/character feeds
+  // so they don't pollute curated content.
+  Origin: {
+    type: String,
+    trim: true,
+    index: true,
   }
 }, {
   timestamps: true, 

@@ -68,6 +68,9 @@ const CSP_DIRECTIVES = [
     "https://player.twitch.tv",
     "https://cdn.jsdelivr.net",
     "https://cdnjs.cloudflare.com",
+    "https://www.googletagmanager.com",      // GTM / vue-gtag
+    "https://www.google-analytics.com",
+    "https://static.cloudflareinsights.com", // Cloudflare RUM beacon
   ],
   // Styles: inline Vue scoped styles + CDN fonts/icons
   [
@@ -89,23 +92,31 @@ const CSP_DIRECTIVES = [
   ],
   // Images: user avatars, game logos, og-images, data URIs, blobs
   ["img-src", "'self'", "data:", "blob:", "https:"],
-  // Iframes: YouTube player, Twitch embed
+  // Iframes: YouTube player, Twitch embed, Twitter embeds
   [
     "frame-src",
     "https://www.youtube.com",
     "https://www.twitch.tv",
     "https://player.twitch.tv",
+    "https://platform.twitter.com",          // tweet embed widget
     "https://syndication.twitter.com",
     "https://tpc.googlesyndication.com",
   ],
-  // Fetch / XHR: API calls back to own server
+  // Fetch / XHR: API calls back to own server + analytics + CDN sourcemaps
   [
     "connect-src",
     "'self'",
     "https://fighters-edge.com",
     "https://www.fighters-edge.com",
     "https://www.googleapis.com",
-    "https://securetoken.googleapis.com",  // Firebase Auth token refresh
+    "https://securetoken.googleapis.com",     // Firebase Auth token refresh
+    "https://www.google-analytics.com",
+    "https://analytics.google.com",
+    "https://stats.g.doubleclick.net",
+    "https://cdn.jsdelivr.net",               // .map source maps fetched at runtime
+    "https://cdnjs.cloudflare.com",
+    "https://cloudflareinsights.com",
+    "https://static.cloudflareinsights.com",
   ],
   // Audio / video: uploaded clips served from own origin
   ["media-src", "'self'", "blob:", "https:"],
@@ -117,8 +128,22 @@ const CSP_DIRECTIVES = [
 
 const cspValue = CSP_DIRECTIVES.map((parts) => parts.join(' ')).join('; ');
 
+// Permissions-Policy: allow autoplay/fullscreen/PiP for any origin so the
+// embedded Twitch and YouTube players can autoplay muted media without
+// being blocked by the browser's default `self`-only policy.
+//
+// We use `*` (all origins) instead of an explicit origin allowlist because
+// Chrome's structured-header parser is picky about quoted origins and a
+// malformed value silently downgrades to `self`, breaking iframe autoplay.
+const permissionsPolicy = [
+  'autoplay=*',
+  'fullscreen=*',
+  'picture-in-picture=*',
+].join(', ');
+
 app.use((_req, res, next) => {
   res.setHeader('Content-Security-Policy', cspValue);
+  res.setHeader('Permissions-Policy', permissionsPolicy);
   next();
 });
 

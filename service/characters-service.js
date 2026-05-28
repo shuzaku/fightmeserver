@@ -9,9 +9,18 @@ function addCharacter(characterData, isBulk = false) {
             var new_character = new Character({
                 Name: characterData.Name,
                 GameId: characterData.GameId,
-                ImageUrl: characterData.ImageUrl,
-                AvatarUrl: characterData.AvatarUrl
             });
+
+            if (characterData.ImageUrl    !== undefined) new_character.ImageUrl    = characterData.ImageUrl;
+            if (characterData.AvatarUrl   !== undefined) new_character.AvatarUrl   = characterData.AvatarUrl;
+            if (characterData.Slug        !== undefined) new_character.Slug        = characterData.Slug;
+            if (characterData.Archetype   !== undefined) new_character.Archetype   = characterData.Archetype;
+            if (characterData.Gameplan    !== undefined) new_character.Gameplan    = characterData.Gameplan;
+            if (characterData.Strengths   !== undefined) new_character.Strengths   = characterData.Strengths;
+            if (characterData.Weakness    !== undefined) new_character.Weakness    = characterData.Weakness;
+            if (characterData.OverviewUrl !== undefined) new_character.OverviewUrl = characterData.OverviewUrl;
+            if (characterData.Wiki        !== undefined) new_character.Wiki        = characterData.Wiki;
+            if (characterData.releaseDate !== undefined) new_character.releaseDate = characterData.releaseDate;
 
             new_character.save(function (error) {
                 if (error) {
@@ -140,6 +149,34 @@ function getCharacter(characterId) {
     });
 }
 
+// When multiple characters share a name (e.g. Tekken 7 vs 8 Kunimitsu),
+// prefer an exact Slug match before legacy name-suffix fallbacks.
+function pickCharactersForSlug(characters, slug) {
+    if (!characters || !characters.length) {
+        return characters;
+    }
+    var key = String(slug).trim().toLowerCase();
+    var byExactSlug = characters.filter(function (c) {
+        return c.Slug && String(c.Slug).trim().toLowerCase() === key;
+    });
+    if (byExactSlug.length > 0) {
+        return byExactSlug;
+    }
+
+    var underscoreIdx = key.indexOf('_');
+    if (underscoreIdx !== -1 && underscoreIdx < key.length - 1) {
+        var prefix = key.slice(0, underscoreIdx + 1);
+        var bySlugPrefix = characters.filter(function (c) {
+            return c.Slug && String(c.Slug).trim().toLowerCase().indexOf(prefix) === 0;
+        });
+        if (bySlugPrefix.length > 0) {
+            return bySlugPrefix;
+        }
+    }
+
+    return characters;
+}
+
 // Fetch single character by slug or name
 function getCharacterBySlug(slug) {
     return new Promise((resolve, reject) => {
@@ -181,7 +218,7 @@ function getCharacterBySlug(slug) {
             if (error) {
                 reject(error);
             } else {
-                resolve({ characters: characters });
+                resolve({ characters: pickCharactersForSlug(characters, slug) });
             }
         });
     });

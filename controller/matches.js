@@ -6,6 +6,11 @@ function safeObjectId(value) {
   try { return new ObjectId(String(value)); } catch (e) { return null; }
 }
 
+// Shared filter that strips user-submitted matches from all public feeds.
+// Documents where Origin is absent (legacy) are NOT excluded — only the
+// explicit 'user-submitted' value is filtered out.
+const EXCLUDE_USER_SUBMITTED = { Origin: { $ne: 'user-submitted' } };
+
 // Resolve a character param that may be a Mongo ObjectId string OR a slug.
 // Returns a Mongo ObjectId or null.
 async function resolveCharacterId(value) {
@@ -330,7 +335,8 @@ function patchMatches(req, res) {
 function queryByCharacter(req, res) {
   var queries = [];
   var skip =  parseInt(req.query.skip);
-  var aggregate = [ 
+  var aggregate = [
+    { $match: EXCLUDE_USER_SUBMITTED },
     {
       '$lookup': {
         'from': 'characters', 
@@ -394,7 +400,7 @@ function queryByCharacter(req, res) {
   })
 }
 
-// Query by character
+// Query by player
 function queryByPlayer(req, res) {
   var queries = [];
   var skip =  parseInt(req.query.skip);
@@ -560,7 +566,8 @@ function queryByPlayer(req, res) {
 function queryByGame(req, res) {
   var queries = [];
   var skip =  parseInt(req.query.skip);
-  var aggregate = [     
+  var aggregate = [
+  { $match: EXCLUDE_USER_SUBMITTED },
   {
     '$lookup': {
       'from': 'games', 
@@ -600,6 +607,7 @@ async function getMatchupVideos(req, res) {
   }
 
   var aggregate = [
+    { $match: EXCLUDE_USER_SUBMITTED },
     {
       '$sort': {'_id': -1}
     },{
@@ -651,6 +659,7 @@ function getSlugMatchupVideos(req, res) {
 
   var skip =  parseInt(req.query.skip);
   var aggregate = [
+    { $match: EXCLUDE_USER_SUBMITTED },
     {
       '$sort': 
         {'_id': -1}
@@ -706,7 +715,7 @@ function queryMatchesFeed(req, res) {
   var limit = parseInt(req.query.limit) || 5;
   if (limit > 20) limit = 20;
 
-  var query = {};
+  var query = { Origin: { $ne: 'user-submitted' } };
 
   if (req.query.gameId) {
     try { query.GameId = ObjectId(req.query.gameId); } catch (e) {}
@@ -757,6 +766,8 @@ function queryByTeam(req, res) {
   }
 
   const pipeline = [];
+
+  pipeline.push({ $match: EXCLUDE_USER_SUBMITTED });
 
   // Filter by game first (uses GameId index)
   try {
