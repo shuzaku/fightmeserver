@@ -1,5 +1,6 @@
 var Match = require("../models/matches");
 var Character = require("../models/characters");
+var creatorResolve = require("../service/creator-resolve-service");
 var ObjectId = require('mongodb').ObjectId;
 
 function safeObjectId(value) {
@@ -24,7 +25,7 @@ async function resolveCharacterId(value) {
 
 
 // Add new matches(s)
-function addMatches(req, res) {
+async function addMatches(req, res) {
     if(!req.query.bulk){
       var Team1Players = req.body.Team1Players;
       var Team2Players = req.body.Team2Players
@@ -37,6 +38,19 @@ function addMatches(req, res) {
       var TournamentMatchType = ObjectId(req.body.TournamentMatchType)
       var StartTime = req.body.StartTime;
       var EndTime = req.body.EndTime;
+
+      if (!req.body.ContentCreatorId) {
+        try {
+          await creatorResolve.findOrCreateFromVideo({
+            videoType: req.body.VideoType || 'youtube',
+            url: VideoUrl,
+            importVideoUrl: req.body.ImportVideoUrl,
+          });
+        } catch (creatorErr) {
+          console.error('creator resolve on addMatches:', creatorErr.message);
+        }
+      }
+
       var new_match = new Match({
         Team1Players: Team1Players.map(player => {
           return {

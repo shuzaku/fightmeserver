@@ -33,13 +33,17 @@ const ALLOWED_ORIGINS = [
   'https://fighters-edge.com',
   'https://www.fighters-edge.com',
   'http://localhost:8080',
+  'http://localhost:8081',
   'http://localhost:3000',
 ];
 
 app.use(cors({
   origin(origin, callback) {
     // Allow requests with no origin (curl, Postman, same-origin server calls)
-    if (!origin || ALLOWED_ORIGINS.includes(origin)) {
+    const isLocalDev =
+      origin &&
+      /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin);
+    if (!origin || ALLOWED_ORIGINS.includes(origin) || isLocalDev) {
       callback(null, true);
     } else {
       callback(new Error(`CORS: origin ${origin} not allowed`));
@@ -54,12 +58,21 @@ app.use(cors({
 // ── Content Security Policy ───────────────────────────────────────────────
 // Allows every external resource the SPA intentionally loads.
 // Kept as a single middleware so it is easy to audit and extend.
+//
+// `http://localhost` and `http://localhost:*` are included on every
+// directive that pulls a resource from this server so dev — where the
+// Vue CLI dev server runs on :8080 and the Node API on :80 — works
+// without HTTPS. They have no effect in production since fighters-edge.com
+// can't reach a visitor's localhost.
+const LOCAL_DEV = ["http://localhost", "http://localhost:*"];
+
 const CSP_DIRECTIVES = [
   // Scripts: app bundle + all third-party embeds / SDKs
   [
     "script-src",
     "'self'",
     "'unsafe-inline'",  // Vue runtime inline handlers & webpack chunks
+    ...LOCAL_DEV,
     "https://www.youtube.com",
     "https://s.ytimg.com",
     "https://pagead2.googlesyndication.com",
@@ -77,6 +90,7 @@ const CSP_DIRECTIVES = [
     "style-src",
     "'self'",
     "'unsafe-inline'",
+    ...LOCAL_DEV,
     "https://fonts.googleapis.com",
     "https://cdn.jsdelivr.net",
     "https://cdnjs.cloudflare.com",
@@ -86,15 +100,17 @@ const CSP_DIRECTIVES = [
     "font-src",
     "'self'",
     "data:",
+    ...LOCAL_DEV,
     "https://fonts.gstatic.com",
     "https://cdn.jsdelivr.net",
     "https://cdnjs.cloudflare.com",
   ],
   // Images: user avatars, game logos, og-images, data URIs, blobs
-  ["img-src", "'self'", "data:", "blob:", "https:"],
+  ["img-src", "'self'", "data:", "blob:", "http:", "https:"],
   // Iframes: YouTube player, Twitch embed, Twitter embeds
   [
     "frame-src",
+    ...LOCAL_DEV,
     "https://www.youtube.com",
     "https://www.twitch.tv",
     "https://player.twitch.tv",
@@ -106,6 +122,7 @@ const CSP_DIRECTIVES = [
   [
     "connect-src",
     "'self'",
+    ...LOCAL_DEV,
     "https://fighters-edge.com",
     "https://www.fighters-edge.com",
     "https://www.googleapis.com",
@@ -119,7 +136,8 @@ const CSP_DIRECTIVES = [
     "https://static.cloudflareinsights.com",
   ],
   // Audio / video: uploaded clips served from own origin
-  ["media-src", "'self'", "blob:", "https:"],
+  // (e.g. /api/twitter-video-stream proxies tweet video bytes through Node)
+  ["media-src", "'self'", "blob:", "https:", ...LOCAL_DEV],
   // Workers / blobs used by some video libraries
   ["worker-src", "'self'", "blob:"],
   // Everything else defaults to self

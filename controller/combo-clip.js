@@ -1,5 +1,6 @@
 var ComboClip = require("../models/combo-clips");
 var Character = require("../models/characters");
+var creatorResolve = require("../service/creator-resolve-service");
 var ObjectId = require('mongodb').ObjectId;
 
 var OBJECT_ID_RE = /^[0-9a-fA-F]{24}$/;
@@ -11,11 +12,24 @@ function safeObjectId(val) {
   return null;
 }
 
-function addComboClip(req, res) {
+async function addComboClip(req, res) {
   var data = req.body;
   var tags = Array.isArray(data.Tags)
     ? data.Tags.map((t) => { try { return ObjectId(t); } catch(e) { return t; } })
     : [];
+
+  // Upsert content creator from the video's channel / Twitter profile URL.
+  if (!data.ContentCreatorId) {
+    try {
+      await creatorResolve.findOrCreateFromVideo({
+        videoType: data.VideoType,
+        url: data.Url,
+        importVideoUrl: data.ImportVideoUrl,
+      });
+    } catch (creatorErr) {
+      console.error('creator resolve on addComboClip:', creatorErr.message);
+    }
+  }
 
   var newClip = new ComboClip({
     CharacterId: data.CharacterId,

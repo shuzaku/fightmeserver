@@ -1,5 +1,20 @@
 var Montage = require("../models/montages");
+var Character = require("../models/characters");
 var ObjectId = require('mongodb').ObjectId;
+
+function safeObjectId(value) {
+  try { return new ObjectId(String(value)); } catch (e) { return null; }
+}
+
+async function resolveCharacterId(value) {
+  if (!value) return null;
+  const id = safeObjectId(value);
+  if (id) return id;
+  const found = await Character.findOne({
+    Slug: new RegExp('^' + String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i'),
+  }).lean();
+  return found ? found._id : null;
+}
 
 // Add new Montage
 function addMontage(req, res) {
@@ -83,9 +98,10 @@ function getMontage(req, res) {
 }
 
 // Query paginated list of montages
-function queryMontages(req, res) {
+async function queryMontages(req, res) {
   var skip = parseInt(req.query.skip) || 0;
   var playerId = req.query.playerId || null;
+  var characterId = req.query.characterId || null;
 
   var aggregate = [
     { $lookup: { from: 'players', localField: 'Players', foreignField: '_id', as: 'Player' } },
@@ -99,6 +115,14 @@ function queryMontages(req, res) {
     } catch (e) {
       return res.status(400).json({ error: 'Invalid playerId' });
     }
+  }
+
+  if (characterId) {
+    const resolvedCharacterId = await resolveCharacterId(characterId);
+    if (!resolvedCharacterId) {
+      return res.status(400).json({ error: 'Invalid characterId' });
+    }
+    aggregate.unshift({ $match: { Characters: resolvedCharacterId } });
   }
 
   aggregate.push({ $sort: { _id: -1 } });

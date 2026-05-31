@@ -6,6 +6,7 @@ function addCreator(creatorData) {
     return new Promise((resolve, reject) => {
         var new_creator = new Creator({
             Name: creatorData.Name,
+            Url: creatorData.Url,
             LogoUrl: creatorData.LogoUrl,
             YoutubeUrl: creatorData.YoutubeUrl,
             YoutubeId: creatorData.YoutubeId

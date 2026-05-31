@@ -5,30 +5,51 @@ var Player = require("../models/players");
 var Character = require("../models/characters");
 var Account = require("../models/accounts");
 var ComboClip = require("../models/combo-clips");
+var creatorResolve = require("./creator-resolve-service");
 var ObjectId = require('mongodb').ObjectId;
+
+async function ensureContentCreatorId(videoValidateData) {
+    if (videoValidateData.ContentCreatorId) {
+        return videoValidateData;
+    }
+    try {
+        const creator = await creatorResolve.findOrCreateFromVideo({
+            videoType: videoValidateData.VideoType,
+            url: videoValidateData.Url || videoValidateData.VideoUrl,
+            importVideoUrl: videoValidateData.ImportVideoUrl,
+        });
+        if (creator && creator._id) {
+            videoValidateData.ContentCreatorId = creator._id;
+        }
+    } catch (err) {
+        console.error('creator resolve on addVideoValidate:', err.message);
+    }
+    return videoValidateData;
+}
 
 // Add new video for validation
 function addVideoValidate(videoValidateData) {
+    return ensureContentCreatorId(videoValidateData).then(function (data) {
     return new Promise((resolve, reject) => {
         // If this is a combo video with multiple combos, create separate validateVideo records for each combo
-        if (videoValidateData.ContentType === 'Combo' && videoValidateData.Combos && videoValidateData.Combos.length > 0) {
-            const validateVideoPromises = videoValidateData.Combos.map(comboData => {
+        if (data.ContentType === 'Combo' && data.Combos && data.Combos.length > 0) {
+            const validateVideoPromises = data.Combos.map(comboData => {
                 return new Promise((resolveCombo, rejectCombo) => {
                     // Create a new validateVideo record for each combo
                     const new_video_validate = new VideoValidate({
-                        Url: videoValidateData.Url,
-                        VideoUrl: videoValidateData.VideoUrl,
-                        GameId: videoValidateData.GameId,
-                        Team1Players: videoValidateData.Team1Players,
-                        Team2Players: videoValidateData.Team2Players,
-                        SubmittedBy: videoValidateData.SubmittedBy,
-                        UpdatedBy: videoValidateData.UpdatedBy,
-                        ContentType: videoValidateData.ContentType,
-                        ContentCreatorId: videoValidateData.ContentCreatorId,
-                        VideoType: videoValidateData.VideoType,
-                        Tags: videoValidateData.Tags,
-                        StartTime: comboData.StartTime || videoValidateData.StartTime,
-                        EndTime: comboData.EndTime || videoValidateData.EndTime,
+                        Url: data.Url,
+                        VideoUrl: data.VideoUrl,
+                        GameId: data.GameId,
+                        Team1Players: data.Team1Players,
+                        Team2Players: data.Team2Players,
+                        SubmittedBy: data.SubmittedBy,
+                        UpdatedBy: data.UpdatedBy,
+                        ContentType: data.ContentType,
+                        ContentCreatorId: data.ContentCreatorId,
+                        VideoType: data.VideoType,
+                        Tags: data.Tags,
+                        StartTime: comboData.StartTime || data.StartTime,
+                        EndTime: comboData.EndTime || data.EndTime,
                         Combos: [comboData] // Single combo per validateVideo record
                     });
 
@@ -59,20 +80,20 @@ function addVideoValidate(videoValidateData) {
         } else {
             // For non-combo videos or combo videos without combos, create single record as before
             var new_video_validate = new VideoValidate({
-                Url: videoValidateData.Url,
-                VideoUrl: videoValidateData.VideoUrl,
-                GameId: videoValidateData.GameId,
-                Team1Players: videoValidateData.Team1Players,
-                Team2Players: videoValidateData.Team2Players,
-                SubmittedBy: videoValidateData.SubmittedBy,
-                UpdatedBy: videoValidateData.UpdatedBy,
-                ContentType: videoValidateData.ContentType,
-                ContentCreatorId: videoValidateData.ContentCreatorId,
-                VideoType: videoValidateData.VideoType,
-                Tags: videoValidateData.Tags,
-                StartTime: videoValidateData.StartTime,
-                EndTime: videoValidateData.EndTime,
-                Combos: videoValidateData.Combos
+                Url: data.Url,
+                VideoUrl: data.VideoUrl,
+                GameId: data.GameId,
+                Team1Players: data.Team1Players,
+                Team2Players: data.Team2Players,
+                SubmittedBy: data.SubmittedBy,
+                UpdatedBy: data.UpdatedBy,
+                ContentType: data.ContentType,
+                ContentCreatorId: data.ContentCreatorId,
+                VideoType: data.VideoType,
+                Tags: data.Tags,
+                StartTime: data.StartTime,
+                EndTime: data.EndTime,
+                Combos: data.Combos
             });
 
             new_video_validate.save(function (error) {
@@ -87,6 +108,7 @@ function addVideoValidate(videoValidateData) {
                 }
             });
         }
+    });
     });
 }
 

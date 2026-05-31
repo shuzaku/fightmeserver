@@ -6,6 +6,11 @@ var CreatorsSchema = new Schema({
     type: String,
     required: '{PATH} is required!'
   },
+  // Canonical channel / profile page (YouTube @handle, twitter.com/user, etc.)
+  Url: {
+    type: String,
+    index: true,
+  },
   LogoUrl: {
     type: String,
   },

@@ -112,7 +112,7 @@ function getCharacters(queryParams = {}) {
         var skip = parseSkip(mockReq);
         var sortObj = parseSortWithDirection(mockReq, '_id', -1);
 
-        var query = Character.find({}, 'Name GameId ImageUrl AvatarUrl FeaturedPlayers').sort(sortObj).skip(skip);
+        var query = Character.find({}, 'Name GameId ImageUrl AvatarUrl Slug FeaturedPlayers releaseDate').sort(sortObj).skip(skip);
         if (limit !== undefined) {
             query = query.limit(limit);
         }
