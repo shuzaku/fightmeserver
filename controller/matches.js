@@ -804,9 +804,12 @@ function queryByTeam(req, res) {
         ]
       }
     });
-  } else if (char1) {
+  } else if (char1 || char2) {
+    const singleCharId = char1 || char2;
     let c1;
-    try { c1 = ObjectId(char1); } catch (e) { return res.status(400).send({ error: 'Invalid char1' }); }
+    try { c1 = ObjectId(singleCharId); } catch (e) {
+      return res.status(400).send({ error: 'Invalid character id' });
+    }
     pipeline.push({
       $match: {
         $or: [
