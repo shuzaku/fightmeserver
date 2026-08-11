@@ -37,6 +37,9 @@ const deviceAuthRoutes = require('./device-auth');
 const autostreamRoutes = require('./autostream');
 const ogRoutes = require('./og');
 const twitterVideoRoutes = require('./twitter-video');
+const playerRatingsRoutes = require('./player-ratings');
+const seasonPowerRankingsRoutes = require('./season-power-rankings');
+const playerTournamentHistoryRoutes = require('./player-tournament-history');
 
 // Use route modules
 router.use('/', characterRoutes);
@@ -73,5 +76,8 @@ router.use('/', deviceAuthRoutes);
 router.use('/', autostreamRoutes);
 router.use('/', ogRoutes);
 router.use('/', twitterVideoRoutes);
+router.use('/', playerRatingsRoutes);
+router.use('/', seasonPowerRankingsRoutes);
+router.use('/', playerTournamentHistoryRoutes);
 
 module.exports = router;

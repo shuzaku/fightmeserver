@@ -124,4 +124,47 @@ function queryTournament(req, res) {
         });
 };
 
-module.exports = { addTournament, getTournaments, getTournament, updateTournament, deleteTournament, getTournamentSeries,getCompletedTournaments, queryTournament}
+// Search tournaments (game/tier/date-range/location/name filters, paginated)
+function searchTournaments(req, res) {
+    tournamentService.searchTournaments(req.query)
+        .then(result => {
+            res.send(result);
+        })
+        .catch(error => {
+            console.error(error);
+            var msg = error.message || 'Error searching tournaments';
+            var status = /Invalid ObjectId/i.test(msg) ? 400 : 500;
+            res.status(status).send({
+                success: false,
+                message: 'Error searching tournaments',
+                error: msg
+            });
+        });
+}
+
+// Fetch a tournament's results: top standings + round-grouped match list
+function getTournamentResults(req, res) {
+    tournamentService.getTournamentResults(req.params.id, req.query)
+        .then(result => {
+            if (!result) {
+                res.status(404).send({
+                    success: false,
+                    message: 'Tournament not found'
+                });
+                return;
+            }
+            res.send(result);
+        })
+        .catch(error => {
+            console.error(error);
+            var msg = error.message || 'Error fetching tournament results';
+            var status = /Invalid ObjectId/i.test(msg) ? 400 : 500;
+            res.status(status).send({
+                success: false,
+                message: 'Error fetching tournament results',
+                error: msg
+            });
+        });
+}
+
+module.exports = { addTournament, getTournaments, getTournament, updateTournament, deleteTournament, getTournamentSeries,getCompletedTournaments, queryTournament, searchTournaments, getTournamentResults}

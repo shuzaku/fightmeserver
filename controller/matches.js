@@ -398,13 +398,30 @@ function queryByCharacter(req, res) {
     }
   };
 
+  // Optional point-character narrowing: the character must be the FIRST entry
+  // in some player's CharacterIds. Matched against the raw team arrays (not the
+  // $lookup'd character docs) because only those preserve the listed order.
+  if (req.query.pointChar) {
+    try {
+      var pointCharId = ObjectId(req.query.pointChar);
+      queries.push({
+        $or: [
+          { Team1Players: { $elemMatch: { 'CharacterIds.0': pointCharId } } },
+          { Team2Players: { $elemMatch: { 'CharacterIds.0': pointCharId } } },
+        ]
+      });
+    } catch (e) {
+      return res.status(400).send({ error: 'Invalid point character id' });
+    }
+  }
+
   if(queries.length > 0) {
     aggregate.push({$match: {$and: queries}});
   }
 
-  aggregate.push({$sort: { _id: -1 }});  
+  aggregate.push({$sort: { _id: -1 }});
   aggregate.push({$skip: skip});
-  aggregate.push({$limit: 5});  
+  aggregate.push({$limit: 5});
 
   Match.aggregate(aggregate, function (error, matches) {
     if (error) { console.error(error); }
@@ -767,13 +784,16 @@ function queryMatchesFeed(req, res) {
     });
 }
 
-// Filter matches where two characters are on the SAME team (both in Team1 OR both in Team2)
+// Filter matches where two characters are on the SAME team (both in Team1 OR both in Team2).
+// Also supports `pointChar`: the point character is the FIRST entry in a player's
+// CharacterIds array (the order characters were listed when the match was recorded).
 function queryByTeam(req, res) {
-  const skip   = parseInt(req.query.skip)  || 0;
-  const limit  = parseInt(req.query.limit) || 10;
-  const gameId = req.query.gameId;
-  const char1  = req.query.char1;
-  const char2  = req.query.char2;
+  const skip      = parseInt(req.query.skip)  || 0;
+  const limit     = parseInt(req.query.limit) || 10;
+  const gameId    = req.query.gameId;
+  const char1     = req.query.char1;
+  const char2     = req.query.char2;
+  const pointChar = req.query.pointChar;
 
   if (!gameId) {
     return res.status(400).send({ error: 'gameId is required' });
@@ -815,6 +835,24 @@ function queryByTeam(req, res) {
         $or: [
           { 'Team1Players.CharacterIds': c1 },
           { 'Team2Players.CharacterIds': c1 },
+        ]
+      }
+    });
+  }
+
+  // Point character: must be the first character listed for some player on
+  // either team. $elemMatch keeps the position check scoped to a single
+  // player entry, so it can't match across two different players.
+  if (pointChar) {
+    let pc;
+    try { pc = ObjectId(pointChar); } catch (e) {
+      return res.status(400).send({ error: 'Invalid point character id' });
+    }
+    pipeline.push({
+      $match: {
+        $or: [
+          { Team1Players: { $elemMatch: { 'CharacterIds.0': pc } } },
+          { Team2Players: { $elemMatch: { 'CharacterIds.0': pc } } },
         ]
       }
     });

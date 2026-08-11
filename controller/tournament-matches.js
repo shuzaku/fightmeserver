@@ -135,10 +135,11 @@ async function _queryTournamentMatchesByTournamentId(req, res) {
   }
 
   // Optional extra filters (e.g., PlayerId, PlayerSlug, GameId, CharacterId)
+  var extra = [];
+
   if (req.query.queryName && req.query.queryValue) {
     var names = req.query.queryName.split(',');
     var values = req.query.queryValue.split(',');
-    var extra = [];
 
     var parsedPlayerId = null;
     var parsedCharId = null;
@@ -223,10 +224,28 @@ async function _queryTournamentMatchesByTournamentId(req, res) {
       });
     }
 
-    if (extra.length) {
-      // Apply filters at the start of the pipeline for performance and to use raw fields
-      aggregate.unshift({ $match: { $and: extra } });
+  }
+
+  // Optional point-character narrowing: the character must be the FIRST entry
+  // in some player's CharacterIds ($elemMatch keeps the position check scoped
+  // to one player entry).
+  if (req.query.pointChar) {
+    try {
+      var pointCharId = new ObjectId(req.query.pointChar);
+      extra.push({
+        $or: [
+          { Team1Players: { $elemMatch: { 'CharacterIds.0': pointCharId } } },
+          { Team2Players: { $elemMatch: { 'CharacterIds.0': pointCharId } } }
+        ]
+      });
+    } catch (e) {
+      return res.status(400).json({ error: 'Invalid point character id' });
     }
+  }
+
+  if (extra.length) {
+    // Apply filters at the start of the pipeline for performance and to use raw fields
+    aggregate.unshift({ $match: { $and: extra } });
   }
 
   // Sort by most recent first, then paginate
