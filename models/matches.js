@@ -74,7 +74,6 @@ var MatchessSchema = new Schema({
   timestamps: true, 
 });
 
-MatchessSchema.index({ _id: -1 });
 MatchessSchema.index({ SetId: 1, _id: 1 });
 MatchessSchema.index({ GameId: 1, _id: -1 });
 MatchessSchema.index({ 'Team1Players.CharacterIds': 1, _id: -1 });

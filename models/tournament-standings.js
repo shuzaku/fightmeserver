@@ -10,6 +10,11 @@ var TournamentStandingSchema = new Schema({
   PlayerId: { type: ObjectId, ref: 'Players', default: null, index: true },
 
   Placement: { type: Number, required: true, index: true },
+
+  // Provenance. 'derived' means the placement was inferred from Liquipedia
+  // bracket results rather than read from a prize pool or start.gg.
+  Source: { type: String, enum: ['startgg', 'prize-pool', 'derived'], default: 'startgg', index: true },
+  PlacementConfidence: { type: String, enum: ['high', 'medium'], default: undefined },
   Seed: { type: Number },
   PrizeAmount: { type: Number },
 }, {

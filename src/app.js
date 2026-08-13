@@ -198,10 +198,14 @@ var mongoose = require('mongoose');
 if (!dbUsername || !dbPassword) {
   console.error('ERROR: DB_USERNAME and DB_PASSWORD environment variables are required!');
 } else {
-  var connectionString  = `mongodb+srv://${dbUsername}:${dbPassword}@cluster0.vdh52.mongodb.net/Fighters-Edge?retryWrites=true&w=majority`;
-  
+  var connectionString  = `mongodb+srv://${dbUsername}:${dbPassword}@cluster0.vdh52.mongodb.net/Fighters-Edge?retryWrites=true`;
+
   mongoose.connect(connectionString, {
-    serverSelectionTimeoutMS: 5000
+    serverSelectionTimeoutMS: 5000,
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    useCreateIndex: true,
+    writeConcern: { w: 'majority' }
   }).catch(err => {
     console.error('MongoDB connection error:', err.message);
   });
